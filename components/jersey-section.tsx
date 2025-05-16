@@ -14,7 +14,7 @@ const defaultJerseyData = {
 
 const foxesData = {
   title: "Foxes Bikes Ciclo Tours",
-  description: `<p style="text-align: justify;">Como integrante de Pedal Power, he compartido caminos, emociones y aprendizajes que marcaron mi vida. En plena organización de nuestro segundo evento del año 2024, “La Nocturna”, junto a dos compañeras del grupo, Iarita y Claudia, vivimos algo que transformó nuestra mirada: el rescate de un zorrito herido.</p><p style="text-align: justify;">Ese momento de conexión profunda con la naturaleza fue la chispa que necesitaba para darle forma y nombre a un sueño que venía madurando hace tiempo.</p><p style="text-align: justify;">Así nació <strong>Foxes Bikes Ciclo Tours</strong>, una propuesta que combina todo lo que amo del cicloturismo grupal, pero llevada a una escala más íntima. Es una invitación a vivir un fin de semana completo con todo resuelto: alojamiento, comidas, circuitos guiados y actividades, ideal para venir en familia, con amigos (bikers o no) o incluso solo/a.</p><p style="text-align: justify;">No hace falta experiencia, solo ganas de disfrutar. Mi misión es que te desconectes del ruido cotidiano y te reconectes con la naturaleza, con la bici y con vos mismo/a.</p><p style="text-align: justify;"><strong>Cupos limitados. Experiencia única. Bienvenidos a rodar distinto.</strong></p><p><strong>Contacto:</strong> Brunilda Schubert<br /><strong>Celular:</strong> 3456 530720</p>`,
+  description: `<p style="text-align: justify;">Como integrante de Pedal Power, he compartido caminos, emociones y aprendizajes que marcaron mi vida. En plena organización de nuestro segundo evento del año 2024, "La Nocturna", junto a dos compañeras del grupo, Iarita y Claudia, vivimos algo que transformó nuestra mirada: el rescate de un zorrito herido.</p><p style="text-align: justify;">Ese momento de conexión profunda con la naturaleza fue la chispa que necesitaba para darle forma y nombre a un sueño que venía madurando hace tiempo.</p><p style="text-align: justify;">Así nació <strong>Foxes Bikes Ciclo Tours</strong>, una propuesta que combina todo lo que amo del cicloturismo grupal, pero llevada a una escala más íntima. Es una invitación a vivir un fin de semana completo con todo resuelto: alojamiento, comidas, circuitos guiados y actividades, ideal para venir en familia, con amigos (bikers o no) o incluso solo/a.</p><p style="text-align: justify;">No hace falta experiencia, solo ganas de disfrutar. Mi misión es que te desconectes del ruido cotidiano y te reconectes con la naturaleza, con la bici y con vos mismo/a.</p><p style="text-align: justify;"><strong>Cupos limitados. Experiencia única. Bienvenidos a rodar distinto.</strong></p><p><strong>Contacto:</strong> Brunilda Schubert<br /><strong>Celular:</strong> 3456 530720</p>`,
   imageUrl: "/foxes.jpg",
 }
 
@@ -59,51 +59,51 @@ export default function JerseySection() {
     <div className="container mx-auto px-4 space-y-24">
       {/* Sección Pedal Power */}
       <div>
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
             {jerseyData.title}
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 mx-auto mb-4"></div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 items-center">
-          <div className="relative aspect-square max-w-md mx-auto">
+        <div className="grid md:grid-cols-2 gap-0 items-center">
+          <div className="relative aspect-square max-w-md mx-auto md:mx-0 md:ml-auto order-1 md:order-none md:pr-4">
             <Image
               src={jerseyData.imageUrl || "/pedalpower.jpg"}
               alt="Nuestra Historia"
               width={400}
               height={400}
-              className="object-contain"
+              className="object-contain rounded-3xl shadow-2xl"
               priority
             />
           </div>
 
-          <div className="space-y-4 prose max-w-none" dangerouslySetInnerHTML={{ __html: jerseyData.description }} />
+          <div className="space-y-4 prose max-w-none md:pl-4" dangerouslySetInnerHTML={{ __html: jerseyData.description }} />
         </div>
       </div>
 
       {/* Sección Foxes */}
       <div>
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
             {foxesData.title}
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 mx-auto mb-4"></div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 items-center">
-          <div className="relative aspect-square max-w-md mx-auto order-1 md:order-none">
+        <div className="grid md:grid-cols-2 gap-0 items-center">
+          <div className="relative aspect-square max-w-md mx-auto md:mx-0 md:ml-auto order-1 md:order-none md:pr-4">
             <Image
               src={foxesData.imageUrl || "/foxes.jpg"}
               alt="Foxes Bikes"
               width={400}
               height={400}
-              className="object-contain"
+              className="object-contain rounded-3xl shadow-2xl"
               priority
             />
           </div>
 
-          <div className="space-y-4 prose max-w-none" dangerouslySetInnerHTML={{ __html: foxesData.description }} />
+          <div className="space-y-2 prose max-w-none md:pl-4" dangerouslySetInnerHTML={{ __html: foxesData.description }} />
         </div>
       </div>
     </div>

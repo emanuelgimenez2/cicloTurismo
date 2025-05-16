@@ -15,7 +15,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-lg font-bold mb-4">Enlaces rápidos</h3>
+            <h3 className="text-lg font-bold mb-4 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">Enlaces rápidos</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/#inicio" className="text-sm text-gray-600 hover:text-gray-900">
@@ -56,7 +56,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-lg font-bold mb-4">Síguenos</h3>
+            <h3 className="text-lg font-bold mb-4 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">Síguenos</h3>
             <div className="flex space-x-4">
               <Link href="#" className="text-gray-600 hover:text-pink-500">
                 <Facebook className="h-6 w-6" />

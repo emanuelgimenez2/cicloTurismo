@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -35,14 +36,18 @@ export default function Navbar() {
 
   return (
     <header
-      className={cn(
-        "sticky top-0 z-50 w-full transition-all duration-300",
-        isScrolled ? "bg-white/90 backdrop-blur-md shadow-sm" : "bg-transparent",
-      )}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled ? "bg-gradient-to-r from-pink-100 via-violet-90 to-blue-100 border-t py-4 shadow-md"  : "bg-transparent py-4"
+      }`}
     >
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
+      <div className="container mx-auto flex items-center justify-between px-4">
         <Link href="/" className="flex items-center space-x-2">
-          <span className="text-xl font-bold bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
+          <span className={cn(
+            "text-xl font-bold",
+            isScrolled
+              ? "bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent"
+              : "bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent"
+          )}>
             Cicloturismo Termal
           </span>
         </Link>
@@ -55,14 +60,17 @@ export default function Navbar() {
               href={item.href}
               className={cn(
                 "text-sm font-medium transition-colors hover:text-primary",
-                isScrolled ? "text-gray-900" : "text-gray-900",
+                isScrolled ? "text-gray-900" : "text-white drop-shadow-md hover:text-gray-200"
               )}
             >
               {item.name}
             </Link>
           ))}
           <Link href="/inscripcion">
-            <Button className="bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 hover:from-pink-600 hover:via-violet-600 hover:to-blue-600">
+            <Button className={cn(
+              "bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 hover:from-pink-600 hover:via-violet-600 hover:to-blue-600",
+              !isScrolled && "shadow-lg"
+            )}>
               Inscribirme
             </Button>
           </Link>
@@ -71,7 +79,7 @@ export default function Navbar() {
         {/* Mobile Navigation */}
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className={!isScrolled ? "text-white" : ""}>
               <Menu className="h-6 w-6" />
               <span className="sr-only">Toggle menu</span>
             </Button>

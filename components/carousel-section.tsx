@@ -89,14 +89,14 @@ export default function CarouselSection() {
 
   if (loading) {
     return (
-      <div className="relative h-[60vh] flex items-center justify-center bg-gray-100">
+      <div className="relative h-screen flex items-center justify-center bg-gray-100">
         <p>Cargando...</p>
       </div>
     )
   }
 
   return (
-    <div className="relative h-[60vh] overflow-hidden">
+    <div className="relative h-screen overflow-hidden">
       {slides.map((slide, index) => (
         <div
           key={slide.id}
