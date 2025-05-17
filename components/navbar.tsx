@@ -40,10 +40,15 @@ export default function Navbar() {
         isScrolled ? "bg-gradient-to-r from-pink-100 via-violet-90 to-blue-100 border-t py-2 shadow-md"  : "bg-transparent py-2"
       }`}
     >
-      <div className="container mx-auto flex items-center justify-between px-2">
-        <Link href="/" className="flex items-center space-x-2">
+      <div className="container mx-auto flex items-center justify-between px-4">
+        <Link href="/" className="flex items-center space-x-3">
+          <img
+            src="/logo.png"
+            alt="Logo Cicloturismo Termal"
+            className="h-12 w-auto"
+          /> 
           <span className={cn(
-            "text-xl font-bold",
+            "text-3xl font-bold",
             isScrolled
               ? "bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent"
               : "bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent"
