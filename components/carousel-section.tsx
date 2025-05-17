@@ -27,6 +27,30 @@ const defaultSlides = [
     buttonText: "Conoce más",
     buttonUrl: "/#beneficios",
   },
+  {
+    id: "default-3",
+    imageUrl: "/foto 2.jpg?height=600&width=1200",
+    title: "Sponsors",
+    subtitle: "Conoce a nuestros sponsors",
+    buttonText: "Sponsors",
+    buttonUrl: "/#sponsors",
+  },
+  {
+    id: "default-4",
+    imageUrl: "/foto 3.jpg?height=600&width=1200",
+    title: "¡Tenes alguna duda?",
+    subtitle: "Contactate con nosotros",
+    buttonText: "Contacto",
+    buttonUrl: "/#contacto",
+  },
+  {
+    id: "default-5",
+    imageUrl: "/foto 5.jpg?height=600&width=1200",
+    title: "Como comenzamos",
+    subtitle: "Te contamos nuestra historia",
+    buttonText: "Historia",
+    buttonUrl: "/#historia",
+  },
 ]
 
 export default function CarouselSection() {

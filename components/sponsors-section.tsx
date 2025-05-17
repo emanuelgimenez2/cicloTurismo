@@ -98,7 +98,7 @@ export default function SponsorsSection() {
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">Empresas que hacen posible este evento</p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 max-w-5xl mx-auto">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         {sponsors.map((sponsor) => (
           <Link
             key={sponsor.id}
@@ -106,12 +106,12 @@ export default function SponsorsSection() {
             target={sponsor.url ? "_blank" : "_self"}
             className="flex flex-col items-center group"
           >
-            <div className="relative h-24 w-full mb-2 bg-white rounded-lg p-2 flex items-center justify-center shadow-sm transition-transform group-hover:scale-105">
+            <div className="relative h-24 w-full mb-2 bg-white rounded-lg p-2 flex items-center justify-center shadow-sm transition-transform group-hover:scale-100">
               <Image
-                src={sponsor.logoUrl || "/placeholder.svg?height=100&width=200"}
+                src={sponsor.logoUrl || "/placeholder.svg?height=100&width=100"}
                 alt={sponsor.name}
-                width={150}
-                height={80}
+                width={300}
+                height={300}
                 className="object-contain max-h-20"
               />
             </div>

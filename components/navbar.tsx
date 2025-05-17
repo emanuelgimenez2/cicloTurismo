@@ -37,10 +37,10 @@ export default function Navbar() {
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "bg-gradient-to-r from-pink-100 via-violet-90 to-blue-100 border-t py-4 shadow-md"  : "bg-transparent py-4"
+        isScrolled ? "bg-gradient-to-r from-pink-100 via-violet-90 to-blue-100 border-t py-2 shadow-md"  : "bg-transparent py-2"
       }`}
     >
-      <div className="container mx-auto flex items-center justify-between px-4">
+      <div className="container mx-auto flex items-center justify-between px-2">
         <Link href="/" className="flex items-center space-x-2">
           <span className={cn(
             "text-xl font-bold",

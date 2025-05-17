@@ -59,7 +59,7 @@ export default function BenefitsSection() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 text-center">
+      <div className="container mx-auto px-2 text-center">
         <p>Cargando...</p>
       </div>
     )
@@ -77,11 +77,11 @@ export default function BenefitsSection() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5x1 mx-auto">
         {benefits.map((benefit) => (
-          <div key={benefit.id} className="flex items-start space-x-2 bg-white p-4 rounded-lg shadow-sm">
-            <div className="flex-shrink-0 mt-1">
-              <div className="h-5 w-5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 flex items-center justify-center">
+          <div key={benefit.id} className="flex items-start space-x-2 bg-white p-2 rounded-lg shadow-sm">
+            <div className="flex-shrink-0 mx-1 md:mx-1">
+              <div className="h-5 w-5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 flex items-center justify-left">
                 <Check className="h-3 w-3 text-white" />
               </div>
             </div>
@@ -92,3 +92,5 @@ export default function BenefitsSection() {
     </div>
   )
 }
+
+
