@@ -9,7 +9,7 @@ import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 
 const defaultJerseyData = {
   title: "Pedal Power",
-  description: `<p style="text-align: justify;">Somos Pedal Power, un grupo de amigos unidos por una misma pasión: el ciclismo. Nacimos con la simple idea de salir a pedalear cada vez que podíamos, disfrutando del camino, del aire libre y de la compañía.</p><p style="text-align: justify;">Con el tiempo, esa pasión se transformó en un compromiso: aumentamos la frecuencia de nuestras salidas, recorrimos más kilómetros y nos animamos a participar en cicloturismos por toda la región, incluyendo en la vecina y muy querida República Oriental del Uruguay.</p><p style="text-align: justify;">Esas experiencias nos inspiraron a dar un paso más: organizar nuestro propio evento. Así nació el Cicloturismo Termal en Federación, Entre Ríos. La primera edición, en octubre del 2024, fue un éxito rotundo y nos impulsó a seguir creciendo.</p><p style="text-align: justify;">Hoy, seguimos pedaleando con la misma alegría del primer día, pero con la convicción de que este camino recién comienza. Nos mueve la pasión, el compañerismo y el deseo de compartir esta experiencia con más personas.</p><p style="text-align: justify;">¿Te sumás a vivir la Segunda Edición del Cicloturismo Termal?              </p>`,
+  description: `<p style="text-align: justify;">Somos Pedal Power, un grupo de amigos unidos por una misma pasión: el ciclismo.</p><p style="text-align: justify;">Nacimos con la simple idea de salir a pedalear cada vez que podíamos, disfrutando del camino, del aire libre y de la compañía.</p><p style="text-align: justify;">Con el tiempo, esa pasión se transformó en un compromiso: aumentamos la frecuencia de nuestras salidas, recorrimos más kilómetros y nos animamos a participar en cicloturismos por toda la región, incluyendo en la vecina y muy querida República Oriental del Uruguay.</p><p style="text-align: justify;">Esas experiencias nos inspiraron a dar un paso más: organizar nuestro propio evento.</p><p style="text-align: justify;">Así nació el Cicloturismo Termal en Federación, Entre Ríos. La primera edición, en octubre del 2024, fue un éxito rotundo y nos impulsó a seguir creciendo.</p><p style="text-align: justify;">Hoy, seguimos pedaleando con la misma alegría del primer día, pero con la convicción de que este camino recién comienza. Nos mueve la pasión, el compañerismo y el deseo de compartir esta experiencia con más personas.</p><p style="text-align: justify;">    </p><p style="text-align: justify;">   </p><p style="text-align: justify;">¿Te sumás a vivir la Segunda Edición del Cicloturismo Termal?              </p>`,
   imageUrl: "/pedalpower.jpg",
 }
 
@@ -31,7 +31,7 @@ function SectionHeader({ image, title }) {
           className="object-contain"
           priority
         />
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
+        <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-600 via-violet-600 to-blue-600 bg-clip-text text-transparent">
           {title}
         </h2>
       </div>
@@ -40,130 +40,132 @@ function SectionHeader({ image, title }) {
   )
 }
 
-function CollapsibleText({ html, imageHeight = 250 }) {
-  const [expanded, setExpanded] = useState(false)
-  const textContainerRef = useRef(null)
+function CollapsibleText({ html, imageUrl }) {
+  const [showModal, setShowModal] = useState(false)
   const [shouldTruncate, setShouldTruncate] = useState(false)
-  
-  // Process the HTML to get a preview version
-  const processHtml = (htmlContent) => {
-    // Extract text without HTML tags for line calculation
-    const tempDiv = document.createElement('div')
-    tempDiv.innerHTML = htmlContent
-    const plainText = tempDiv.textContent || tempDiv.innerText
-    
-    // Calculate approximately how many characters fit in the image height
-    // Estimating 20px per line and about 60 chars per line
-    const linesInImageHeight = Math.floor(imageHeight / 50)
-    const charsInImageHeight = linesInImageHeight * 120
-    
-    // If text is longer than what fits in image height, truncate
-    if (plainText.length > charsInImageHeight) {
-      let truncatedText = plainText.substring(0, charsInImageHeight)
-      // Try to truncate at a space to avoid cutting words
-      if (truncatedText.lastIndexOf(' ') > charsInImageHeight - 80) {
-        truncatedText = truncatedText.substring(0, truncatedText.lastIndexOf(' '))
-      }
-      truncatedText += '...'
-      
-      return {
-        previewHtml: `<p style="text-align: justify;">${truncatedText}</p>`,
-        hasMore: true
-      }
-    }
-    
-    return {
-      previewHtml: htmlContent,
-      hasMore: false
-    }
-  }
-  
-  // State for processed content
   const [processedContent, setProcessedContent] = useState({
     previewHtml: html,
     fullHtml: html,
-    hasMore: false
+    hasMore: false,
   })
-  
-  // Check if text height exceeds image height
-  useEffect(() => {
-    if (textContainerRef.current) {
-      const checkHeight = () => {
-        const textHeight = textContainerRef.current.scrollHeight
-        if (textHeight > imageHeight) {
-          setShouldTruncate(true)
-          const { previewHtml, hasMore } = processHtml(html)
-          setProcessedContent({
-            previewHtml,
-            fullHtml: html,
-            hasMore
-          })
-        } else {
-          setShouldTruncate(false)
-        }
+
+  const calculateMaxChars = (width) => {
+    if (width > 1100) return 1300
+    if (width > 990) return 900
+    if (width > 800) return 600
+    if (width > 700) return 500
+    return 250
+  }
+
+  const processHtml = (htmlContent, maxChars) => {
+    const tempDiv = document.createElement("div")
+    tempDiv.innerHTML = htmlContent
+    const plainText = tempDiv.textContent || tempDiv.innerText || ""
+
+    if (plainText.length > maxChars) {
+      let truncatedText = plainText.substring(0, maxChars)
+      const lastSpace = truncatedText.lastIndexOf(" ")
+      if (lastSpace > 0) truncatedText = truncatedText.substring(0, lastSpace)
+      truncatedText += "..."
+      return {
+        previewHtml: `<p style="text-align: justify;">${truncatedText}</p>`,
+        hasMore: true,
       }
-      
-      // Initial check
-      checkHeight()
-      
-      // Add resize listener
-      window.addEventListener('resize', checkHeight)
-      return () => window.removeEventListener('resize', checkHeight)
     }
-  }, [html, imageHeight])
+    return {
+      previewHtml: htmlContent,
+      hasMore: false,
+    }
+  }
+
+  useEffect(() => {
+    const handleResize = () => {
+      const maxChars = calculateMaxChars(window.innerWidth)
+      const { previewHtml, hasMore } = processHtml(html, maxChars)
+      setProcessedContent({
+        previewHtml,
+        fullHtml: html,
+        hasMore,
+      })
+      setShouldTruncate(hasMore)
+    }
+
+    handleResize()
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [html])
 
   return (
-    <div className="prose max-w-none flex-1">
-      {/* Hidden div to measure text height */}
-      <div 
-        ref={textContainerRef}
-        className="absolute opacity-0 pointer-events-none"
-        style={{ width: '100%', maxWidth: '100%' }}
-        dangerouslySetInnerHTML={{ __html: html }}
-      />
-      
-      {/* Visible content */}
+    <div className="prose max-w-none flex-1 relative">
       <div>
-        {shouldTruncate && !expanded ? (
+        {shouldTruncate ? (
           <>
             <div
               style={{ textAlign: "justify" }}
               dangerouslySetInnerHTML={{ __html: processedContent.previewHtml }}
             />
             <button
-              onClick={() => setExpanded(true)}
+              onClick={() => setShowModal(true)}
               className="mt-2 text-blue-600 font-medium hover:underline focus:outline-none"
             >
               Leer más
             </button>
           </>
         ) : (
-          <>
-            <div
-              style={{ textAlign: "justify" }}
-              dangerouslySetInnerHTML={{ __html: processedContent.fullHtml }}
-            />
-            {shouldTruncate && (
-              <button
-                onClick={() => setExpanded(false)}
-                className="mt-2 text-blue-600 font-medium hover:underline focus:outline-none"
-              >
-                Ver menos
-              </button>
-            )}
-          </>
+          <div
+            style={{ textAlign: "justify" }}
+            dangerouslySetInnerHTML={{ __html: processedContent.fullHtml }}
+          />
         )}
       </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 px-4">
+
+          <div className="bg-gradient-to-r from-pink-100 via-violet-100 to-blue-100 mt-2 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+            <button
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              onClick={() => setShowModal(false)}
+            >
+              ✕
+            </button>
+            {imageUrl && (
+              <div className="w-full h-64 relative rounded-t-2xl overflow-hidden">
+                <Image
+                  src={imageUrl}
+                  alt="Imagen completa"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+            )}
+            <div className="p-6 text-justify">
+              <div dangerouslySetInnerHTML={{ __html: processedContent.fullHtml }} />
+              <button
+                onClick={() => setShowModal(false)}
+                className="mt-4 text-blue-600 font-medium hover:underline"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+
+
+
+
 
 
 export default function JerseySection() {
   const { eventSettings, isFirebaseAvailable } = useFirebaseContext()
   const [jerseyData, setJerseyData] = useState(defaultJerseyData)
   const [loading, setLoading] = useState(true)
-  const IMAGE_HEIGHT = 250 // La altura de la imagen en píxeles
+  const IMAGE_HEIGHT = 300 // La altura de la imagen en píxeles
 
   useEffect(() => {
     const fetchJerseyData = async () => {
@@ -173,7 +175,7 @@ export default function JerseySection() {
       }
 
       try {
-        const jerseyDoc = doc(db, "content", "#historia")
+        const jerseyDoc = doc(db, "content", "historia")
         const docSnap = await getDoc(jerseyDoc)
 
         if (

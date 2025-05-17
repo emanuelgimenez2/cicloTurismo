@@ -71,7 +71,7 @@ export default function ContactSection() {
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">¿Tenés alguna pregunta? Contactanos</p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+      <div className="grid md:grid-cols-2 gap-10 max-w-10xl mx-auto">
         <div className="space-y-6">
           <div className="flex items-start space-x-3">
             <MapPin className="h-5 w-5 text-pink-500 mt-1" />

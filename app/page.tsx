@@ -15,7 +15,7 @@ export default function Home() {
         <section id="inicio">
           <CarouselSection />
         </section>
-        <section id="remera" className="py-16">
+        <section id="historia" className="py-16">
           <JerseySection />
         </section>
         <section id="beneficios" className="py-16 bg-gradient-to-r from-violet-50 to-blue-50">

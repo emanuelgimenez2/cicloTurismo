@@ -24,7 +24,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/#historia" className="text-sm text-gray-600 hover:text-gray-900">
-                  Remera
+                  Historia
                 </Link>
               </li>
               <li>

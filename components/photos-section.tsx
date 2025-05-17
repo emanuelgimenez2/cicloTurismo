@@ -97,7 +97,7 @@ export default function PhotosSection() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
         {photos.map((photo) => (
           <div key={photo.id} className="relative group overflow-hidden rounded-lg">
             <div className="aspect-square relative">
