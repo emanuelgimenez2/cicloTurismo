@@ -22,19 +22,23 @@ const foxesData = {
 function SectionHeader({ image, title }) {
   return (
     <div className="flex flex-col items-center text-center mb-8">
-      <div className="flex items-center gap-4">
+      {/* Contenedor del logo */}
+      <div className="relative w-[60px] h-[60px] mb-2">
         <Image
           src={image}
           alt={`Logo ${title}`}
-          width={60}
-          height={60}
+          fill
           className="object-contain"
           priority
         />
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-600 via-violet-600 to-blue-600 bg-clip-text text-transparent">
-          {title}
-        </h2>
       </div>
+
+      {/* Título separado del logo */}
+      <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-600 via-violet-600 to-blue-600 bg-clip-text text-transparent">
+        {title}
+      </h2>
+
+      {/* Línea decorativa */}
       <div className="w-24 h-1 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 mt-2" />
     </div>
   )
