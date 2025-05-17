@@ -1,15 +1,14 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
-import { db } from "@/lib/firebase/firebase-config"
+import { db } from "../lib/firebase/firebase-config"
 import { doc, getDoc } from "firebase/firestore"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 
-
 const defaultJerseyData = {
   title: "Pedal Power",
-  description: `<p style="text-align: justify;">Somos Pedal Power, un grupo de amigos unidos por una misma pasión: el ciclismo.</p><p style="text-align: justify;">Nacimos con la simple idea de salir a pedalear cada vez que podíamos, disfrutando del camino, del aire libre y de la compañía.</p><p style="text-align: justify;">Con el tiempo, esa pasión se transformó en un compromiso: aumentamos la frecuencia de nuestras salidas, recorrimos más kilómetros y nos animamos a participar en cicloturismos por toda la región, incluyendo en la vecina y muy querida República Oriental del Uruguay.</p><p style="text-align: justify;">Esas experiencias nos inspiraron a dar un paso más: organizar nuestro propio evento.</p><p style="text-align: justify;">Así nació el Cicloturismo Termal en Federación, Entre Ríos. La primera edición, en octubre del 2024, fue un éxito rotundo y nos impulsó a seguir creciendo.</p><p style="text-align: justify;">Hoy, seguimos pedaleando con la misma alegría del primer día, pero con la convicción de que este camino recién comienza. Nos mueve la pasión, el compañerismo y el deseo de compartir esta experiencia con más personas.</p><p style="text-align: justify;">    </p><p style="text-align: justify;">   </p><p style="text-align: justify;">¿Te sumás a vivir la Segunda Edición del Cicloturismo Termal?              </p>`,
+  description: `<p style="text-align: justify;">Somos Pedal Power, un grupo de amigos unidos por una misma pasión: el ciclismo.</p><p style="text-align: justify;">Nacimos con la simple idea de salir a pedalear cada vez que podíamos, disfrutando del camino, del aire libre y de la compañía.</p><p style="text-align: justify;">Con el tiempo, esa pasión se transformó en un compromiso: aumentamos la frecuencia de nuestras salidas, recorrimos más kilómetros y nos animamos a participar en cicloturismos por toda la región, incluyendo en la vecina y muy querida República Oriental del Uruguay.</p><p style="text-align: justify;">Esas experiencias nos inspiraron a dar un paso más: organizar nuestro propio evento.</p><p style="text-align: justify;">Así nació el Cicloturismo Termal en Federación, Entre Ríos. La primera edición, en octubre del 2024, fue un éxito rotundo y nos impulsó a seguir creciendo.</p><p style="text-align: justify;">Hoy, seguimos pedaleando con la misma alegría del primer día, pero con la convicción de que este camino recién comienza. Nos mueve la pasión, el compañerismo y el deseo de compartir esta experiencia con más personas.</p><p style="text-align: justify;">¿Te sumás a vivir la Segunda Edición del Cicloturismo Termal?</p>`,
   imageUrl: "/pedalpower.jpg",
 }
 
@@ -19,28 +18,21 @@ const foxesData = {
   imageUrl: "/foxes.jpg",
 }
 
-function SectionHeader({ image, title }) {
+function SectionHeader({ image, title }: { image: string; title: string }) {
   return (
     <div className="flex flex-col items-center text-center mb-8">
-      <div className="flex items-center gap-4">
-        <Image
-          src={image}
-          alt={`Logo ${title}`}
-          width={60}
-          height={60}
-          className="object-contain"
-          priority
-        />
-        <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-600 via-violet-600 to-blue-600 bg-clip-text text-transparent">
-          {title}
-        </h2>
+      <div className="relative w-[60px] h-[60px] mb-2">
+        <Image src={image} alt={`Logo ${title}`} fill className="object-contain" priority />
       </div>
+      <h2 className="text-3xl font-bold bg-gradient-to-r from-pink-600 via-violet-600 to-blue-600 bg-clip-text text-transparent">
+        {title}
+      </h2>
       <div className="w-24 h-1 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 mt-2" />
     </div>
   )
 }
 
-function CollapsibleText({ html, imageUrl }) {
+function CollapsibleText({ html, imageUrl }: { html: string; imageUrl: string }) {
   const [showModal, setShowModal] = useState(false)
   const [shouldTruncate, setShouldTruncate] = useState(false)
   const [processedContent, setProcessedContent] = useState({
@@ -49,7 +41,7 @@ function CollapsibleText({ html, imageUrl }) {
     hasMore: false,
   })
 
-  const calculateMaxChars = (width) => {
+  const calculateMaxChars = (width: number) => {
     if (width > 1100) return 1300
     if (width > 990) return 900
     if (width > 800) return 600
@@ -57,7 +49,7 @@ function CollapsibleText({ html, imageUrl }) {
     return 250
   }
 
-  const processHtml = (htmlContent, maxChars) => {
+  const processHtml = (htmlContent: string, maxChars: number) => {
     const tempDiv = document.createElement("div")
     tempDiv.innerHTML = htmlContent
     const plainText = tempDiv.textContent || tempDiv.innerText || ""
@@ -96,7 +88,7 @@ function CollapsibleText({ html, imageUrl }) {
   }, [html])
 
   return (
-    <div className="prose max-w-none flex-1 relative">
+    <div className="prose max-w-none flex-1 relative text-sm sm:text-base">
       <div>
         {shouldTruncate ? (
           <>
@@ -119,28 +111,16 @@ function CollapsibleText({ html, imageUrl }) {
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 px-4">
-
-          <div className="bg-gradient-to-r from-pink-100 via-violet-100 to-blue-100 mt-2 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+          <div className="bg-gradient-to-r from-pink-100 via-violet-100 to-blue-100 mt-2 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-xl relative">
             <button
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
               onClick={() => setShowModal(false)}
             >
               ✕
             </button>
-            {imageUrl && (
-              <div className="w-full h-64 relative rounded-t-2xl overflow-hidden">
-                <Image
-                  src={imageUrl}
-                  alt="Imagen completa"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-            )}
-            <div className="p-6 text-justify">
+            <div className="p-4 sm:p-6 text-justify max-w-prose mx-auto text-sm sm:text-base">
               <div dangerouslySetInnerHTML={{ __html: processedContent.fullHtml }} />
               <button
                 onClick={() => setShowModal(false)}
@@ -156,16 +136,10 @@ function CollapsibleText({ html, imageUrl }) {
   )
 }
 
-
-
-
-
-
 export default function JerseySection() {
   const { eventSettings, isFirebaseAvailable } = useFirebaseContext()
   const [jerseyData, setJerseyData] = useState(defaultJerseyData)
   const [loading, setLoading] = useState(true)
-  const IMAGE_HEIGHT = 300 // La altura de la imagen en píxeles
 
   useEffect(() => {
     const fetchJerseyData = async () => {
@@ -177,11 +151,9 @@ export default function JerseySection() {
       try {
         const jerseyDoc = doc(db, "content", "historia")
         const docSnap = await getDoc(jerseyDoc)
-
         if (
           docSnap.exists() &&
-          docSnap.data().year ===
-            (eventSettings?.currentYear || new Date().getFullYear())
+          docSnap.data().year === (eventSettings?.currentYear || new Date().getFullYear())
         ) {
           setJerseyData(docSnap.data())
         }
@@ -209,7 +181,7 @@ export default function JerseySection() {
       <div>
         <SectionHeader image="/pedalpowerlogo.png" title={jerseyData.title} />
         <div className="flex flex-col md:flex-row items-center gap-8">
-          <div className="relative w-[300px] h-[300px] flex-shrink-0 mx-auto md:mx-0">
+          <div className="relative w-[280px] h-[280px] flex-shrink-0 mx-auto md:mx-0">
             <Image
               src={jerseyData.imageUrl || "/pedalpower.jpg"}
               alt="Nuestra Historia"
@@ -218,7 +190,7 @@ export default function JerseySection() {
               priority
             />
           </div>
-          <CollapsibleText html={jerseyData.description} imageHeight={IMAGE_HEIGHT} />
+          <CollapsibleText html={jerseyData.description} imageUrl={jerseyData.imageUrl} />
         </div>
       </div>
 
@@ -226,7 +198,7 @@ export default function JerseySection() {
       <div>
         <SectionHeader image="/foxeslogo.png" title={foxesData.title} />
         <div className="flex flex-col md:flex-row items-center gap-8">
-          <div className="relative w-[300px] h-[300px] flex-shrink-0 mx-auto md:mx-0">
+          <div className="relative w-[280px] h-[280px] flex-shrink-0 mx-auto md:mx-0">
             <Image
               src={foxesData.imageUrl || "/foxes.jpg"}
               alt="Foxes Bikes"
@@ -235,7 +207,7 @@ export default function JerseySection() {
               priority
             />
           </div>
-          <CollapsibleText html={foxesData.description} imageHeight={IMAGE_HEIGHT} />
+          <CollapsibleText html={foxesData.description} imageUrl={foxesData.imageUrl} />
         </div>
       </div>
     </div>

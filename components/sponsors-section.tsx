@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { db } from "@/lib/firebase/firebase-config"
+import { db } from "../lib/firebase/firebase-config"
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 
@@ -11,33 +11,33 @@ import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 const defaultSponsors = [
   {
     id: "sponsor-1",
-    name: "Municipalidad de Federación",
-    logoUrl: "/placeholder.svg?height=100&width=200",
+    name: "Indumentaria  Deportiva Personalizada",
+    logoUrl: "/sponsor 1.jpg?height=100&width=200",
     url: "#",
   },
   {
     id: "sponsor-2",
-    name: "Termas de Federación",
-    logoUrl: "/placeholder.svg?height=100&width=200",
+    name: "Pedal Power",
+    logoUrl: "/sponsor 2.png?height=100&width=200",
     url: "#",
   },
   {
     id: "sponsor-3",
-    name: "Bicicletas del Litoral",
-    logoUrl: "/placeholder.svg?height=100&width=200",
+    name: "Foxes Ciclo Turs",
+    logoUrl: "/sponsor 3.png?height=100&width=200",
     url: "#",
   },
   {
     id: "sponsor-4",
-    name: "Hotel Termal",
-    logoUrl: "/placeholder.svg?height=100&width=200",
-    url: "#",
+    name: "El Mangrullo",
+    logoUrl: "/sponsor 4.jpg?height=100&width=200",
+    url: "https://linktr.ee/elmangrullo",
   },
   {
     id: "sponsor-5",
-    name: "Deportes Entre Ríos",
-    logoUrl: "/placeholder.svg?height=100&width=200",
-    url: "#",
+    name: "SetviTec",
+    logoUrl: "/sponsor 5.jpg?height=100&width=200",
+    url: "https://linktr.ee/serviteccdelu",
   },
 ]
 
@@ -106,16 +106,15 @@ export default function SponsorsSection() {
             target={sponsor.url ? "_blank" : "_self"}
             className="flex flex-col items-center group"
           >
-            <div className="relative h-24 w-full mb-2 bg-white rounded-lg p-2 flex items-center justify-center shadow-sm transition-transform group-hover:scale-100">
+            <div className="relative aspect-square w-full bg-white rounded-lg overflow-hidden shadow-sm transition-transform group-hover:scale-105">
               <Image
-                src={sponsor.logoUrl || "/placeholder.svg?height=100&width=100"}
+                src={sponsor.logoUrl || "/placeholder.svg"}
                 alt={sponsor.name}
-                width={300}
-                height={300}
-                className="object-contain max-h-20"
+                fill
+                className="object-cover"
               />
             </div>
-            <p className="text-sm font-medium text-center">{sponsor.name}</p>
+            <p className="text-sm font-medium text-center mt-2">{sponsor.name}</p>
           </Link>
         ))}
       </div>
