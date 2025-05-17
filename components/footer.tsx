@@ -4,60 +4,44 @@ import { Facebook, Instagram, Twitter } from "lucide-react"
 export default function Footer() {
   return (
     <footer className="bg-gradient-to-r from-pink-100 via-violet-100 to-blue-100 py-8 border-t">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div>
+      <div className="container mx-auto px-4 max-w-screen-xl">
+        <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 gap-8 text-center md:text-left">
+          <div className="flex flex-col items-center md:items-start">
             <h3 className="text-lg font-bold mb-4 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
               Cicloturismo Termal
             </h3>
-            <p className="text-sm text-gray-600 mb-4">Federación, Entre Ríos, Argentina</p>
+            <p className="text-sm text-gray-600 mb-2">Federación, Entre Ríos, Argentina</p>
             <p className="text-sm text-gray-600">12 de octubre de 2025</p>
           </div>
 
-          <div>
-            <h3 className="text-lg font-bold mb-4 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">Enlaces rápidos</h3>
+          <div className="flex flex-col items-center md:items-start">
+            <h3 className="text-lg font-bold mb-4 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
+              Enlaces rápidos
+            </h3>
             <ul className="space-y-2">
-              <li>
-                <Link href="/#inicio" className="text-sm text-gray-600 hover:text-gray-900">
-                  Inicio
-                </Link>
-              </li>
-              <li>
-                <Link href="/#historia" className="text-sm text-gray-600 hover:text-gray-900">
-                  Historia
-                </Link>
-              </li>
-              <li>
-                <Link href="/#beneficios" className="text-sm text-gray-600 hover:text-gray-900">
-                  Qué incluye
-                </Link>
-              </li>
-              <li>
-                <Link href="/#fotos" className="text-sm text-gray-600 hover:text-gray-900">
-                  Fotos
-                </Link>
-              </li>
-              <li>
-                <Link href="/#sponsors" className="text-sm text-gray-600 hover:text-gray-900">
-                  Sponsors
-                </Link>
-              </li>
-              <li>
-                <Link href="/#contacto" className="text-sm text-gray-600 hover:text-gray-900">
-                  Contacto
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin" className="text-sm text-gray-600 hover:text-gray-900">
-                  Admin
-                </Link>
-              </li>
+              {[
+                ["#inicio", "Inicio"],
+                ["#historia", "Historia"],
+                ["#beneficios", "Qué incluye"],
+                ["#fotos", "Fotos"],
+                ["#sponsors", "Sponsors"],
+                ["#contacto", "Contacto"],
+                ["/admin", "Admin"]
+              ].map(([href, label]) => (
+                <li key={label}>
+                  <Link href={href} className="text-sm text-gray-600 hover:text-gray-900">
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
-          <div>
-            <h3 className="text-lg font-bold mb-4 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">Síguenos</h3>
-            <div className="flex space-x-4">
+          <div className="flex flex-col items-center md:items-start">
+            <h3 className="text-lg font-bold mb-3 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
+              Síguenos
+            </h3>
+            <div className="flex space-x-3">
               <Link href="#" className="text-gray-600 hover:text-pink-500">
                 <Facebook className="h-6 w-6" />
                 <span className="sr-only">Facebook</span>
@@ -74,19 +58,19 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <p className="text-center text-sm text-gray-600">
+        <div className="mt-8 pt-6 border-t border-gray-200 text-center space-y-2">
+          <p className="text-sm text-gray-600">
             &copy; {new Date().getFullYear()} Cicloturismo Termal de Federación. Todos los derechos reservados.
           </p>
-          <p className="text-center text-sm text-gray-600">
-            &copy; {new Date().getFullYear()} Desarrollado por{" "}
+          <p className="text-sm text-gray-600">
+            Desarrollado por{" "}
             <a
               href="https://linktr.ee/serviteccdelu"
               target="_blank"
               rel="noopener noreferrer"
               className="text-pink-600 hover:underline"
             >
-              servitec
+              Servitec
             </a>
           </p>
         </div>
