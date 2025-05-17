@@ -31,7 +31,7 @@ export default function JerseySection() {
       }
 
       try {
-        const jerseyDoc = doc(db, "content", "jersey")
+        const jerseyDoc = doc(db, "content", "#historia")
         const docSnap = await getDoc(jerseyDoc)
 
         if (docSnap.exists() && docSnap.data().year === (eventSettings?.currentYear || new Date().getFullYear())) {
@@ -66,19 +66,23 @@ export default function JerseySection() {
           <div className="w-24 h-1 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 mx-auto mb-4"></div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-0 items-center">
-          <div className="relative aspect-square max-w-md mx-auto md:mx-0 md:ml-auto order-1 md:order-none md:pr-4">
+        <div className="flex items-center gap-8">
+          <div className="relative aspect-square max-w-[400px] flex-shrink-0">
             <Image
               src={jerseyData.imageUrl || "/pedalpower.jpg"}
               alt="Nuestra Historia"
-              width={400}
-              height={400}
+              width={300}
+              height={700}
               className="object-contain rounded-3xl shadow-2xl"
               priority
             />
           </div>
 
-          <div className="space-y-4 prose max-w-none md:pl-4" dangerouslySetInnerHTML={{ __html: jerseyData.description }} />
+          <div
+            className="prose max-w-none flex-1"
+            style={{ textAlign: "justify" }}
+            dangerouslySetInnerHTML={{ __html: jerseyData.description }}
+          />
         </div>
       </div>
 
@@ -91,19 +95,23 @@ export default function JerseySection() {
           <div className="w-24 h-1 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 mx-auto mb-4"></div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-0 items-center">
-          <div className="relative aspect-square max-w-md mx-auto md:mx-0 md:ml-auto order-1 md:order-none md:pr-4">
+        <div className="flex items-center gap-8">
+          <div className="relative aspect-square max-w-[400px] flex-shrink-0">
             <Image
               src={foxesData.imageUrl || "/foxes.jpg"}
               alt="Foxes Bikes"
-              width={400}
-              height={400}
+              width={300}
+              height={700}
               className="object-contain rounded-3xl shadow-2xl"
               priority
             />
           </div>
 
-          <div className="space-y-2 prose max-w-none md:pl-4" dangerouslySetInnerHTML={{ __html: foxesData.description }} />
+          <div
+            className="prose max-w-none flex-1"
+            style={{ textAlign: "justify" }}
+            dangerouslySetInnerHTML={{ __html: foxesData.description }}
+          />
         </div>
       </div>
     </div>
