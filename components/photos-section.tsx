@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { db } from "@/lib/firebase/firebase-config"
+import { db } from "../lib/firebase/firebase-config"
 import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 
@@ -12,27 +12,27 @@ import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 const defaultPhotos = [
   {
     id: "photo-1",
-    url: "/placeholder.svg?height=300&width=300",
+    url: "/foto 1.jpg?height=300&width=300",
     description: "Participantes en la línea de salida",
   },
   {
     id: "photo-2",
-    url: "/placeholder.svg?height=300&width=300",
+    url: "/foto 2.jpg?height=300&width=300",
     description: "Recorriendo los paisajes de Entre Ríos",
   },
   {
     id: "photo-3",
-    url: "/placeholder.svg?height=300&width=300",
+    url: "/foto 3.jpg?height=300&width=300",
     description: "Parada de hidratación",
   },
   {
     id: "photo-4",
-    url: "/placeholder.svg?height=300&width=300",
+    url: "/foto 4.jpg?height=300&width=300",
     description: "Llegada a las termas",
   },
   {
     id: "photo-5",
-    url: "/placeholder.svg?height=300&width=300",
+    url: "/foto 5.jpg?height=300&width=300",
     description: "Entrega de premios",
   },
 ]
