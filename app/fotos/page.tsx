@@ -8,7 +8,7 @@ import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { db } from "@/lib/firebase/firebase-config"
+import { db } from "../../lib/firebase/firebase-config"
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore"
 
 export default function PhotosPage() {

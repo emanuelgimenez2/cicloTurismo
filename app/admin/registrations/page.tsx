@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { db } from "@/lib/firebase/firebase-config"
+import { db } from "../../../lib/firebase/firebase-config"
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore"
 import { Download, Search, Filter } from "lucide-react"
 

@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
-import { db } from "@/lib/firebase/firebase-config"
+import { db } from "../../../lib/firebase/firebase-config"
 import { doc, getDoc, setDoc, collection, getDocs } from "firebase/firestore"
 import { AlertCircle } from "lucide-react"
 

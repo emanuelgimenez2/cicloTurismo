@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { db } from "@/lib/firebase/firebase-config"
+import { db } from "../lib/firebase/firebase-config"
 import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 

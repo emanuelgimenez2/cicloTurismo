@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { db } from "@/lib/firebase/firebase-config"
+import { db } from "../../../lib/firebase/firebase-config"
 import { collection, getDocs, query, where } from "firebase/firestore"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
 import { Users, Calendar, TrendingUp, ShoppingBag, Home, LogOut } from "lucide-react"
