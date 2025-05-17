@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth"
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "firebase/auth"
 import { db } from "../../lib/firebase/firebase-config"
 import { collection, getDocs, query, where, addDoc, updateDoc } from "firebase/firestore"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,7 +16,39 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [initialLoading, setInitialLoading] = useState(true)
   const router = useRouter()
+
+  // Verificar si ya hay una sesión activa al cargar la página
+  useEffect(() => {
+    const auth = getAuth()
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // Verificar si el usuario es administrador
+        try {
+          const adminsRef = collection(db, "admins")
+          const adminQuery = query(adminsRef, where("email", "==", user.email))
+          const adminSnapshot = await getDocs(adminQuery)
+          
+          if (!adminSnapshot.empty) {
+            const adminData = adminSnapshot.docs[0].data()
+            
+            if (adminData.role === "admin") {
+              // Ya existe una sesión de administrador, redirigir al dashboard
+              router.push("/admin/dashboard")
+              return
+            }
+          }
+        } catch (error) {
+          console.error("Error verificando permisos:", error)
+        }
+      }
+      
+      setInitialLoading(false)
+    })
+    
+    return () => unsubscribe()
+  }, [router])
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -92,6 +124,9 @@ export default function LoginPage() {
       const auth = getAuth()
       const provider = new GoogleAuthProvider()
       
+      // Persistencia de sesión - mantener la sesión activa
+      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+      
       // Autenticar con Google
       const result = await signInWithPopup(auth, provider)
       const user = result.user
@@ -158,6 +193,15 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Mostrar carga mientras se verifica la sesión
+  if (initialLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <p>Verificando sesión...</p>
+      </div>
+    )
   }
 
   return (
