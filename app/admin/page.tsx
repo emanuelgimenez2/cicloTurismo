@@ -1,148 +1,254 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth"
+import { db } from "../../lib/firebase/firebase-config"
+import { collection, getDocs, query, where, addDoc, updateDoc } from "firebase/firestore"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
-import { auth } from "@/lib/firebase/firebase-config"
-import { signInWithEmailAndPassword } from "firebase/auth"
-import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
-import { AlertCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Lock, Mail } from "lucide-react"
 
-export default function AdminLoginPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const { isFirebaseAvailable } = useFirebaseContext()
+export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  useEffect(() => {
-    if (!isFirebaseAvailable) return
-
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setIsAuthenticated(true)
-        router.push("/admin/dashboard")
-      } else {
-        setIsAuthenticated(false)
-      }
-    })
-
-    return () => unsubscribe()
-  }, [router, isFirebaseAvailable])
+  const router = useRouter()
 
   const handleLogin = async (e) => {
     e.preventDefault()
-
-    if (!isFirebaseAvailable) {
-      toast({
-        title: "Firebase no disponible",
-        description: "La autenticación no está disponible porque Firebase no está configurado correctamente.",
-        variant: "destructive",
-      })
-      return
-    }
-
+    setError("")
     setLoading(true)
 
     try {
-      await signInWithEmailAndPassword(auth, email, password)
-      toast({
-        title: "Inicio de sesión exitoso",
-        description: "Bienvenido al panel de administración",
-      })
-      router.push("/admin/dashboard")
+      const auth = getAuth()
+      // Autenticar con Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const user = userCredential.user
+
+      // Verificar si el usuario existe en la colección de admins
+      const adminsRef = collection(db, "admins")
+      const adminQuery = query(adminsRef, where("email", "==", user.email))
+      const adminSnapshot = await getDocs(adminQuery)
+
+      if (!adminSnapshot.empty) {
+        // El usuario ya está en la colección de admins
+        const adminDoc = adminSnapshot.docs[0]
+        const adminData = adminDoc.data()
+        
+        // Verificar si el usuario tiene rol de administrador
+        if (adminData.role === "admin") {
+          // El usuario es administrador aprobado, redirigir al dashboard
+          router.push("/admin/dashboard")
+        } else {
+          // El usuario está pendiente de aprobación
+          await auth.signOut()
+          setError("Tu cuenta está pendiente de aprobación por un administrador.")
+        }
+      } else {
+        // El usuario no existe en la colección de admins, agregarlo como pendiente
+        try {
+          await addDoc(collection(db, "admins"), {
+            email: user.email,
+            displayName: user.displayName || "",
+            photoURL: user.photoURL || "",
+            role: "pending", // Usuario pendiente de aprobación
+            loginMethod: "email",
+            createdAt: new Date(),
+            lastLogin: new Date()
+          })
+          
+          // Cerrar sesión ya que aún no está aprobado
+          await auth.signOut()
+          setError("Gracias por registrarte. Tu solicitud de acceso está pendiente de aprobación.")
+        } catch (addError) {
+          console.error("Error al guardar usuario en admins:", addError)
+          await auth.signOut()
+          setError("Error al procesar la solicitud. Por favor, intenta nuevamente.")
+        }
+      }
     } catch (error) {
-      console.error("Error logging in:", error)
-      toast({
-        title: "Error de inicio de sesión",
-        description: "Credenciales incorrectas. Por favor, intenta nuevamente.",
-        variant: "destructive",
-      })
+      console.error("Error al iniciar sesión:", error)
+      if (error.code === "auth/invalid-credential" || error.code === "auth/user-not-found" || error.code === "auth/wrong-password") {
+        setError("Credenciales incorrectas. Por favor, verifica tu email y contraseña.")
+      } else if (error.code === "auth/too-many-requests") {
+        setError("Demasiados intentos fallidos. Por favor, intenta más tarde.")
+      } else {
+        setError("Error al iniciar sesión. Por favor, intenta nuevamente.")
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  if (isAuthenticated) {
-    return <div className="flex justify-center items-center min-h-screen">Redirigiendo...</div>
+  const handleGoogleLogin = async () => {
+    setError("")
+    setLoading(true)
+
+    try {
+      const auth = getAuth()
+      const provider = new GoogleAuthProvider()
+      
+      // Autenticar con Google
+      const result = await signInWithPopup(auth, provider)
+      const user = result.user
+      
+      // Verificar si el usuario de Google existe en la colección de admins
+      const adminsRef = collection(db, "admins")
+      const adminQuery = query(adminsRef, where("email", "==", user.email))
+      const adminSnapshot = await getDocs(adminQuery)
+
+      if (!adminSnapshot.empty) {
+        // El usuario ya está en la colección de admins
+        const adminDoc = adminSnapshot.docs[0]
+        const adminData = adminDoc.data()
+        
+        // Actualizar último login
+        try {
+          await updateDoc(adminDoc.ref, {
+            lastLogin: new Date()
+          })
+        } catch (updateError) {
+          console.error("Error al actualizar último login:", updateError)
+        }
+        
+        // Verificar si el usuario tiene rol de administrador
+        if (adminData.role === "admin") {
+          // El usuario es administrador aprobado, redirigir al dashboard
+          router.push("/admin/dashboard")
+        } else {
+          // El usuario está pendiente de aprobación
+          await auth.signOut()
+          setError("Tu cuenta está pendiente de aprobación por un administrador.")
+        }
+      } else {
+        // El usuario no existe en la colección de admins, agregarlo como pendiente
+        try {
+          await addDoc(collection(db, "admins"), {
+            email: user.email,
+            displayName: user.displayName || "",
+            photoURL: user.photoURL || "",
+            role: "pending", // Usuario pendiente de aprobación
+            loginMethod: "google",
+            createdAt: new Date(),
+            lastLogin: new Date()
+          })
+          
+          // Cerrar sesión ya que aún no está aprobado
+          await auth.signOut()
+          setError("Gracias por registrarte. Tu solicitud de acceso está pendiente de aprobación.")
+        } catch (addError) {
+          console.error("Error al guardar usuario en admins:", addError)
+          await auth.signOut()
+          setError("Error al procesar la solicitud. Por favor, intenta nuevamente.")
+        }
+      }
+    } catch (error) {
+      console.error("Error al iniciar sesión con Google:", error)
+      if (error.code === "auth/popup-closed-by-user") {
+        setError("Inicio de sesión cancelado. Por favor, intenta nuevamente.")
+      } else if (error.code === "auth/cancelled-popup-request") {
+        setError("La solicitud de inicio de sesión fue cancelada. Por favor, intenta nuevamente.")
+      } else {
+        setError("Error al iniciar sesión con Google. Por favor, intenta nuevamente.")
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-pink-50 to-blue-50">
+    <div className="flex justify-center items-center min-h-screen bg-gray-50">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Panel de Administración</CardTitle>
-          <CardDescription className="text-center">Cicloturismo Termal de Federación</CardDescription>
+          <CardTitle className="text-2xl text-center">Acceso Administradores</CardTitle>
+          <CardDescription className="text-center">
+            Ingresa tus credenciales para acceder al panel administrativo
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          {!isFirebaseAvailable && (
-            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-md flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
-              <div>
-                <h3 className="font-medium text-yellow-800">Firebase no configurado</h3>
-                <p className="text-sm text-yellow-700 mt-1">
-                  Para acceder al panel de administración, necesitas configurar las variables de entorno de Firebase.
-                </p>
-              </div>
-            </div>
-          )}
-
-          <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin}>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <div className="flex items-center space-x-2">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email
+                </label>
+              </div>
               <Input
                 id="email"
                 type="email"
-                placeholder="admin@ejemplo.com"
+                placeholder="tu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={!isFirebaseAvailable}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <div className="flex items-center space-x-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <label htmlFor="password" className="text-sm font-medium">
+                  Contraseña
+                </label>
+              </div>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                disabled={!isFirebaseAvailable}
               />
             </div>
-            <Button
-              type="submit"
-              className="w-full bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 hover:from-pink-600 hover:via-violet-600 hover:to-blue-600"
-              disabled={loading || !isFirebaseAvailable}
-            >
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-2">
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Iniciando sesión..." : "Iniciar sesión"}
             </Button>
-          </form>
-
-          {!isFirebaseAvailable && (
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-              <h3 className="font-medium text-blue-800 mb-2">Configuración de Firebase</h3>
-              <p className="text-sm text-blue-700 mb-2">
-                Para configurar Firebase, necesitas agregar las siguientes variables de entorno a tu proyecto:
-              </p>
-              <ul className="text-xs text-blue-700 list-disc pl-5 space-y-1">
-                <li>NEXT_PUBLIC_FIREBASE_API_KEY</li>
-                <li>NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN</li>
-                <li>NEXT_PUBLIC_FIREBASE_PROJECT_ID</li>
-                <li>NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET</li>
-                <li>NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID</li>
-                <li>NEXT_PUBLIC_FIREBASE_APP_ID</li>
-              </ul>
+            <div className="relative w-full my-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t"></span>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">O continúa con</span>
+              </div>
             </div>
-          )}
-        </CardContent>
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="w-full" 
+              onClick={handleGoogleLogin} 
+              disabled={loading}
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5 mr-2" aria-hidden="true">
+                <path
+                  d="M12.0003 4.75C13.7703 4.75 15.3553 5.36002 16.6053 6.54998L20.0303 3.125C17.9502 1.19 15.2353 0 12.0003 0C7.31028 0 3.25527 2.69 1.28027 6.60998L5.27028 9.70498C6.21525 6.86002 8.87028 4.75 12.0003 4.75Z"
+                  fill="#EA4335"
+                />
+                <path
+                  d="M23.49 12.275C23.49 11.49 23.415 10.73 23.3 10H12V14.51H18.47C18.18 15.99 17.34 17.25 16.08 18.1L19.945 21.1C22.2 19.01 23.49 15.92 23.49 12.275Z"
+                  fill="#4285F4"
+                />
+                <path
+                  d="M5.26498 14.2949C5.02498 13.5699 4.88501 12.7999 4.88501 11.9999C4.88501 11.1999 5.01998 10.4299 5.26498 9.7049L1.275 6.60986C0.46 8.22986 0 10.0599 0 11.9999C0 13.9399 0.46 15.7699 1.28 17.3899L5.26498 14.2949Z"
+                  fill="#FBBC05"
+                />
+                <path
+                  d="M12.0004 24.0001C15.2404 24.0001 17.9654 22.935 19.9454 21.095L16.0804 18.095C15.0054 18.82 13.6204 19.245 12.0004 19.245C8.8704 19.245 6.2154 17.135 5.2654 14.29L1.27539 17.385C3.25539 21.31 7.3104 24.0001 12.0004 24.0001Z"
+                  fill="#34A853"
+                />
+              </svg>
+              Iniciar sesión con Google
+            </Button>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   )
