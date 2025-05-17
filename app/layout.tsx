@@ -1,34 +1,45 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
-import { FirebaseProvider } from "@/lib/firebase/firebase-provider"
+import { type ReactNode } from "react";
+import { type Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/toaster";
+import { FirebaseProvider } from "@/lib/firebase/firebase-provider";
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Cicloturismo Termal de Federación - Segunda Edición",
   description: "Evento de cicloturismo en Federación, Entre Ríos, Argentina - 12 de octubre de 2025",
-    generator: 'v0.dev'
+  generator: 'v0.dev'
+};
+
+// Componente para asegurar que Firebase solo se carga en el cliente
+function ClientSideFirebaseProvider({ children }: { children: ReactNode }) {
+  if (typeof window === 'undefined') return <>{children}</>;
+  return <FirebaseProvider>{children}</FirebaseProvider>;
 }
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: ReactNode;
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={`${inter.className} min-h-screen bg-gradient-to-b from-pink-500 via-fuchsia-600 via-blue-500 to-cyan-300 text-black flex flex-col`}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <FirebaseProvider>
+        <ThemeProvider 
+          attribute="class" 
+          defaultTheme="light" 
+          enableSystem 
+          disableTransitionOnChange
+        >
+          <ClientSideFirebaseProvider>
             {children}
             <Toaster />
-          </FirebaseProvider>
+          </ClientSideFirebaseProvider>
         </ThemeProvider>
       </body>
     </html>
-  )
+  );
 }

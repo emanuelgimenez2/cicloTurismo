@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { auth } from "@/lib/firebase/firebase-config"
+import { auth } from "../../lib/firebase/firebase-config"
 import AdminSidebar from "@/components/admin/admin-sidebar"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"

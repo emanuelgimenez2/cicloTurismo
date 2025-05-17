@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { useToast } from "@/components/ui/use-toast"
-import { db } from "@/lib/firebase/firebase-config"
+import { db } from "../../lib/firebase/firebase-config"
 import { doc, getDoc, setDoc } from "firebase/firestore"
 import { Loader2, MapPin, Phone, Mail, Facebook, Instagram, Twitter } from "lucide-react"
 

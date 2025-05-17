@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { MapPin, Phone, Mail, Facebook, Instagram, Twitter } from "lucide-react"
-import { db } from "@/lib/firebase/firebase-config"
+import { db } from "../lib/firebase/firebase-config"
 import { doc, getDoc } from "firebase/firestore"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 
