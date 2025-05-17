@@ -7,7 +7,6 @@ import { db } from "@/lib/firebase/firebase-config"
 import { doc, getDoc } from "firebase/firestore"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 
-// Datos predeterminados para cuando Firebase no está disponible
 const defaultContactData = {
   phone: "+54 9 11 1234-5678",
   email: "contacto@cicloturismotermal.com",
@@ -62,16 +61,18 @@ export default function ContactSection() {
   }
 
   return (
-    <div className="container mx-auto px-4">
+    <div className="container mx-auto px-4 py-12">
       <div className="text-center mb-12">
         <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
           Contacto
         </h2>
         <div className="w-24 h-1 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 mx-auto mb-4"></div>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">¿Tenés alguna pregunta? Contactanos</p>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          ¿Tenés alguna pregunta? Contactanos
+        </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-10 max-w-10xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         <div className="space-y-6">
           <div className="flex items-start space-x-3">
             <MapPin className="h-5 w-5 text-pink-500 mt-1" />
@@ -107,7 +108,7 @@ export default function ContactSection() {
 
           <div className="pt-4">
             <h3 className="font-medium mb-3">Redes Sociales</h3>
-            <div className="flex space-x-4">
+            <div className="flex flex-wrap gap-4 justify-start sm:justify-center md:justify-start">
               <Link href={contactData.facebook} target="_blank" className="text-gray-600 hover:text-pink-500">
                 <Facebook className="h-6 w-6" />
                 <span className="sr-only">Facebook</span>
@@ -125,13 +126,13 @@ export default function ContactSection() {
         </div>
 
         {contactData.showMap && (
-          <div className="h-80 rounded-lg overflow-hidden shadow-sm">
+          <div className="h-72 sm:h-80 md:h-full rounded-lg overflow-hidden shadow-sm">
             <iframe
               src={contactData.mapUrl}
               width="100%"
               height="100%"
               style={{ border: 0 }}
-              allowFullScreen=""
+              allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               title="Mapa de ubicación"
