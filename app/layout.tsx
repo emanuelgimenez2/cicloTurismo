@@ -11,8 +11,31 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Cicloturismo Termal de Federación - Segunda Edición",
   description: "Evento de cicloturismo en Federación, Entre Ríos, Argentina - 12 de octubre de 2025",
-    generator: 'v0.dev'
+  generator: 'v0.dev',
+  openGraph: {
+    title: "Cicloturismo Termal de Federación - Segunda Edición",
+    description: "Evento de cicloturismo en Federación, Entre Ríos, Argentina - 12 de octubre de 2025",
+    url: "https://ciclo-turismo-583o.vercel.app", // reemplazá por la URL real del sitio
+    siteName: "Cicloturismo Termal",
+    images: [
+      {
+        url: "/logo.pjp",
+        width: 800,
+        height: 600,
+        alt: "Logo de Cicloturismo Termal",
+      },
+    ],
+    locale: "es_AR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Cicloturismo Termal de Federación - Segunda Edición",
+    description: "Evento de cicloturismo en Federación, Entre Ríos, Argentina - 12 de octubre de 2025",
+    images: ["/logo.jpg"],
+  },
 }
+
 
 export default function RootLayout({
   children,
