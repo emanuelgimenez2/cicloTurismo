@@ -8,6 +8,7 @@ import { db } from "../lib/firebase/firebase-config"
 import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 
+
 // Datos predeterminados para cuando Firebase no está disponible
 const defaultPhotos = [
   {
