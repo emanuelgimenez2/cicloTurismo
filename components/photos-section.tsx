@@ -12,27 +12,32 @@ import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 const defaultPhotos = [
   {
     id: "photo-1",
-    url: "/foto 1.jpg?height=300&width=300",
+    url: "/foto 1 pc.jpg?height=300&width=300",
     description: "Participantes en la línea de salida",
   },
   {
     id: "photo-2",
-    url: "/foto 2.jpg?height=300&width=300",
+    url: "/foto 2 pc.jpg?height=300&width=300",
     description: "Recorriendo los paisajes de Entre Ríos",
   },
   {
     id: "photo-3",
-    url: "/foto 3.jpg?height=300&width=300",
+    url: "/foto 3 pc.jpg?height=300&width=300",
     description: "Parada de hidratación",
   },
   {
     id: "photo-4",
-    url: "/foto 4.jpg?height=300&width=300",
+    url: "/foto 4 pc.jpg?height=300&width=300",
     description: "Llegada a las termas",
   },
   {
     id: "photo-5",
-    url: "/foto 5.jpg?height=300&width=300",
+    url: "/foto 5 pc.jpg?height=300&width=300",
+    description: "Entrega de premios",
+  },
+  {
+    id: "photo-6",
+    url: "/foto 6 pc.jpg?height=300&width=300",
     description: "Entrega de premios",
   },
 ]
@@ -97,7 +102,7 @@ export default function PhotosSection() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 mb-8">
         {photos.map((photo) => (
           <div key={photo.id} className="relative group overflow-hidden rounded-lg">
             <div className="aspect-square relative">

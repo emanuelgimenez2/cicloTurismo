@@ -16,15 +16,15 @@ const defaultSponsors = [
     url: "#",
   },
   {
-    id: "sponsor-2",
-    name: "Pedal Power",
-    logoUrl: "/sponsor 2.png?height=100&width=200",
-    url: "#",
-  },
-  {
     id: "sponsor-3",
     name: "Foxes Ciclo Turs",
     logoUrl: "/sponsor 3.png?height=100&width=200",
+    url: "#",
+  },
+  {
+    id: "sponsor-2",
+    name: "Pedal Power",
+    logoUrl: "/sponsor 2.png?height=100&width=200",
     url: "#",
   },
   {
@@ -117,6 +117,9 @@ export default function SponsorsSection() {
             <p className="text-sm font-medium text-center mt-2">{sponsor.name}</p>
           </Link>
         ))}
+      </div>
+      <div className="text-center mb-13 mt-2">
+        <p className="text-lg text-gray-600 max-w-5xl mx-auto">Contactate con nosotros para ser un sponsor</p>
       </div>
     </div>
   )
