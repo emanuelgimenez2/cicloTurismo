@@ -37,7 +37,7 @@ import {
 import { collection, addDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/lib/firebase/firebase-config";
-import { AlertCircle, UploadCloud, Loader2, CheckCircle2 } from "lucide-react";
+import { AlertCircle, UploadCloud, Loader2, CheckCircle2, Home } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
 export default function RegistrationForm() {
@@ -72,7 +72,14 @@ export default function RegistrationForm() {
   // Cerrar diálogo y hacer scroll al inicio
   const handleCloseSuccessDialog = () => {
     setShowSuccessDialog(false);
+    // Asegurar que se desplace al inicio de la página
+    window.scrollTo({ top: 0, behavior: "smooth" });
     topRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  // Función para volver a la página principal
+  const goToHomePage = () => {
+    window.location.href = "/"; // Navega a la página principal
   };
 
   // Validaciones individuales
@@ -336,11 +343,28 @@ export default function RegistrationForm() {
     }
   };
 
+  useEffect(() => {
+    // Asegurar que la página se cargue desde el inicio
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-blue-50">
       <main className="container mx-auto px-4 py-8">
         {/* Referencia para scroll al inicio */}
         <div ref={topRef}></div>
+        
+        {/* Botón de inicio */}
+        <div className="max-w-4xl mx-auto mb-6">
+          <Button 
+            onClick={goToHomePage} 
+            variant="outline" 
+            className="flex items-center gap-2 bg-white hover:bg-gray-100"
+          >
+            <Home className="h-4 w-4" />
+            Volver a la página principal
+          </Button>
+        </div>
         
         {/* Diálogo de éxito */}
         <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
@@ -368,7 +392,7 @@ export default function RegistrationForm() {
         <Card className="max-w-4xl mx-auto shadow-lg">
           <CardHeader className="bg-gradient-to-r from-pink-100 to-blue-100 rounded-t-lg">
             <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
-              Inscripción - Cicloturismo Termal
+              Inscripción 
             </CardTitle>
             <CardDescription className="text-center text-gray-700">
               Complete el formulario para registrarse
@@ -396,6 +420,7 @@ export default function RegistrationForm() {
                       className={fieldErrors.nombre ? "border-red-500" : ""}
                       pattern="[A-Za-zÁáÉéÍíÓóÚúÜüÑñ\s]+"
                       title="El nombre solo debe contener letras"
+                      placeholder="Ej: Juan Carlos"
                       required
                     />
                   </div>
@@ -415,6 +440,7 @@ export default function RegistrationForm() {
                       className={fieldErrors.apellido ? "border-red-500" : ""}
                       pattern="[A-Za-zÁáÉéÍíÓóÚúÜüÑñ\s]+"
                       title="El apellido solo debe contener letras"
+                      placeholder="Ej: Gómez"
                       required
                     />
                   </div>
@@ -434,6 +460,7 @@ export default function RegistrationForm() {
                       className={fieldErrors.dni ? "border-red-500" : ""}
                       pattern="\d{7,8}"
                       title="El DNI debe tener 7-8 dígitos"
+                      placeholder="Ej: 32456789"
                       required
                     />
                   </div>
@@ -446,6 +473,7 @@ export default function RegistrationForm() {
                       type="date"
                       value={formData.fechaNacimiento}
                       onChange={handleInputChange}
+                      placeholder="DD/MM/AAAA"
                     />
                   </div>
 
@@ -456,6 +484,7 @@ export default function RegistrationForm() {
                       name="localidad"
                       value={formData.localidad}
                       onChange={handleInputChange}
+                      placeholder="Ej: Buenos Aires"
                     />
                   </div>
 
@@ -473,6 +502,7 @@ export default function RegistrationForm() {
                       value={formData.email}
                       onChange={handleInputChange}
                       className={fieldErrors.email ? "border-red-500" : ""}
+                      placeholder="Ej: ejemplo@correo.com"
                     />
                   </div>
 
@@ -489,6 +519,7 @@ export default function RegistrationForm() {
                       value={formData.telefono}
                       onChange={handleInputChange}
                       className={fieldErrors.telefono ? "border-red-500" : ""}
+                      placeholder="Ej: 11 5555 5555"
                     />
                   </div>
 
@@ -580,7 +611,7 @@ export default function RegistrationForm() {
                         name="alergias"
                         value={formData.alergias}
                         onChange={handleInputChange}
-                        placeholder="Describa sus alergias"
+                        placeholder="Ej: Polen, frutos secos, mariscos, etc."
                         className="mt-1"
                       />
                     </div>
@@ -612,7 +643,7 @@ export default function RegistrationForm() {
                         name="medicamentos"
                         value={formData.medicamentos}
                         onChange={handleInputChange}
-                        placeholder="Describa los medicamentos que toma"
+                        placeholder="Ej: Nombre del medicamento, dosis, frecuencia"
                         className="mt-1"
                       />
                     </div>
@@ -644,7 +675,7 @@ export default function RegistrationForm() {
                         name="problemasSalud"
                         value={formData.problemasSalud}
                         onChange={handleInputChange}
-                        placeholder="Describa sus problemas de salud"
+                        placeholder="Ej: Hipertensión, diabetes, asma, etc."
                         className="mt-1"
                       />
                     </div>
@@ -758,7 +789,7 @@ export default function RegistrationForm() {
           </CardContent>
           <CardFooter className="bg-gradient-to-r from-pink-50 to-blue-50 rounded-b-lg py-4 text-center text-sm text-gray-500">
             Para consultas sobre la inscripción, contacta a{" "}
-            <span className="text-pink-600">info@cicloturismotermal.com</span>
+            <span className="text-pink-600"> cicloturismotermal@gmail.com</span>
           </CardFooter>
         </Card>
       </main>
