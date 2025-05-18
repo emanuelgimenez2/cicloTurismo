@@ -1,10 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, FC } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { db } from "@/lib/firebase/firebase-config"
-import { collection, getDocs, query, where } from "firebase/firestore"
+import { collection, getDocs, query, where, DocumentData, Timestamp } from "firebase/firestore"
 import {
   BarChart,
   Bar,
@@ -21,10 +21,52 @@ import {
 import { Users, Calendar, TrendingUp, ShoppingBag, Loader2 } from "lucide-react"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 
-export default function AdminDashboardPage() {
+interface Registration {
+  id: string;
+  genero?: string;
+  talleRemera?: string;
+  fechaInscripcion: Date;
+  condicionSalud?: any;
+  year?: number;
+  [key: string]: any;
+}
+
+interface CondicionSalud {
+  tieneAlergias?: boolean;
+  tomaMedicamentos?: boolean;
+  tieneProblemasSalud?: boolean;
+  [key: string]: any;
+}
+
+interface JerseySize {
+  xs: number;
+  s: number;
+  m: number;
+  l: number;
+  xl: number;
+  xxl: number;
+  [key: string]: number;
+}
+
+interface DashboardStats {
+  totalRegistrations: number;
+  maleCount: number;
+  femaleCount: number;
+  otherCount: number;
+  withHealthConditions: number;
+  jerseySize: JerseySize;
+  registrationsByDay: Array<{date: string, count: number}>;
+}
+
+interface ChartDataItem {
+  name: string;
+  value: number;
+}
+
+export default function AdminDashboardPage(): JSX.Element {
   const { eventSettings } = useFirebaseContext()
-  const [registrations, setRegistrations] = useState([])
-  const [stats, setStats] = useState({
+  const [registrations, setRegistrations] = useState<Registration[]>([])
+  const [stats, setStats] = useState<DashboardStats>({
     totalRegistrations: 0,
     maleCount: 0,
     femaleCount: 0,
@@ -40,28 +82,50 @@ export default function AdminDashboardPage() {
     },
     registrationsByDay: [],
   })
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState<boolean>(true)
 
   useEffect(() => {
     const fetchRegistrations = async () => {
       try {
-        const registrationsRef = collection(db, "registrations")
+        console.log("Fetching registrations from Firestore...")
+        const registrationsRef = collection(db, "participantes2025")
         const currentYearRegistrations = query(registrationsRef, where("year", "==", new Date().getFullYear()))
         const snapshot = await getDocs(currentYearRegistrations)
 
-        const registrationsData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          fechaInscripcion: doc.data().fechaInscripcion?.toDate?.() || new Date(),
-        }))
+        console.log(`Found ${snapshot.docs.length} registrations`)
+        
+        const registrationsData: Registration[] = snapshot.docs.map((doc) => {
+          const data = doc.data()
+          // Verificar si fechaInscripcion es un timestamp de Firestore
+          let fechaInscripcion: Date
+          if (data.fechaInscripcion && typeof data.fechaInscripcion.toDate === 'function') {
+            fechaInscripcion = data.fechaInscripcion.toDate()
+          } else if (data.fechaInscripcion instanceof Date) {
+            fechaInscripcion = data.fechaInscripcion
+          } else if (data.fechaInscripcion) {
+            // Intentar convertir a fecha si es una cadena o un timestamp
+            fechaInscripcion = new Date(data.fechaInscripcion)
+          } else {
+            fechaInscripcion = new Date() // Fecha predeterminada
+          }
+          
+          return {
+            id: doc.id,
+            ...data,
+            fechaInscripcion
+          }
+        })
 
+        console.log("Processed registration data:", registrationsData.length)
         setRegistrations(registrationsData)
 
         // Calculate statistics
-        const maleCount = registrationsData.filter((reg) => reg.genero === "masculino").length
-        const femaleCount = registrationsData.filter((reg) => reg.genero === "femenino").length
+        const maleCount = registrationsData.filter((reg) => 
+          reg.genero?.toLowerCase() === "masculino").length
+        const femaleCount = registrationsData.filter((reg) => 
+          reg.genero?.toLowerCase() === "femenino").length
         const otherCount = registrationsData.filter(
-          (reg) => reg.genero !== "masculino" && reg.genero !== "femenino",
+          (reg) => reg.genero && reg.genero?.toLowerCase() !== "masculino" && reg.genero?.toLowerCase() !== "femenino"
         ).length
 
         // Count health conditions
@@ -69,24 +133,41 @@ export default function AdminDashboardPage() {
         registrationsData.forEach((reg) => {
           try {
             if (reg.condicionSalud) {
-              const condicionSalud =
-                typeof reg.condicionSalud === "string" ? JSON.parse(reg.condicionSalud) : reg.condicionSalud
+              let condicionSalud: string | CondicionSalud = reg.condicionSalud
+              
+              // Si es string, intentar parsearlo como JSON
+              if (typeof condicionSalud === "string") {
+                try {
+                  condicionSalud = JSON.parse(condicionSalud) as CondicionSalud
+                } catch (e) {
+                  console.log("No se pudo parsear la condición de salud como JSON", reg.id)
+                  // Si no es un JSON válido, considerar cualquier string como condición de salud
+                  withHealthConditions++
+                  return
+                }
+              }
 
-              if (
-                condicionSalud.tieneAlergias ||
-                condicionSalud.tomaMedicamentos ||
-                condicionSalud.tieneProblemasSalud
-              ) {
+              // Verificar si es un objeto y tiene las propiedades esperadas
+              if (typeof condicionSalud === "object" && condicionSalud !== null) {
+                if (
+                  condicionSalud.tieneAlergias === true ||
+                  condicionSalud.tomaMedicamentos === true ||
+                  condicionSalud.tieneProblemasSalud === true
+                ) {
+                  withHealthConditions++
+                }
+              } else {
+                // Si existe condicionSalud pero no es un objeto con formato esperado, contarlo
                 withHealthConditions++
               }
             }
           } catch (error) {
-            console.error("Error parsing condicionSalud:", error)
+            console.error("Error al procesar condicionSalud:", error, reg.id)
           }
         })
 
         // Count jersey sizes
-        const jerseySizes = {
+        const jerseySizes: JerseySize = {
           xs: 0,
           s: 0,
           m: 0,
@@ -96,23 +177,42 @@ export default function AdminDashboardPage() {
         }
 
         registrationsData.forEach((reg) => {
-          if (reg.talleRemera && jerseySizes.hasOwnProperty(reg.talleRemera.toLowerCase())) {
-            jerseySizes[reg.talleRemera.toLowerCase()]++
+          if (reg.talleRemera) {
+            const size = reg.talleRemera.toLowerCase() as keyof JerseySize
+            if (jerseySizes.hasOwnProperty(size)) {
+              jerseySizes[size]++
+            }
           }
         })
 
         // Group registrations by day
-        const registrationsByDay = {}
+        const registrationsByDay: Record<string, number> = {}
         registrationsData.forEach((reg) => {
-          const date = new Date(reg.fechaInscripcion).toLocaleDateString()
-          registrationsByDay[date] = (registrationsByDay[date] || 0) + 1
+          try {
+            if (reg.fechaInscripcion) {
+              const date = reg.fechaInscripcion.toLocaleDateString()
+              registrationsByDay[date] = (registrationsByDay[date] || 0) + 1
+            }
+          } catch (error) {
+            console.error("Error al procesar fecha:", error)
+          }
         })
 
         // Convert to array for chart
         const registrationsByDayArray = Object.entries(registrationsByDay)
           .map(([date, count]) => ({ date, count }))
-          .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
           .slice(-14) // Last 14 days
+
+        console.log("Statistics calculated:", {
+          totalRegistrations: registrationsData.length,
+          maleCount,
+          femaleCount,
+          otherCount,
+          withHealthConditions,
+          jerseySize: jerseySizes,
+          registrationsByDay: registrationsByDayArray.length
+        })
 
         setStats({
           totalRegistrations: registrationsData.length,
@@ -133,16 +233,19 @@ export default function AdminDashboardPage() {
     fetchRegistrations()
   }, [])
 
-  const genderData = [
+  // Verificar si hay datos antes de crear gráficos
+  const hasRegistrations = stats.totalRegistrations > 0
+  
+  const genderData: ChartDataItem[] = [
     { name: "Masculino", value: stats.maleCount },
     { name: "Femenino", value: stats.femaleCount },
     { name: "Otro", value: stats.otherCount },
-  ]
+  ].filter(item => item.value > 0) // Solo incluir valores positivos
 
-  const jerseySizeData = Object.entries(stats.jerseySize).map(([size, count]) => ({
+  const jerseySizeData: ChartDataItem[] = Object.entries(stats.jerseySize).map(([size, count]) => ({
     name: size.toUpperCase(),
     value: count,
-  }))
+  })).filter(item => item.value > 0) // Solo incluir valores positivos
 
   const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff8042", "#0088FE", "#00C49F"]
 
@@ -241,31 +344,34 @@ export default function AdminDashboardPage() {
             <CardDescription>Últimos 14 días</CardDescription>
           </CardHeader>
           <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.registrationsByDay}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 12 }}
-                  tickFormatter={(value) => {
-                    const date = new Date(value)
-                    return `${date.getDate()}/${date.getMonth() + 1}`
-                  }}
-                />
-                <YAxis allowDecimals={false} />
-                <Tooltip
-                  formatter={(value) => [`${value} inscripciones`, "Cantidad"]}
-                  labelFormatter={(label) => `Fecha: ${label}`}
-                />
-                <Bar dataKey="count" name="Inscripciones" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} />
-                <defs>
-                  <linearGradient id="colorGradient" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#ec4899" />
-                    <stop offset="100%" stopColor="#8b5cf6" />
-                  </linearGradient>
-                </defs>
-              </BarChart>
-            </ResponsiveContainer>
+            {hasRegistrations && stats.registrationsByDay.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats.registrationsByDay}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis
+                    dataKey="date"
+                    tick={{ fontSize: 12 }}
+                    tickFormatter={(value) => {
+                      const date = new Date(value)
+                      return `${date.getDate()}/${date.getMonth() + 1}`
+                    }}
+                  />
+                  <YAxis allowDecimals={false} />
+                 
+                  <Bar dataKey="count" name="Inscripciones" fill="url(#colorGradient)" radius={[4, 4, 0, 0]} />
+                  <defs>
+                    <linearGradient id="colorGradient" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#ec4899" />
+                      <stop offset="100%" stopColor="#8b5cf6" />
+                    </linearGradient>
+                  </defs>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500">No hay datos de inscripciones recientes</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -281,26 +387,32 @@ export default function AdminDashboardPage() {
                 <CardDescription>Distribución de participantes según género</CardDescription>
               </CardHeader>
               <CardContent className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={genderData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={true}
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {genderData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [`${value} participantes`, "Cantidad"]} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
+                {genderData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={genderData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={true}
+                        label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {genderData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(value) => [`${value} participantes`, "Cantidad"]} />
+                      <Legend />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500">No hay datos de género disponibles</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -311,21 +423,27 @@ export default function AdminDashboardPage() {
                 <CardDescription>Cantidad de remeras por talle</CardDescription>
               </CardHeader>
               <CardContent className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={jerseySizeData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis dataKey="name" />
-                    <YAxis allowDecimals={false} />
-                    <Tooltip formatter={(value) => [`${value} remeras`, "Cantidad"]} />
-                    <Bar dataKey="value" fill="url(#colorGradient2)" radius={[4, 4, 0, 0]} />
-                    <defs>
-                      <linearGradient id="colorGradient2" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#8b5cf6" />
-                        <stop offset="100%" stopColor="#3b82f6" />
-                      </linearGradient>
-                    </defs>
-                  </BarChart>
-                </ResponsiveContainer>
+                {jerseySizeData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={jerseySizeData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="name" />
+                      <YAxis allowDecimals={false} />
+                      <Tooltip formatter={(value) => [`${value} remeras`, "Cantidad"]} />
+                      <Bar dataKey="value" fill="url(#colorGradient2)" radius={[4, 4, 0, 0]} />
+                      <defs>
+                        <linearGradient id="colorGradient2" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="#8b5cf6" />
+                          <stop offset="100%" stopColor="#3b82f6" />
+                        </linearGradient>
+                      </defs>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-gray-500">No hay datos de talles disponibles</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
