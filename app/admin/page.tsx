@@ -171,54 +171,17 @@ export default function LoginPage() {
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <label htmlFor="email" className="text-sm font-medium">
-                  Email
-                </label>
-              </div>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Lock className="h-4 w-4 text-muted-foreground" />
-                <label htmlFor="password" className="text-sm font-medium">
-                  Contraseña
-                </label>
-              </div>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+           
+            
+           
           </CardContent>
           <CardFooter className="flex flex-col space-y-2">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
-            </Button>
+          
             <div className="relative w-full my-2">
               <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t"></span>
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">O continúa con</span>
-              </div>
+             
             </div>
             <Button 
               type="button" 
