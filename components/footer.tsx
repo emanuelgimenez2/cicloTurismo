@@ -1,11 +1,11 @@
 import Link from "next/link"
-import { Facebook, Instagram, Twitter } from "lucide-react"
+//import { Facebook, Instagram, Twitter } from "lucide-react"
 
 export default function Footer() {
   return (
     <footer className="bg-gradient-to-r from-pink-100 via-violet-100 to-blue-100 py-10 border-t">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center md:text-left">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 text-center md:center-text-left">
           {/* Información del evento */}
           <div>
             <h3 className="text-lg font-bold mb-4 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
@@ -20,7 +20,7 @@ export default function Footer() {
             <h3 className="text-lg font-bold mb-4 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
               Enlaces rápidos
             </h3>
-            <ul className="space-y-2">
+            <ul className="space-y-2 ">
               {[
                 { href: "/#inicio", label: "Inicio" },
                 { href: "/#historia", label: "Historia" },
@@ -39,23 +39,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Redes sociales */}
-          <div>
-            <h3 className="text-lg font-bold mb-4 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
-              Síguenos
-            </h3>
-            <div className="flex justify-center md:justify-start items-center space-x-6">
-              <Link href="#" className="text-gray-600 hover:text-pink-500" aria-label="Facebook">
-                <Facebook className="h-6 w-6" />
-              </Link>
-              <Link href="#" className="text-gray-600 hover:text-violet-500" aria-label="Instagram">
-                <Instagram className="h-6 w-6" />
-              </Link>
-              <Link href="#" className="text-gray-600 hover:text-blue-500" aria-label="Twitter">
-                <Twitter className="h-6 w-6" />
-              </Link>
-            </div>
-          </div>
+          
         </div>
 
         {/* Derechos y créditos */}
@@ -79,3 +63,23 @@ export default function Footer() {
     </footer>
   )
 }
+
+
+
+//{/* Redes sociales */}
+{/*<div>
+<h3 className="text-lg font-bold mb-4 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
+  Síguenos
+</h3>
+<div className="flex justify-center md:justify-start items-center space-x-6">
+  <Link href="#" className="text-gray-600 hover:text-pink-500" aria-label="Facebook">
+    <Facebook className="h-6 w-6" />
+  </Link>
+  <Link href="#" className="text-gray-600 hover:text-violet-500" aria-label="Instagram">
+    <Instagram className="h-6 w-6" />
+  </Link>
+  <Link href="#" className="text-gray-600 hover:text-blue-500" aria-label="Twitter">
+    <Twitter className="h-6 w-6" />
+  </Link>
+</div>
+/</div>*/}
