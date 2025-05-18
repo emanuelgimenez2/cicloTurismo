@@ -16,16 +16,16 @@ const defaultSponsors = [
     url: "#",
   },
   {
-    id: "sponsor-3",
-    name: "Foxes Ciclo Turs",
+    id: "sponsor-2",
+    name: "Foxes Bikes Ciclo Tours",
     logoUrl: "/sponsor 3.png?height=100&width=200",
-    url: "#",
+    url: "https://linktr.ee/Foxesbikesciclotours",
   },
   {
-    id: "sponsor-2",
+    id: "sponsor-3",
     name: "Pedal Power",
     logoUrl: "/sponsor 2.png?height=100&width=200",
-    url: "#",
+    url: "",
   },
   {
     id: "sponsor-4",
