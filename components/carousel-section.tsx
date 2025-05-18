@@ -13,7 +13,7 @@ import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 const defaultSlides = [
   {
     id: "default-1",
-    imageUrl: "/foto 4.jpg?height=600&width=1200",
+    imageUrl: "/foto 1.jpg?height=600&width=1200",
     title: "Cicloturismo Termal de Federación",
     subtitle: "Segunda Edición - 12 de octubre de 2025",
     buttonText: "Inscribirme ahora",
@@ -21,7 +21,7 @@ const defaultSlides = [
   },
   {
     id: "default-2",
-    imageUrl: "/foto 1.jpg?height=600&width=1200",
+    imageUrl: "/foto 2.jpg?height=600&width=1200",
     title: "Recorre los paisajes de Entre Ríos",
     subtitle: "50 km de aventura y naturaleza",
     buttonText: "Conoce más",
@@ -29,7 +29,7 @@ const defaultSlides = [
   },
   {
     id: "default-3",
-    imageUrl: "/foto 2.jpg?height=600&width=1200",
+    imageUrl: "/foto 3.jpg?height=600&width=1200",
     title: "Sponsors",
     subtitle: "Conoce a nuestros sponsors",
     buttonText: "Sponsors",
@@ -37,7 +37,7 @@ const defaultSlides = [
   },
   {
     id: "default-4",
-    imageUrl: "/foto 3.jpg?height=600&width=1200",
+    imageUrl: "/foto 4.jpg?height=600&width=1200",
     title: "¡Tenes alguna duda?",
     subtitle: "Contactate con nosotros",
     buttonText: "Contacto",
@@ -51,6 +51,14 @@ const defaultSlides = [
     buttonText: "Historia",
     buttonUrl: "/#historia",
   },
+  {
+    id: "default-6",
+    imageUrl: "/foto 6.jpg?height=600&width=1200",
+    title: "Cicloturismo Termal de Federación",
+    subtitle: "Segunda Edición - 12 de octubre de 2025",
+    buttonText: "Inscribirme ahora",
+    buttonUrl: "/inscripcion",
+  },
 ]
 
 export default function CarouselSection() {
@@ -58,6 +66,18 @@ export default function CarouselSection() {
   const [slides, setSlides] = useState(defaultSlides)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [isMobile, setIsMobile] = useState(false) // 👈 NUEVO
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768) // 👈 PUNTO DE CORTE MÓVIL/PC
+    }
+
+    handleResize()
+    window.addEventListener("resize", handleResize)
+    return () => window.removeEventListener("resize", handleResize)
+  }, [])
+
 
   useEffect(() => {
     const fetchCarouselImages = async () => {
@@ -130,7 +150,11 @@ export default function CarouselSection() {
         >
           <div className="relative h-full w-full">
             <Image
-              src={slide.imageUrl || "/placeholder.svg"}
+              src={
+                isMobile
+                  ? slide.imageUrl.replace(".jpg", " cel.jpg")
+                  : slide.imageUrl.replace(".jpg", " pc.jpg")
+              }
               alt={slide.title || "Carousel image"}
               fill
               priority
