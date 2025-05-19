@@ -45,20 +45,20 @@ export default function BenefitsSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 max-w-6xl mx-auto">
           {eventData.map((item, index) => {
             const IconComponent = item.icon
             return (
-              <div key={index} className="bg-white p-6 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
-                <div className="flex items-center space-x-4">
+              <div key={index} className="bg-white p-3 md:p-6 rounded-lg md:rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow duration-300">
+                <div className="flex items-center space-x-2 md:space-x-4">
                   <div className="flex-shrink-0">
-                    <div className="h-12 w-12 rounded-full bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 flex items-center justify-center">
-                      <IconComponent className="h-6 w-6 text-white" />
+                    <div className="h-8 w-8 md:h-12 md:w-12 rounded-full bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 flex items-center justify-center">
+                      <IconComponent className="h-4 w-4 md:h-6 md:w-6 text-white" />
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide">{item.label}</h3>
-                    <p className="text-lg font-semibold text-gray-900 mt-1">{item.value}</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wide">{item.label}</h3>
+                    <p className="text-sm md:text-lg font-semibold text-gray-900 mt-1 leading-tight">{item.value}</p>
                   </div>
                 </div>
               </div>
