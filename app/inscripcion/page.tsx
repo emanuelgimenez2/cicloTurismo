@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import TallesRemera from "@/components/TallesRemera"
 import {
   Select,
   SelectContent,
@@ -553,6 +554,7 @@ export default function RegistrationForm() {
                         <SelectItem value="xxl">XXL</SelectItem>
                       </SelectContent>
                     </Select>
+                    <TallesRemera />
                   </div>
                 </div>
               </div>
@@ -775,9 +777,26 @@ export default function RegistrationForm() {
             </form>
           </CardContent>
           <CardFooter className="bg-gradient-to-r from-pink-50 to-blue-50 rounded-b-lg py-4 text-center text-sm text-gray-500">
-            Para consultas sobre la inscripción, contacta a  {"   "}
-            <span className="text-pink-600">   cicloturismotermal@gmail.com</span>
+            Para consultas sobre la inscripción, contacta a{" "}
+            <a
+              href="https://wa.me/543456530720"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-pink-600 hover:underline mx-1"
+            >
+              Brunilda Schubert
+            </a>
+            o
+            <a
+              href="https://wa.me/543456026088"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-pink-600 hover:underline ml-1"
+            >
+              Claudia Mansilla
+            </a>
           </CardFooter>
+
         </Card>
       </main>
     </div>

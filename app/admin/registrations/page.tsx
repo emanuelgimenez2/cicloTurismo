@@ -10,9 +10,35 @@ import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { db } from "@/lib/firebase/firebase-config"
+import { db, storage } from "@/lib/firebase/firebase-config"
 import { collection, getDocs, orderBy, query, doc, updateDoc } from "firebase/firestore"
+import { getDownloadURL, ref } from "firebase/storage"
 import { Download, Search, Filter, Eye, FileText, FileSpreadsheet, Save, X } from "lucide-react"
+
+
+// Importa EmailJS
+import emailjs from '@emailjs/browser';
+
+// Inicializa EmailJS
+if (typeof window !== 'undefined') {
+  emailjs.init('qZ1uWOlXB-rlAsutR');
+}
+
+// Función para formatear fechas
+const formatDate = (dateString) => {
+  if (!dateString) return null;
+  
+  // Si ya está en formato día/mes/año, lo dejamos igual
+  if (dateString.includes('/')) return dateString;
+  
+  // Si está en formato ISO (YYYY-MM-DD)
+  if (dateString.includes('-')) {
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  }
+  
+  return dateString;
+}
 
 export default function AdminRegistrationsPage() {
   const [registrations, setRegistrations] = useState([])
@@ -27,6 +53,14 @@ export default function AdminRegistrationsPage() {
   const [newStatus, setNewStatus] = useState("")
   const [statusNote, setStatusNote] = useState("")
   const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [sendingEmail, setSendingEmail] = useState(false)
+  const [comprobanteUrl, setComprobanteUrl] = useState("")
+  const [loadingComprobante, setLoadingComprobante] = useState(false)
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
+  const [zoomedImage, setZoomedImage] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     const fetchRegistrations = async () => {
@@ -42,6 +76,7 @@ export default function AdminRegistrationsPage() {
           id: doc.id,
           ...doc.data(),
           fechaInscripcion: doc.data().fechaInscripcion?.toDate?.() || new Date(),
+          fechaNacimiento: formatDate(doc.data().fechaNacimiento) || '-',
         }))
 
         const years = [...new Set(registrationsData.map(reg => reg.fechaInscripcion.getFullYear()))]
@@ -86,11 +121,55 @@ export default function AdminRegistrationsPage() {
     setFilteredRegistrations(filtered)
   }, [searchTerm, statusFilter, yearFilter, registrations])
 
-  const openDetailsModal = (registration) => {
+  const loadComprobante = async (registration) => {
+    setLoadingComprobante(true)
+    try {
+      let url = ""
+      
+      if (registration.comprobantePagoUrl) {
+        url = registration.comprobantePagoUrl
+      } else if (registration.imagenBase64) {
+        url = registration.imagenBase64
+      }
+      
+      setComprobanteUrl(url)
+      return url
+    } catch (error) {
+      console.error("Error cargando comprobante:", error)
+      setComprobanteUrl("")
+      return ""
+    } finally {
+      setLoadingComprobante(false)
+    }
+  }
+  const handleMouseDown = (e) => {
+    if (zoomedImage) {
+      setIsDragging(true);
+      setDragStart({
+        x: e.clientX - zoomPosition.x,
+        y: e.clientY - zoomPosition.y
+      });
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging && zoomedImage) {
+      setZoomPosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+  const openDetailsModal = async (registration) => {
     setSelectedRegistration(registration)
     setNewStatus(registration.estado || "pendiente")
     setStatusNote(registration.nota || "")
     setIsDetailsModalOpen(true)
+    await loadComprobante(registration)
   }
 
   const closeDetailsModal = () => {
@@ -98,6 +177,51 @@ export default function AdminRegistrationsPage() {
     setSelectedRegistration(null)
     setNewStatus("")
     setStatusNote("")
+    setComprobanteUrl("")
+  }
+
+  const openImageModal = () => {
+    setIsImageModalOpen(true)
+  }
+
+  const closeImageModal = () => {
+    setIsImageModalOpen(false)
+  }
+
+  const sendConfirmationEmail = async (participant) => {
+    if (!participant || !participant.email) {
+      console.error("No se puede enviar email: información del participante incompleta")
+      return false
+    }
+
+    setSendingEmail(true)
+    try {
+      const templateParams = {
+        nombre: participant.nombre || '',
+        apellido: participant.apellido || '',
+        dni: participant.dni || '',
+        email: participant.email,
+        telefono: participant.telefono || '',
+        localidad: participant.localidad || '',
+        genero: participant.genero || '',
+        talleRemera: participant.talleRemera || '',
+        fechaInscripcion: participant.fechaInscripcion.toLocaleDateString('es-ES'),
+      }
+
+      const response = await emailjs.send(
+        'default_service',
+        'template_2fg4bhx',
+        templateParams
+      )
+
+      console.log('Email enviado con éxito:', response)
+      return true
+    } catch (error) {
+      console.error('Error al enviar el correo de confirmación:', error)
+      return false
+    } finally {
+      setSendingEmail(false)
+    }
   }
 
   const updateRegistrationStatus = async () => {
@@ -114,14 +238,31 @@ export default function AdminRegistrationsPage() {
 
       await updateDoc(registrationRef, updateData)
 
-      // Actualizar el estado local
+      if (newStatus === "confirmado" && selectedRegistration.estado !== "confirmado") {
+        const emailSent = await sendConfirmationEmail(selectedRegistration)
+        if (emailSent) {
+          await updateDoc(registrationRef, {
+            emailEnviado: true,
+            fechaEmailEnviado: new Date()
+          })
+        }
+      }
+
       setRegistrations(prev => prev.map(reg => 
         reg.id === selectedRegistration.id 
-          ? { ...reg, ...updateData, fechaActualizacion: new Date() }
+          ? { 
+              ...reg, 
+              ...updateData, 
+              fechaActualizacion: new Date(),
+              emailEnviado: newStatus === "confirmado" ? true : reg.emailEnviado
+            }
           : reg
       ))
 
-      alert("Estado actualizado correctamente")
+      alert("Estado actualizado correctamente" + 
+        (newStatus === "confirmado" && selectedRegistration.estado !== "confirmado" 
+          ? " y correo de confirmación enviado" 
+          : ""))
       closeDetailsModal()
     } catch (error) {
       console.error("Error updating registration:", error)
@@ -141,7 +282,7 @@ export default function AdminRegistrationsPage() {
       "Localidad",
       "Género",
       "Talle",
-      "Fecha Inscripción",
+      "Fecha Nacimiento",
       "Estado",
       "Nota",
       "Año"
@@ -159,7 +300,7 @@ export default function AdminRegistrationsPage() {
           `"${reg.localidad || ''}"`,
           `"${reg.genero || ''}"`,
           `"${reg.talleRemera || ''}"`,
-          `"${reg.fechaInscripcion.toLocaleDateString()}"`,
+          `"${reg.fechaNacimiento || ''}"`,
           `"${reg.estado || 'pendiente'}"`,
           `"${reg.nota || ''}"`,
           `"${reg.fechaInscripcion.getFullYear()}"`
@@ -197,7 +338,7 @@ export default function AdminRegistrationsPage() {
       "Localidad",
       "Género",
       "Talle Remera",
-      "Fecha Inscripción"
+      "Fecha Nacimiento"
     ]
 
     const csvContent = [
@@ -212,7 +353,7 @@ export default function AdminRegistrationsPage() {
           reg.localidad || '',
           reg.genero || '',
           reg.talleRemera || '',
-          reg.fechaInscripcion.toLocaleDateString()
+          reg.fechaNacimiento || ''
         ].join("\t")
       ),
     ].join("\n")
@@ -272,7 +413,7 @@ export default function AdminRegistrationsPage() {
                     <th>Localidad</th>
                     <th>Género</th>
                     <th>Talle</th>
-                    <th>Fecha Inscripción</th>
+                    <th>Fecha Nacimiento</th>
                 </tr>
             </thead>
             <tbody>
@@ -286,7 +427,7 @@ export default function AdminRegistrationsPage() {
                         <td>${reg.localidad || ''}</td>
                         <td>${reg.genero || ''}</td>
                         <td>${reg.talleRemera || ''}</td>
-                        <td>${reg.fechaInscripcion.toLocaleDateString()}</td>
+                        <td>${reg.fechaNacimiento || ''}</td>
                     </tr>
                 `).join('')}
             </tbody>
@@ -445,7 +586,7 @@ export default function AdminRegistrationsPage() {
                     <TableHead>Teléfono</TableHead>
                     <TableHead>Localidad</TableHead>
                     <TableHead>Talle</TableHead>
-                    <TableHead>Fecha</TableHead>
+                    <TableHead>Fecha Nacimiento</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
@@ -460,12 +601,12 @@ export default function AdminRegistrationsPage() {
                       <TableCell>{registration.telefono || '-'}</TableCell>
                       <TableCell>{registration.localidad || '-'}</TableCell>
                       <TableCell className="uppercase">{registration.talleRemera || '-'}</TableCell>
-                      <TableCell>{registration.fechaInscripcion.toLocaleDateString('es-ES')}</TableCell>
+                      <TableCell>{registration.fechaNacimiento || '-'}</TableCell>
                       <TableCell>{getStatusBadge(registration.estado)}</TableCell>
                       <TableCell className="text-right">
                         <Button variant="ghost" size="sm" onClick={() => openDetailsModal(registration)}>
                           <Eye className="h-4 w-4 mr-1" />
-                          Ver detalles
+                          Ver
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -490,7 +631,7 @@ export default function AdminRegistrationsPage() {
           <DialogHeader>
             <DialogTitle>Detalles de Inscripción</DialogTitle>
             <DialogDescription>
-              Información completa del participante y gestión de estado
+              Información completa del participante
             </DialogDescription>
           </DialogHeader>
           
@@ -526,12 +667,69 @@ export default function AdminRegistrationsPage() {
                   <p className="text-sm uppercase">{selectedRegistration.talleRemera || '-'}</p>
                 </div>
                 <div>
+                  <Label className="text-sm font-medium text-gray-500">Fecha de nacimiento</Label>
+                  <p className="text-sm">{selectedRegistration.fechaNacimiento || '-'}</p>
+                </div>
+                <div>
                   <Label className="text-sm font-medium text-gray-500">Fecha de inscripción</Label>
                   <p className="text-sm">{selectedRegistration.fechaInscripcion.toLocaleDateString('es-ES')}</p>
                 </div>
               </div>
 
               <div className="space-y-4 border-t pt-4">
+              <div>
+                <Label>Comprobante de pago</Label>
+                {loadingComprobante ? (
+                  <div className="flex items-center justify-center h-40 border rounded-md">
+                    <p>Cargando comprobante...</p>
+                  </div>
+                ) : comprobanteUrl ? (
+                  <div className="border rounded-md p-2">
+                    {selectedRegistration.comprobantePagoUrl?.endsWith('.pdf') || 
+                    selectedRegistration.nombreArchivo?.endsWith('.pdf') ? (
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-center h-40 border rounded-md">
+                          <iframe 
+                            src={comprobanteUrl} 
+                            className="w-full h-full border-none"
+                            title="Comprobante de pago"
+                          />
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            setIsDetailsModalOpen(false)
+                            setIsImageModalOpen(true)
+                          }}
+                          className="w-full"
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Ver PDF completo
+                        </Button>
+                      </div>
+                    ) : (
+                      <div 
+                        className="cursor-pointer border rounded-md p-2"
+                        onClick={() => {
+                          setIsDetailsModalOpen(false)
+                          setIsImageModalOpen(true)
+                        }}
+                      >
+                        <img 
+                          src={comprobanteUrl} 
+                          alt="Comprobante de pago" 
+                          className="max-h-60 mx-auto object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-20 border rounded-md">
+                    <p className="text-gray-500">No hay comprobante disponible</p>
+                  </div>
+                  )}
+                </div>
+
                 <div>
                   <Label htmlFor="status">Estado de la inscripción</Label>
                   <Select value={newStatus} onValueChange={setNewStatus}>
@@ -563,15 +761,81 @@ export default function AdminRegistrationsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={closeDetailsModal}>
               <X className="mr-2 h-4 w-4" />
-              Cancelar
+              Cerrar
             </Button>
             <Button 
               onClick={updateRegistrationStatus} 
-              disabled={updatingStatus}
+              disabled={updatingStatus || sendingEmail}
               className="min-w-32"
             >
               <Save className="mr-2 h-4 w-4" />
-              {updatingStatus ? "Guardando..." : "Guardar cambios"}
+              {updatingStatus ? "Guardando..." : sendingEmail ? "Enviando email..." : "Guardar cambios"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isImageModalOpen} onOpenChange={(open) => {
+        if (!open) {
+          setZoomedImage(false);
+          setZoomPosition({ x: 0, y: 0 });
+        }
+        setIsImageModalOpen(open);
+      }}>
+        <DialogContent className="max-w-[80vw] max-h-[100vh]">
+          <DialogHeader>
+            <DialogTitle>Comprobante de Pago</DialogTitle>
+          </DialogHeader>
+          <div className="flex justify-center items-center h-full overflow-hidden">
+            {selectedRegistration?.comprobantePagoUrl?.endsWith('.pdf') || 
+            selectedRegistration?.nombreArchivo?.endsWith('.pdf') ? (
+              <iframe 
+                src={comprobanteUrl} 
+                className="w-full h-[90vh] border-none"
+                title="Comprobante de pago ampliado"
+              />
+            ) : (
+              <div 
+                className="relative w-full h-full"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
+                <div 
+                  className="w-full h-full flex justify-center items-center overflow-hidden"
+                  onClick={() => !isDragging && setZoomedImage(!zoomedImage)}
+                >
+                  <img 
+                    src={comprobanteUrl} 
+                    alt="Comprobante de pago ampliado" 
+                    className={`${zoomedImage ? 'cursor-move' : 'cursor-zoom-in'} transition-transform duration-300`}
+                    style={{
+                      transform: zoomedImage 
+                        ? `scale(1.5) translate(${zoomPosition.x}px, ${zoomPosition.y}px)`
+                        : 'scale(1)',
+                      maxWidth: zoomedImage ? 'none' : '100%',
+                      maxHeight: zoomedImage ? 'none' : '90vh',
+                      objectFit: 'contain'
+                    }}
+                  />
+                </div>
+                {zoomedImage && (
+                  <div className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-md">
+                    {isDragging ? 'Suelta para dejar de mover' : 'Arrastra para mover la imagen'}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setZoomedImage(false);
+              setZoomPosition({ x: 0, y: 0 });
+              closeImageModal();
+            }}>
+              <X className="mr-2 h-4 w-4" />
+              Cerrar
             </Button>
           </DialogFooter>
         </DialogContent>
