@@ -16,13 +16,10 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Cicloturismo Termal de Federación - Segunda Edición",
     description: "Evento de cicloturismo en Federación, Entre Ríos, Argentina - 12 de octubre de 2025",
-    url: "https://ciclo-turismo-583o.vercel.app",
     siteName: "Cicloturismo Termal",
     images: [
       {
         url: "/logo.jpg", // Imagen alojada en /public/logo.jpg
-        width: 1200,
-        height: 630,
         alt: "Logo Cicloturismo Termal",
       },
     ],
@@ -33,7 +30,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Cicloturismo Termal de Federación - Segunda Edición",
     description: "Evento de cicloturismo en Federación, Entre Ríos, Argentina - 12 de octubre de 2025",
-    images: ["/logo.jpg"],
+    images: ["/logo 1.jpg"],
   },
 }
 
