@@ -69,20 +69,16 @@ export default function RegistrationForm() {
     comprobantePagoUrl: "",
   });
 
-  // Cerrar diálogo y hacer scroll al inicio
   const handleCloseSuccessDialog = () => {
     setShowSuccessDialog(false);
-    // Asegurar que se desplace al inicio de la página
     window.scrollTo({ top: 0, behavior: "smooth" });
     topRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Función para volver a la página principal
   const goToHomePage = () => {
-    window.location.href = "/"; // Navega a la página principal
+    window.location.href = "/";
   };
 
-  // Validaciones individuales
   const validateName = (value) => {
     return /^[A-Za-zÁáÉéÍíÓóÚúÜüÑñ\s]+$/.test(value);
   };
@@ -92,16 +88,15 @@ export default function RegistrationForm() {
   };
 
   const validateEmail = (value) => {
-    if (!value) return true; // Email no es obligatorio
+    if (!value) return true;
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
   };
 
   const validatePhone = (value) => {
-    if (!value) return true; // Teléfono no es obligatorio
+    if (!value) return true;
     return /^\d{10,15}$/.test(value.replace(/\D/g, ""));
   };
 
-  // Función para validar un campo específico
   const validateField = (name, value) => {
     switch (name) {
       case "nombre":
@@ -128,7 +123,6 @@ export default function RegistrationForm() {
       [name]: newValue,
     });
     
-    // Validar el campo en tiempo real (solo para campos con validación)
     if (["nombre", "apellido", "dni", "email", "telefono"].includes(name)) {
       const error = validateField(name, newValue);
       setFieldErrors({
@@ -193,10 +187,8 @@ export default function RegistrationForm() {
   };
 
   const validateForm = () => {
-    // Inicializar errores
     const errors = {};
     
-    // Validar campos obligatorios
     if (!formData.nombre) errors.nombre = "El nombre es obligatorio";
     else if (!validateName(formData.nombre)) errors.nombre = "El nombre solo debe contener letras";
     
@@ -206,25 +198,20 @@ export default function RegistrationForm() {
     if (!formData.dni) errors.dni = "El DNI es obligatorio";
     else if (!validateDNI(formData.dni)) errors.dni = "El DNI debe tener 7-8 dígitos";
     
-    // Validar campos opcionales si tienen valor
     if (formData.email && !validateEmail(formData.email)) 
       errors.email = "Formato de email inválido";
     
     if (formData.telefono && !validatePhone(formData.telefono)) 
       errors.telefono = "Formato de teléfono inválido";
     
-    // Verificar aceptación de condiciones
     if (!formData.aceptaCondiciones) 
       errors.aceptaCondiciones = "Debe aceptar los términos y condiciones";
     
-    // Verificar comprobante de pago
     if (!formData.comprobantePago) 
       errors.comprobantePago = "Debe adjuntar un comprobante de pago";
     
-    // Actualizar los errores y verificar si hay alguno
     setFieldErrors(errors);
     
-    // Si hay errores, mostrar toast con resumen
     if (Object.keys(errors).length > 0) {
       toast({
         title: "Hay errores en el formulario",
@@ -250,7 +237,6 @@ export default function RegistrationForm() {
       let fileUrl = "";
       let imagenBase64 = "";
 
-      // Intentar subir archivo a Storage si está disponible
       if (formData.comprobantePago && storage) {
         try {
           fileUrl = await uploadFile(formData.comprobantePago);
@@ -262,7 +248,6 @@ export default function RegistrationForm() {
         imagenBase64 = await convertToBase64(formData.comprobantePago);
       }
 
-      // Preparar información de condición de salud
       const condicionSalud = {
         tieneAlergias: formData.tieneAlergias,
         alergias: formData.alergias,
@@ -272,7 +257,6 @@ export default function RegistrationForm() {
         problemasSalud: formData.problemasSalud,
       };
 
-      // Guardar datos de registro
       const registrationData = {
         nombre: formData.nombre,
         apellido: formData.apellido,
@@ -285,31 +269,27 @@ export default function RegistrationForm() {
         talleRemera: formData.talleRemera || "",
         condicionSalud: JSON.stringify(condicionSalud),
         comprobantePagoUrl: fileUrl,
-        imagenBase64: fileUrl ? "" : imagenBase64, // Solo incluir Base64 si no hay URL
+        imagenBase64: fileUrl ? "" : imagenBase64,
         nombreArchivo: formData.comprobantePago?.name || "comprobante.jpg",
         fechaInscripcion: new Date().toISOString(),
         year: new Date().getFullYear(),
         estado: "pendiente",
       };
 
-      // Agregar documento a Firestore
       const docRef = await addDoc(
         collection(db, "participantes2025"),
         registrationData
       );
 
-      // Mostrar mensaje de éxito
       toast({
         title: "¡Inscripción exitosa!",
         description: "Tu inscripción ha sido registrada correctamente",
         variant: "success",
       });
 
-      // Marcar como enviado y mostrar el diálogo de éxito
       setSubmitted(true);
       setShowSuccessDialog(true);
 
-      // Limpiar formulario después de envío exitoso
       setFormData({
         nombre: "",
         apellido: "",
@@ -344,17 +324,14 @@ export default function RegistrationForm() {
   };
 
   useEffect(() => {
-    // Asegurar que la página se cargue desde el inicio
     window.scrollTo(0, 0);
   }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-blue-50">
       <main className="container mx-auto px-4 py-8">
-        {/* Referencia para scroll al inicio */}
         <div ref={topRef}></div>
         
-        {/* Botón de inicio */}
         <div className="max-w-4xl mx-auto mb-6">
           <Button 
             onClick={goToHomePage} 
@@ -366,7 +343,6 @@ export default function RegistrationForm() {
           </Button>
         </div>
         
-        {/* Diálogo de éxito */}
         <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
           <DialogContent className="bg-white border-green-200 max-w-md">
             <DialogHeader>
@@ -683,6 +659,17 @@ export default function RegistrationForm() {
                 </div>
               </div>
 
+              {/* Sección agregada con la información de pago */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="font-medium text-lg mb-2 text-blue-800">Información de pago</h3>
+                <p className="text-blue-700">
+                  El precio de la inscripción es de <span className="font-bold">$35.000 ARS</span>.
+                </p>
+                <p className="text-blue-700 mt-2">
+                  Por favor adjunte el comprobante de pago en formato imagen (JPG/PNG) con un tamaño menor a 5MB.
+                </p>
+              </div>
+
               <div className="bg-gray-50 p-4 rounded-lg border">
                 <h3 className="font-medium text-lg mb-4 text-gray-800">
                   Comprobante de pago
@@ -788,8 +775,8 @@ export default function RegistrationForm() {
             </form>
           </CardContent>
           <CardFooter className="bg-gradient-to-r from-pink-50 to-blue-50 rounded-b-lg py-4 text-center text-sm text-gray-500">
-            Para consultas sobre la inscripción, contacta a{" "}
-            <span className="text-pink-600"> cicloturismotermal@gmail.com</span>
+            Para consultas sobre la inscripción, contacta a  {"   "}
+            <span className="text-pink-600">   cicloturismotermal@gmail.com</span>
           </CardFooter>
         </Card>
       </main>
