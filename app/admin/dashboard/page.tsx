@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, FC } from "react"
+import { useState, useEffect, FC, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { db } from "@/lib/firebase/firebase-config"
@@ -17,9 +17,13 @@ import {
   Pie,
   Cell,
   Legend,
+  LineChart,
+  Line,
 } from "recharts"
-import { Users, Calendar, TrendingUp, ShoppingBag, Loader2 } from "lucide-react"
+import { Users, Calendar, TrendingUp, ShoppingBag, Loader2, Home, ArrowUp } from "lucide-react"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 interface Registration {
   id: string;
@@ -28,6 +32,7 @@ interface Registration {
   fechaInscripcion: Date;
   condicionSalud?: any;
   year?: number;
+  estado?: string; // Puede ser: pendiente, confirmado, rechazado, cancelado
   [key: string]: any;
 }
 
@@ -50,12 +55,13 @@ interface JerseySize {
 
 interface DashboardStats {
   totalRegistrations: number;
+  validRegistrations: number; // Inscripciones confirmadas + pendientes
   maleCount: number;
   femaleCount: number;
   otherCount: number;
   withHealthConditions: number;
   jerseySize: JerseySize;
-  registrationsByDay: Array<{date: string, count: number}>;
+  registrationsByDay: Array<{date: string, total: number, rejected: number}>;
 }
 
 interface ChartDataItem {
@@ -68,6 +74,7 @@ export default function AdminDashboardPage(): JSX.Element {
   const [registrations, setRegistrations] = useState<Registration[]>([])
   const [stats, setStats] = useState<DashboardStats>({
     totalRegistrations: 0,
+    validRegistrations: 0,
     maleCount: 0,
     femaleCount: 0,
     otherCount: 0,
@@ -83,17 +90,23 @@ export default function AdminDashboardPage(): JSX.Element {
     registrationsByDay: [],
   })
   const [loading, setLoading] = useState<boolean>(true)
+  // Referencia para el botón de volver arriba
+  const topRef = useRef<HTMLDivElement>(null)
+  
+  // Función para volver al inicio
+  const scrollToTop = () => {
+    topRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
   useEffect(() => {
     const fetchRegistrations = async () => {
       try {
-        console.log("Fetching registrations from Firestore...")
+    
         const registrationsRef = collection(db, "participantes2025")
         const currentYearRegistrations = query(registrationsRef, where("year", "==", new Date().getFullYear()))
         const snapshot = await getDocs(currentYearRegistrations)
 
-        console.log(`Found ${snapshot.docs.length} registrations`)
-        
+        // Mantener todas las inscripciones para el gráfico total
         const registrationsData: Registration[] = snapshot.docs.map((doc) => {
           const data = doc.data()
           // Verificar si fechaInscripcion es un timestamp de Firestore
@@ -116,21 +129,33 @@ export default function AdminDashboardPage(): JSX.Element {
           }
         })
 
-        console.log("Processed registration data:", registrationsData.length)
+      
         setRegistrations(registrationsData)
 
+        // Filtrar solo inscripciones confirmadas y pendientes
+        const validRegistrations = registrationsData.filter(reg => 
+          reg.estado === "confirmado" || reg.estado === "pendiente"
+        )
+        
+       
+
+        // Contar registros rechazados para el gráfico
+        const rejectedRegistrations = registrationsData.filter(reg => 
+          reg.estado === "rechazado"
+        )
+
         // Calculate statistics
-        const maleCount = registrationsData.filter((reg) => 
+        const maleCount = validRegistrations.filter((reg) => 
           reg.genero?.toLowerCase() === "masculino").length
-        const femaleCount = registrationsData.filter((reg) => 
+        const femaleCount = validRegistrations.filter((reg) => 
           reg.genero?.toLowerCase() === "femenino").length
-        const otherCount = registrationsData.filter(
+        const otherCount = validRegistrations.filter(
           (reg) => reg.genero && reg.genero?.toLowerCase() !== "masculino" && reg.genero?.toLowerCase() !== "femenino"
         ).length
 
         // Count health conditions
         let withHealthConditions = 0
-        registrationsData.forEach((reg) => {
+        validRegistrations.forEach((reg) => {
           try {
             if (reg.condicionSalud) {
               let condicionSalud: string | CondicionSalud = reg.condicionSalud
@@ -140,7 +165,7 @@ export default function AdminDashboardPage(): JSX.Element {
                 try {
                   condicionSalud = JSON.parse(condicionSalud) as CondicionSalud
                 } catch (e) {
-                  console.log("No se pudo parsear la condición de salud como JSON", reg.id)
+                
                   // Si no es un JSON válido, considerar cualquier string como condición de salud
                   withHealthConditions++
                   return
@@ -176,7 +201,7 @@ export default function AdminDashboardPage(): JSX.Element {
           xxl: 0,
         }
 
-        registrationsData.forEach((reg) => {
+        validRegistrations.forEach((reg) => {
           if (reg.talleRemera) {
             const size = reg.talleRemera.toLowerCase() as keyof JerseySize
             if (jerseySizes.hasOwnProperty(size)) {
@@ -185,37 +210,66 @@ export default function AdminDashboardPage(): JSX.Element {
           }
         })
 
-        // Group registrations by day
-        const registrationsByDay: Record<string, number> = {}
+        // Group registrations by day, incluyendo todas las inscripciones
+        const registrationsByDay: Record<string, {total: number, rejected: number}> = {}
+        
+        // Ordenar todas las inscripciones por fecha para asegurar que mostramos desde la primera
+        const sortedRegistrations = [...registrationsData].sort((a, b) => 
+          a.fechaInscripcion.getTime() - b.fechaInscripcion.getTime()
+        )
+        
+        // Primero, inicializar todas las fechas entre la primera y la última inscripción
+        if (sortedRegistrations.length > 0) {
+          const firstDate = new Date(sortedRegistrations[0].fechaInscripcion)
+          const lastDate = new Date(sortedRegistrations[sortedRegistrations.length - 1].fechaInscripcion)
+          
+          // Crear un array con todas las fechas entre la primera y última inscripción
+          const currentDate = new Date(firstDate)
+          while (currentDate <= lastDate) {
+            const dateStr = currentDate.toLocaleDateString()
+            registrationsByDay[dateStr] = { total: 0, rejected: 0 }
+            currentDate.setDate(currentDate.getDate() + 1)
+          }
+        }
+        
+        // Luego, contar las inscripciones por día
         registrationsData.forEach((reg) => {
           try {
             if (reg.fechaInscripcion) {
               const date = reg.fechaInscripcion.toLocaleDateString()
-              registrationsByDay[date] = (registrationsByDay[date] || 0) + 1
+              
+              // Inicializar el día si aún no existe
+              if (!registrationsByDay[date]) {
+                registrationsByDay[date] = { total: 0, rejected: 0 }
+              }
+              
+              // Incrementar contadores
+              registrationsByDay[date].total++
+              
+              // Si es rechazado, incrementar contador de rechazados
+              if (reg.estado === "rechazado") {
+                registrationsByDay[date].rejected++
+              }
             }
           } catch (error) {
             console.error("Error al procesar fecha:", error)
           }
         })
 
-        // Convert to array for chart
+        // Convert to array for chart, ordenado por fecha
         const registrationsByDayArray = Object.entries(registrationsByDay)
-          .map(([date, count]) => ({ date, count }))
+          .map(([date, counts]) => ({ 
+            date, 
+            total: counts.total,
+            rejected: counts.rejected 
+          }))
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-          .slice(-14) // Last 14 days
 
-        console.log("Statistics calculated:", {
-          totalRegistrations: registrationsData.length,
-          maleCount,
-          femaleCount,
-          otherCount,
-          withHealthConditions,
-          jerseySize: jerseySizes,
-          registrationsByDay: registrationsByDayArray.length
-        })
+      
 
         setStats({
           totalRegistrations: registrationsData.length,
+          validRegistrations: validRegistrations.length,
           maleCount,
           femaleCount,
           otherCount,
@@ -234,7 +288,7 @@ export default function AdminDashboardPage(): JSX.Element {
   }, [])
 
   // Verificar si hay datos antes de crear gráficos
-  const hasRegistrations = stats.totalRegistrations > 0
+  const hasRegistrations = stats.validRegistrations > 0
   
   const genderData: ChartDataItem[] = [
     { name: "Masculino", value: stats.maleCount },
@@ -262,30 +316,39 @@ export default function AdminDashboardPage(): JSX.Element {
 
   return (
     <div className="space-y-6">
-      <div>
+      {/* Añadir una referencia aquí para el botón de volver arriba */}
+      <div ref={topRef}>
         <h1 className="text-3xl font-bold tracking-tight">Panel de Administración</h1>
         <p className="text-muted-foreground">
           Bienvenido al panel de administración del Cicloturismo Termal de Federación
         </p>
       </div>
 
+      <div className="flex justify-between items-center">
+        <Link href="/">
+          <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <Home className="h-4 w-4" /> Volver al inicio
+          </Button>
+        </Link>
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Inscripciones</CardTitle>
+            <CardTitle className="text-sm font-medium">Inscripciones Activas</CardTitle>
             <Users className="h-4 w-4 text-pink-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalRegistrations}</div>
+            <div className="text-2xl font-bold">{stats.validRegistrations}</div>
             <p className="text-xs text-muted-foreground">
               de {eventSettings?.cupoMaximo || 300} cupos disponibles (
-              {Math.round((stats.totalRegistrations / (eventSettings?.cupoMaximo || 300)) * 100)}%)
+              {Math.round((stats.validRegistrations / (eventSettings?.cupoMaximo || 300)) * 100)}%)
             </p>
             <div className="mt-2 h-2 w-full bg-gray-100 rounded-full overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-pink-500 to-violet-500 rounded-full"
                 style={{
-                  width: `${Math.min(100, (stats.totalRegistrations / (eventSettings?.cupoMaximo || 300)) * 100)}%`,
+                  width: `${Math.min(100, (stats.validRegistrations / (eventSettings?.cupoMaximo || 300)) * 100)}%`,
                 }}
               ></div>
             </div>
@@ -299,8 +362,8 @@ export default function AdminDashboardPage(): JSX.Element {
           <CardContent>
             <div className="text-2xl font-bold">{stats.withHealthConditions}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.totalRegistrations > 0
-                ? `${((stats.withHealthConditions / stats.totalRegistrations) * 100).toFixed(1)}% del total`
+              {stats.validRegistrations > 0
+                ? `${((stats.withHealthConditions / stats.validRegistrations) * 100).toFixed(1)}% del total`
                 : "0% del total"}
             </p>
           </CardContent>
@@ -325,10 +388,10 @@ export default function AdminDashboardPage(): JSX.Element {
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{(eventSettings?.cupoMaximo || 300) - stats.totalRegistrations}</div>
+            <div className="text-2xl font-bold">{(eventSettings?.cupoMaximo || 300) - stats.validRegistrations}</div>
             <p className="text-xs text-muted-foreground">
               {(
-                (((eventSettings?.cupoMaximo || 300) - stats.totalRegistrations) / (eventSettings?.cupoMaximo || 300)) *
+                (((eventSettings?.cupoMaximo || 300) - stats.validRegistrations) / (eventSettings?.cupoMaximo || 300)) *
                 100
               ).toFixed(1)}
               % disponible
@@ -336,6 +399,65 @@ export default function AdminDashboardPage(): JSX.Element {
           </CardContent>
         </Card>
       </div>
+
+      {/* Gráfico de línea para inscripciones recientes */}
+      <Card className="shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader>
+          <CardTitle>Inscripciones Recientes</CardTitle>
+          <CardDescription>Tendencia de inscripciones en los últimos 14 días</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            {hasRegistrations ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={stats.registrationsByDay}
+                  margin={{
+                    top: 5,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="count"
+                    name="Inscripciones"
+                    stroke="#8884d8"
+                    activeDot={{ r: 8 }}
+                    strokeWidth={2}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex justify-center items-center h-full">
+                <p className="text-muted-foreground">No hay datos suficientes para mostrar</p>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Botón para volver arriba (fijo en la parte inferior derecha) */}
+      <div className="fixed bottom-8 right-8">
+        <Button
+          onClick={scrollToTop}
+          variant="secondary"
+          size="icon"
+          className="rounded-full shadow-lg hover:shadow-xl bg-pink-500 hover:bg-pink-600 text-white"
+        >
+          <ArrowUp className="h-5 w-5" />
+        </Button>
+      </div>
+ 
+
+
+
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="shadow-sm">
