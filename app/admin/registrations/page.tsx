@@ -555,14 +555,7 @@ export default function AdminRegistrationsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <Button variant="outline" onClick={exportToCSV} disabled={filteredRegistrations.length === 0}>
-                <Download className="mr-2 h-4 w-4" />
-                Exportar CSV
-              </Button>
-              <Button variant="outline" onClick={exportApprovedToExcel} disabled={registrations.filter(r => r.estado === "confirmado").length === 0}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" />
-                Confirmados Excel
-              </Button>
+             
               <Button variant="outline" onClick={exportApprovedToPDF} disabled={registrations.filter(r => r.estado === "confirmado").length === 0}>
                 <FileText className="mr-2 h-4 w-4" />
                 Confirmados PDF
