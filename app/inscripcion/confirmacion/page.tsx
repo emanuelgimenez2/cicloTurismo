@@ -24,7 +24,7 @@ export default function ConfirmationPage() {
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p>
-              Hemos recibido tu información y comprobante de pago. Pronto recibirás un correo electrónico con la
+              Hemos recibido tu información y comprobante de pago. Recibirás un correo electrónico con la
               confirmación de tu inscripción.
             </p>
             <p>Recuerda que el evento se realizará el 12 de octubre de 2025 en Federación, Entre Ríos.</p>

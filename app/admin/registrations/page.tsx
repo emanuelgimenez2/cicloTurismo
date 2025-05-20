@@ -14,7 +14,7 @@ import { db } from "@/lib/firebase/firebase-config"
 import { collection, getDocs, orderBy, query, doc, updateDoc } from "firebase/firestore"
 import { getDownloadURL, ref } from "firebase/storage"
 import { Download, Search, Filter, Eye, FileText, FileSpreadsheet, Save, X } from "lucide-react"
-
+ 
 
 // Importa EmailJS
 import emailjs from '@emailjs/browser';
@@ -369,6 +369,7 @@ if (reg.condicionSalud) {
         condicionesDeSalud = reg.condicionSalud;
     }
 }
+//
             const telefonoEmergencia = reg.telefonoEmergencia || reg.telefono_emergencia || reg.telEmergencia || reg.telefonoContacto || '';
             const grupoSanguineo = reg.grupoSanguineo || reg.grupo_sanguineo || reg.gruposanguineo || reg.sangre || '';
             
@@ -585,7 +586,7 @@ if (reg.condicionSalud) {
           
           {selectedRegistration && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-10xl0 mx-auto">
                 <div>
                   <Label className="text-sm font-medium text-gray-500">Nombre completo</Label>
                   <p className="text-sm">{selectedRegistration.nombre} {selectedRegistration.apellido}</p>
@@ -602,6 +603,11 @@ if (reg.condicionSalud) {
                   <Label className="text-sm font-medium text-gray-500">Teléfono</Label>
                   <p className="text-sm">{selectedRegistration.telefono || '-'}</p>
                 </div>
+                
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Telefono De Emergencia</Label>
+                  <p className="text-sm">{selectedRegistration.telefonoEmergencia || '-'}</p>
+                </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-500">Localidad</Label>
                   <p className="text-sm">{selectedRegistration.localidad || '-'}</p>
@@ -614,70 +620,90 @@ if (reg.condicionSalud) {
                   <Label className="text-sm font-medium text-gray-500">Talle de remera</Label>
                   <p className="text-sm uppercase">{selectedRegistration.talleRemera || '-'}</p>
                 </div>
+                
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Fecha de nacimiento</Label>
-                  <p className="text-sm">{selectedRegistration.fechaNacimiento || '-'}</p>
+                  <Label className="text-sm font-medium text-gray-500">Fecha de Inscripción</Label>
+                  <p className="text-sm">{selectedRegistration.fechaInscripcion?.toLocaleDateString('es-ES') || '-'}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-500">Fecha de inscripción</Label>
-                  <p className="text-sm">{selectedRegistration.fechaInscripcion.toLocaleDateString('es-ES')}</p>
+                  <Label className="text-sm font-medium text-gray-500">Grupo Sanguineo</Label>
+                  <p className="text-sm">{selectedRegistration.grupoSanguineo || '-'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">condicionesSalud</Label>
+                  <p className="text-sm">{selectedRegistration.condicionesSalud || '-'}</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Grupo Ciclistas</Label>
+                  <p className="text-sm">{selectedRegistration.grupoCiclistas || '-'}</p>
                 </div>
               </div>
-
-              <div className="space-y-4 border-t pt-4">
-              <div>
-                <Label>Comprobante de pago</Label>
-                {loadingComprobante ? (
-                  <div className="flex items-center justify-center h-40 border rounded-md">
-                    <p>Cargando comprobante...</p>
-                  </div>
-                ) : comprobanteUrl ? (
-                  <div className="border rounded-md p-2">
-                    {selectedRegistration.comprobantePagoUrl?.endsWith('.pdf') || 
-                    selectedRegistration.nombreArchivo?.endsWith('.pdf') ? (
-                      <div className="flex flex-col gap-2">
-                        <div className="flex items-center justify-center h-40 border rounded-md">
-                          <iframe 
-                            src={comprobanteUrl} 
-                            className="w-full h-full border-none"
-                            title="Comprobante de pago"
-                          />
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <Label>Comprobante de pago</Label>
+                  {loadingComprobante ? (
+                    <div className="flex items-center justify-center h-40 border rounded-md">
+                      <p>Cargando comprobante...</p>
+                    </div>
+                  ) : comprobanteUrl ? (
+                    <div className="border rounded-md p-2">
+                      {selectedRegistration.comprobantePagoUrl?.endsWith('.pdf') || 
+                      selectedRegistration.nombreArchivo?.endsWith('.pdf') ? (
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center justify-center h-40 border rounded-md">
+                            <iframe 
+                              src={comprobanteUrl} 
+                              className="w-full h-full border-none"
+                              title="Comprobante de pago"
+                            />
+                          </div>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => {
+                              setIsDetailsModalOpen(false)
+                              setIsImageModalOpen(true)
+                            }}
+                            className="w-full"
+                          >
+                            <Eye className="mr-2 h-4 w-4" />
+                            Ver PDF completo
+                          </Button>
                         </div>
-                        <Button 
-                          variant="outline" 
+                      ) : (
+                        <div 
+                          className="cursor-pointer border rounded-md p-2"
                           onClick={() => {
                             setIsDetailsModalOpen(false)
                             setIsImageModalOpen(true)
                           }}
-                          className="w-full"
                         >
-                          <Eye className="mr-2 h-4 w-4" />
-                          Ver PDF completo
-                        </Button>
-                      </div>
-                    ) : (
-                      <div 
-                        className="cursor-pointer border rounded-md p-2"
-                        onClick={() => {
-                          setIsDetailsModalOpen(false)
-                          setIsImageModalOpen(true)
-                        }}
-                      >
-                        <img 
-                          src={comprobanteUrl} 
-                          alt="Comprobante de pago" 
-                          className="max-h-60 mx-auto object-contain"
-                        />
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-20 border rounded-md">
-                    <p className="text-gray-500">No hay comprobante disponible</p>
-                  </div>
+                          <img 
+                            src={comprobanteUrl} 
+                            alt="Comprobante de pago" 
+                            className="max-h-60 mx-auto object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center h-20 border rounded-md">
+                      <p className="text-gray-500">No hay comprobante disponible</p>
+                    </div>
                   )}
                 </div>
-
+                
+                <div>
+                  <Label htmlFor="note">Nota (opcional)</Label>
+                  <Textarea
+                    id="note"
+                    placeholder="Agregar una nota sobre esta inscripción..."
+                    value={statusNote}
+                    onChange={(e) => setStatusNote(e.target.value)}
+                    rows={10}
+                  />
+                </div>
+                
                 <div>
                   <Label htmlFor="status">Estado de la inscripción</Label>
                   <Select value={newStatus} onValueChange={setNewStatus}>
@@ -690,17 +716,6 @@ if (reg.condicionSalud) {
                       <SelectItem value="rechazado">Rechazado</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor="note">Nota (opcional)</Label>
-                  <Textarea
-                    id="note"
-                    placeholder="Agregar una nota sobre esta inscripción..."
-                    value={statusNote}
-                    onChange={(e) => setStatusNote(e.target.value)}
-                    rows={3}
-                  />
                 </div>
               </div>
             </div>
