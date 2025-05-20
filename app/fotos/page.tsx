@@ -125,7 +125,7 @@ export default function PhotosPage() {
           </Tabs>
         ) : (
           <div className="text-center py-12 bg-blue-50 rounded-lg">
-            <p className="text-lg text-blue-700">No hay fotos disponibles todavía.</p>
+            <p className="text-lg text-blue-700">No hay fotos disponibles todavía, las fotos se publicaran una vez termine el evento </p>
           </div>
         )}
 

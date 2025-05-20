@@ -839,13 +839,13 @@ export default function RegistrationForm() {
                   </AlertTitle>
                   <AlertDescription className="text-blue-700">
                     <ul className="list-disc pl-5 mt-2 space-y-1">
-                      <li>Banco: Banco Nación</li>
-                      <li>Titular: Asociación Cicloturismo Termal</li>
-                      <li>CUIT: 30-71234567-8</li>
-                      <li>CBU: 0110599420000012345678</li>
-                      <li>Alias: ciclo.termal</li>
+                      <li>Banco: UALA</li>
+                      <li>Titular: Brunilda Cristina Schubert</li>
+                      <li>CUIT:  27-24600582-1</li>
+                      <li>CBU:  0000007900272460058219</li>
+                      <li>Alias: CICLO.TERMAL.UALA</li>
                       <li>
-                        <strong>Importe: $15.000</strong>
+                        <strong>Importe: $35.000</strong>
                       </li>
                     </ul>
                     <p className="mt-3 text-sm font-medium">
