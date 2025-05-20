@@ -13,7 +13,7 @@ const defaultSponsors = [
     id: "sponsor-1",
     name: "Indumentaria  Deportiva Personalizada",
     logoUrl: "/sponsor 1.jpg?height=100&width=200",
-    url: "www.instagram.com/induo.sport/",
+    url: "www.instagram.com/induo.sport",
   },
   {
     id: "sponsor-2",
