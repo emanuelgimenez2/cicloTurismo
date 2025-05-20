@@ -1,8 +1,11 @@
+
 "use client"
 
 import { useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { AlertTriangle } from "lucide-react"
 import CarouselEditor from "@/components/admin/carousel-editor"
 import JerseyEditor from "@/components/admin/jersey-editor"
 import BenefitsEditor from "@/components/admin/benefits-editor"
@@ -20,6 +23,13 @@ export default function AdminContentPage() {
         <h1 className="text-3xl font-bold tracking-tight">Gestión de Contenido</h1>
         <p className="text-muted-foreground">Edita el contenido del sitio web</p>
       </div>
+
+      <Alert variant="destructive" className="border-red-600 bg-red-100">
+        <AlertTriangle className="h-5 w-5 text-red-600" />
+        <AlertDescription className="text-red-600 font-bold">
+          ESTO POR EL MOMENTO NO ESTÁ FUNCIONANDO, TODAVÍA ESTÁ BAJO MODIFICACIÓN. NO TOCAR
+        </AlertDescription>
+      </Alert>
 
       <Tabs defaultValue="carousel" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7">

@@ -14,6 +14,9 @@ import { db } from "@/lib/firebase/firebase-config"
 import { collection, getDocs, orderBy, query, doc, updateDoc } from "firebase/firestore"
 import { getDownloadURL, ref } from "firebase/storage"
 import { Download, Search, Filter, Eye, FileText, FileSpreadsheet, Save, X } from "lucide-react"
+import Link from "next/link"
+import { Users, Calendar, TrendingUp, ShoppingBag, Loader2, Home, ArrowUp } from "lucide-react"
+
  
 
 // Importa EmailJS
@@ -61,7 +64,10 @@ export default function AdminRegistrationsPage() {
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-
+  {/*volver inicio*/}
+  const scrollToTop = () => {
+    topRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
   useEffect(() => {
     const fetchRegistrations = async () => {
       try {
@@ -432,6 +438,14 @@ if (reg.condicionSalud) {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Inscripciones</h1>
         <p className="text-muted-foreground">Gestiona todas las inscripciones al evento</p>
+      </div>
+      {/*volver inicio*/}
+      <div className="flex justify-between items-center">
+        <Link href="/">
+          <Button variant="outline" size="sm" className="flex items-center gap-2">
+            <Home className="h-4 w-4" /> Volver al inicio
+          </Button>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
