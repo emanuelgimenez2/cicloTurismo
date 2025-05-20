@@ -24,7 +24,7 @@ export default function Footer() {
               {[
                 { href: "/#inicio", label: "Inicio" },
                 { href: "/#historia", label: "Historia" },
-                { href: "/#beneficios", label: "Datos del evento" },
+                { href: "/#Evento", label: "Evento" },
                 { href: "/#fotos", label: "Fotos" },
                 { href: "/#sponsors", label: "Sponsors" },
                 { href: "/#contacto", label: "Contacto" },

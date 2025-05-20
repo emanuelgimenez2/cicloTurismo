@@ -74,7 +74,7 @@ export default function PhotosPage() {
           <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
             Galería de Fotos
           </h1>
-          <p className="text-lg text-gray-600">Revive los mejores momentos del Cicloturismo Termal de Federación</p>
+          <p className="text-lg text-gray-600">Revive los mejores momentos de la edicion 2024</p>
         </div>
 
         {years.length > 0 ? (

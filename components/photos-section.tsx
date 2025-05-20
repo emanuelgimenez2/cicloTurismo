@@ -99,7 +99,7 @@ export default function PhotosSection() {
         </h2>
         <div className="w-24 h-1 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 mx-auto mb-4"></div>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Revive los mejores momentos del Cicloturismo Termal de Federación 2024
+          Revive los mejores momentos de la edicion 2024
         </p>
       </div>
 
@@ -128,7 +128,7 @@ export default function PhotosSection() {
         </h2>
         <div className="w-24 h-1 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 mx-auto mb-4"></div>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Aqui se  Cicloturismo Termal de Federación 2025
+          Aqui se veran las fotos de la edicion 2025
         </p>
       </div>
         

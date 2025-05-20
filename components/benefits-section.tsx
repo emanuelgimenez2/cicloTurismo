@@ -36,14 +36,18 @@ export default function BenefitsSection() {
   return (
     <div className="container mx-auto px-4 space-y-16">
       {/* Sección Datos del Evento */}
+      
+      {/* Insertamos el componente Contador aquí, entre ambas secciones 
+           Sin pasar la prop eventDate para que use la configuración interna */}
+      <Contador />
       <div>
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
-            Datos del Evento
+            Evento
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 mx-auto mb-4"></div>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Información importante sobre el Cicloturismo Termal de Federación
+            Información importante
           </p>
         </div>
 
@@ -69,9 +73,6 @@ export default function BenefitsSection() {
         </div>
       </div>
 
-      {/* Insertamos el componente Contador aquí, entre ambas secciones 
-           Sin pasar la prop eventDate para que use la configuración interna */}
-      <Contador />
 
       {/* Sección Beneficios de la Inscripción */}
       <div>
@@ -81,7 +82,7 @@ export default function BenefitsSection() {
           </h2>
           <div className="w-24 h-1 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 mx-auto mb-4"></div>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Tu inscripción al Cicloturismo Termal de Federación incluye:
+            Incluye:
           </p>
         </div>
 
