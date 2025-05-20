@@ -156,7 +156,7 @@ const TallesRemeraMejorado = () => {
                 <td className="p-2 border text-center">58</td>
                 <td className="p-2 border text-center">69</td>
               </tr>
-                <tr>
+              <tr>
                 <td className="p-2 border text-center">XXXL</td>
                 <td className="p-2 border text-center">60</td>
                 <td className="p-2 border text-center">71</td>
@@ -204,28 +204,28 @@ export default function RegistrationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-    const [showMore, setShowMore] = useState(false);
+  const [showMore, setShowMore] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const topRef = useRef(null);
-  
+
   const [formData, setFormData] = useState({
-  nombre: "",
-  apellido: "",
-  dni: "",
-  fechaNacimiento: "",
-  localidad: "",
-  email: "",
-  telefono: "",
-  telefonoEmergencia: "",
-  grupoSanguineo: "",
-  genero: "",
-  grupoCiclistas: "",
-  talleRemera: "",
-  condicionesSalud: "",
-  aceptaCondiciones: false,
-  comprobantePago: null,
-  comprobantePagoUrl: "",
-});
+    nombre: "",
+    apellido: "",
+    dni: "",
+    fechaNacimiento: "",
+    localidad: "",
+    email: "",
+    telefono: "",
+    telefonoEmergencia: "",
+    grupoSanguineo: "",
+    genero: "",
+    grupoCiclistas: "",
+    talleRemera: "",
+    condicionesSalud: "",
+    aceptaCondiciones: false,
+    comprobantePago: null,
+    comprobantePagoUrl: "",
+  });
   const handleCloseSuccessDialog = () => {
     setShowSuccessDialog(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -259,7 +259,9 @@ export default function RegistrationForm() {
       case "nombre":
         return validateName(value) ? "" : "El nombre solo debe contener letras";
       case "apellido":
-        return validateName(value) ? "" : "El apellido solo debe contener letras";
+        return validateName(value)
+          ? ""
+          : "El apellido solo debe contener letras";
       case "dni":
         return validateDNI(value) ? "" : "El DNI debe tener 7-8 dígitos";
       case "email":
@@ -274,12 +276,12 @@ export default function RegistrationForm() {
   const handleInputChange = (e) => {
     const { name, value, type } = e.target;
     const newValue = type === "checkbox" ? e.target.checked : value;
-    
+
     setFormData({
       ...formData,
       [name]: newValue,
     });
-    
+
     if (["nombre", "apellido", "dni", "email", "telefono"].includes(name)) {
       const error = validateField(name, newValue);
       setFieldErrors({
@@ -345,30 +347,33 @@ export default function RegistrationForm() {
 
   const validateForm = () => {
     const errors = {};
-    
+
     if (!formData.nombre) errors.nombre = "El nombre es obligatorio";
-    else if (!validateName(formData.nombre)) errors.nombre = "El nombre solo debe contener letras";
-    
+    else if (!validateName(formData.nombre))
+      errors.nombre = "El nombre solo debe contener letras";
+
     if (!formData.apellido) errors.apellido = "El apellido es obligatorio";
-    else if (!validateName(formData.apellido)) errors.apellido = "El apellido solo debe contener letras";
-    
+    else if (!validateName(formData.apellido))
+      errors.apellido = "El apellido solo debe contener letras";
+
     if (!formData.dni) errors.dni = "El DNI es obligatorio";
-    else if (!validateDNI(formData.dni)) errors.dni = "El DNI debe tener 7-8 dígitos";
-    
-    if (formData.email && !validateEmail(formData.email)) 
+    else if (!validateDNI(formData.dni))
+      errors.dni = "El DNI debe tener 7-8 dígitos";
+
+    if (formData.email && !validateEmail(formData.email))
       errors.email = "Formato de email inválido";
-    
-    if (formData.telefono && !validatePhone(formData.telefono)) 
+
+    if (formData.telefono && !validatePhone(formData.telefono))
       errors.telefono = "Formato de teléfono inválido";
-    
-    if (!formData.aceptaCondiciones) 
+
+    if (!formData.aceptaCondiciones)
       errors.aceptaCondiciones = "Debe aceptar los términos y condiciones";
-    
-    if (!formData.comprobantePago) 
+
+    if (!formData.comprobantePago)
       errors.comprobantePago = "Debe adjuntar un comprobante de pago";
-    
+
     setFieldErrors(errors);
-    
+
     if (Object.keys(errors).length > 0) {
       toast({
         title: "Hay errores en el formulario",
@@ -377,115 +382,118 @@ export default function RegistrationForm() {
       });
       return false;
     }
-    
+
     return true;
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!validateForm()) {
-    return;
-  }
-
-  setIsSubmitting(true);
-
-  try {
-    let fileUrl = "";
-    let imagenBase64 = "";
-
-    if (formData.comprobantePago && storage) {
-      try {
-        fileUrl = await uploadFile(formData.comprobantePago);
-      } catch (error) {
-        console.error("Error en subida a Storage, usando Base64 como respaldo", error);
-        imagenBase64 = await convertToBase64(formData.comprobantePago);
-      }
-    } else if (formData.comprobantePago) {
-      imagenBase64 = await convertToBase64(formData.comprobantePago);
+    if (!validateForm()) {
+      return;
     }
 
-    // Estructura para condiciones de salud y medicamentos
-    const condicionSalud = {
-      condicionesSalud: formData.condicionesSalud || "",
-    };
+    setIsSubmitting(true);
 
-    // Datos completos para Firestore según el formulario
-    const registrationData = {
-      // Datos personales
-      nombre: formData.nombre,
-      apellido: formData.apellido,
-      dni: formData.dni,
-      fechaNacimiento: formData.fechaNacimiento || "",
-      localidad: formData.localidad || "",
-      email: formData.email || "",
-      telefono: formData.telefono || "",
-      telefonoEmergencia: formData.telefonoEmergencia || "",
-      grupoSanguineo: formData.grupoSanguineo || "",
-      genero: formData.genero || "",
-      grupoCiclistas: formData.grupoCiclistas || "",
-      talleRemera: formData.talleRemera || "",
-      
-      // Condiciones de salud (ahora como texto completo)
-      condicionSalud: JSON.stringify(condicionSalud),
-      
-      // Datos del comprobante de pago
-      comprobantePagoUrl: fileUrl,
-      imagenBase64: fileUrl ? "" : imagenBase64,
-      nombreArchivo: formData.comprobantePago?.name || "comprobante.jpg",
-      
-      // Metadatos
-      fechaInscripcion: new Date().toISOString(),
-      year: new Date().getFullYear(),
-      estado: "pendiente",
-      aceptaTerminos: formData.aceptaCondiciones,
-    };
+    try {
+      let fileUrl = "";
+      let imagenBase64 = "";
 
-    const docRef = await addDoc(
-      collection(db, "participantes2025"),
-      registrationData
-    );
+      if (formData.comprobantePago && storage) {
+        try {
+          fileUrl = await uploadFile(formData.comprobantePago);
+        } catch (error) {
+          console.error(
+            "Error en subida a Storage, usando Base64 como respaldo",
+            error
+          );
+          imagenBase64 = await convertToBase64(formData.comprobantePago);
+        }
+      } else if (formData.comprobantePago) {
+        imagenBase64 = await convertToBase64(formData.comprobantePago);
+      }
 
-    toast({
-      title: "¡Inscripción exitosa!",
-      description: "Tu inscripción ha sido registrada correctamente",
-      variant: "success",
-    });
+      // Estructura para condiciones de salud y medicamentos
+      const condicionSalud = {
+        condicionesSalud: formData.condicionesSalud || "",
+      };
 
-    setSubmitted(true);
-    setShowSuccessDialog(true);
+      // Datos completos para Firestore según el formulario
+      const registrationData = {
+        // Datos personales
+        nombre: formData.nombre,
+        apellido: formData.apellido,
+        dni: formData.dni,
+        fechaNacimiento: formData.fechaNacimiento || "",
+        localidad: formData.localidad || "",
+        email: formData.email || "",
+        telefono: formData.telefono || "",
+        telefonoEmergencia: formData.telefonoEmergencia || "",
+        grupoSanguineo: formData.grupoSanguineo || "",
+        genero: formData.genero || "",
+        grupoCiclistas: formData.grupoCiclistas || "",
+        talleRemera: formData.talleRemera || "",
 
-    // Restablecer formulario
-    setFormData({
-      nombre: "",
-      apellido: "",
-      dni: "",
-      fechaNacimiento: "",
-      localidad: "",
-      email: "",
-      telefono: "",
-      telefonoEmergencia: "",
-      grupoSanguineo: "",
-      genero: "",
-      grupoCiclistas: "",
-      talleRemera: "",
-      condicionesSalud: "",
-      aceptaCondiciones: false,
-      comprobantePago: null,
-      comprobantePagoUrl: "",
-    });
-  } catch (error) {
-    console.error("Error al enviar formulario:", error);
-    toast({
-      title: "Error",
-      description:
-        "Hubo un problema al procesar tu inscripción. Por favor intenta nuevamente.",
-      variant: "destructive",
-    });
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+        // Condiciones de salud (ahora como texto completo)
+        condicionSalud: JSON.stringify(condicionSalud),
+
+        // Datos del comprobante de pago
+        comprobantePagoUrl: fileUrl,
+        imagenBase64: fileUrl ? "" : imagenBase64,
+        nombreArchivo: formData.comprobantePago?.name || "comprobante.jpg",
+
+        // Metadatos
+        fechaInscripcion: new Date().toISOString(),
+        year: new Date().getFullYear(),
+        estado: "pendiente",
+        aceptaTerminos: formData.aceptaCondiciones,
+      };
+
+      const docRef = await addDoc(
+        collection(db, "participantes2025"),
+        registrationData
+      );
+
+      toast({
+        title: "¡Inscripción exitosa!",
+        description: "Tu inscripción ha sido registrada correctamente",
+        variant: "success",
+      });
+
+      setSubmitted(true);
+      setShowSuccessDialog(true);
+
+      // Restablecer formulario
+      setFormData({
+        nombre: "",
+        apellido: "",
+        dni: "",
+        fechaNacimiento: "",
+        localidad: "",
+        email: "",
+        telefono: "",
+        telefonoEmergencia: "",
+        grupoSanguineo: "",
+        genero: "",
+        grupoCiclistas: "",
+        talleRemera: "",
+        condicionesSalud: "",
+        aceptaCondiciones: false,
+        comprobantePago: null,
+        comprobantePagoUrl: "",
+      });
+    } catch (error) {
+      console.error("Error al enviar formulario:", error);
+      toast({
+        title: "Error",
+        description:
+          "Hubo un problema al procesar tu inscripción. Por favor intenta nuevamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -759,24 +767,24 @@ export default function RegistrationForm() {
                   </div>
 
                   <div className="space-y-2">
-  <Label htmlFor="grupoCiclistas">Grupo de ciclistas</Label>
-  
-  <Input
-    list="gruposCiclistas"
-    id="grupoCiclistas"
-    name="grupoCiclistas"
-    value={formData.grupoCiclistas}
-    onChange={handleInputChange}
-    placeholder="Ej: Team Riders, Ciclistas del Sur..."
-  />
-  
-  <datalist id="gruposCiclistas">
-    <option value="Team Riders" />
-    <option value="Ciclistas del Sur" />
-    <option value="Bike Explorers" />
-    <option value="Pedal Power" />
-  </datalist>
-</div>
+                    <Label htmlFor="grupoCiclistas">Grupo de ciclistas</Label>
+
+                    <Input
+                      list="gruposCiclistas"
+                      id="grupoCiclistas"
+                      name="grupoCiclistas"
+                      value={formData.grupoCiclistas}
+                      onChange={handleInputChange}
+                      placeholder="Ej: Team Riders, Ciclistas del Sur..."
+                    />
+
+                    <datalist id="gruposCiclistas">
+                      <option value="Team Riders" />
+                      <option value="Ciclistas del Sur" />
+                      <option value="Bike Explorers" />
+                      <option value="Pedal Power" />
+                    </datalist>
+                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="talleRemera">Talle de remera</Label>
@@ -916,21 +924,21 @@ export default function RegistrationForm() {
                   </p>
                   <ul className="list-disc pl-5 space-y-1">
                     <li>Participa bajo su propia responsabilidad y riesgo</li>
-                   
-                   
+
                     {showMore && (
                       <>
-                       <li>
-                      Debe contar con bicicleta en buen estado y equipo de
-                      seguridad
-                    </li>
-                       <li>
-                      Es obligatorio el uso de casco durante toda la actividad
-                    </li>
-                    <li>
-                      Se compromete a respetar las normas de tránsito y las
-                      indicaciones de los organizadores
-                    </li>
+                        <li>
+                          Debe contar con bicicleta en buen estado y equipo de
+                          seguridad
+                        </li>
+                        <li>
+                          Es obligatorio el uso de casco durante toda la
+                          actividad
+                        </li>
+                        <li>
+                          Se compromete a respetar las normas de tránsito y las
+                          indicaciones de los organizadores
+                        </li>
                         <li>
                           Autoriza el uso de imágenes tomadas durante el evento
                           para fines promocionales
