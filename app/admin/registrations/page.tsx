@@ -271,182 +271,129 @@ export default function AdminRegistrationsPage() {
       setUpdatingStatus(false)
     }
   }
-
-  const exportToCSV = () => {
-    const headers = [
-      "Nombre",
-      "Apellido", 
-      "DNI",
-      "Email",
-      "Teléfono",
-      "Localidad",
-      "Género",
-      "Talle",
-      "Fecha Nacimiento",
-      "Estado",
-      "Nota",
-      "Año"
-    ]
-    
-    const csvContent = [
-      headers.join(","),
-      ...filteredRegistrations.map((reg) =>
-        [
-          `"${reg.nombre || ''}"`,
-          `"${reg.apellido || ''}"`,
-          `"${reg.dni || ''}"`,
-          `"${reg.email || ''}"`,
-          `"${reg.telefono || ''}"`,
-          `"${reg.localidad || ''}"`,
-          `"${reg.genero || ''}"`,
-          `"${reg.talleRemera || ''}"`,
-          `"${reg.fechaNacimiento || ''}"`,
-          `"${reg.estado || 'pendiente'}"`,
-          `"${reg.nota || ''}"`,
-          `"${reg.fechaInscripcion.getFullYear()}"`
-        ].join(",")
-      ),
-    ].join("\n")
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.setAttribute("href", url)
-    link.setAttribute("download", `inscripciones_${new Date().toISOString().split("T")[0]}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }
-
-  const exportApprovedToExcel = () => {
+const exportApprovedToPDF = () => { 
     const approvedRegistrations = registrations
       .filter(reg => reg.estado === "confirmado")
-      .sort((a, b) => a.apellido?.localeCompare(b.apellido) || 0)
-
+      .sort((a, b) => a.apellido?.localeCompare(b.apellido) || 0);
+      
     if (approvedRegistrations.length === 0) {
-      alert("No hay inscripciones confirmadas para exportar")
-      return
+      alert("No hay inscripciones confirmadas para exportar");
+      return;
     }
-
-    const headers = [
-      "N°",
-      "Apellido y Nombre",
-      "DNI", 
-      "Email",
-      "Teléfono",
-      "Localidad",
-      "Género",
-      "Talle Remera",
-      "Fecha Nacimiento"
-    ]
-
-    const csvContent = [
-      headers.join("\t"),
-      ...approvedRegistrations.map((reg, index) =>
-        [
-          index + 1,
-          `${reg.apellido || ''}, ${reg.nombre || ''}`,
-          reg.dni || '',
-          reg.email || '',
-          reg.telefono || '',
-          reg.localidad || '',
-          reg.genero || '',
-          reg.talleRemera || '',
-          reg.fechaNacimiento || ''
-        ].join("\t")
-      ),
-    ].join("\n")
-
-    const blob = new Blob([csvContent], { type: "application/vnd.ms-excel;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.setAttribute("href", url)
-    link.setAttribute("download", `participantes_confirmados_${new Date().toISOString().split("T")[0]}.xls`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }
-
-  const exportApprovedToPDF = () => {
-    const approvedRegistrations = registrations
-      .filter(reg => reg.estado === "confirmado") 
-      .sort((a, b) => a.apellido?.localeCompare(b.apellido) || 0)
-
-    if (approvedRegistrations.length === 0) {
-      alert("No hay inscripciones confirmadas para exportar")
-      return
-    }
-
+    
+    // Verificar campos disponibles (para debugging)
+    console.log("Muestra de datos:", approvedRegistrations[0]);
+    
+    // Calcular totales por grupo de bici (comprobando diferentes posibles nombres de campo)
+    const gruposBici = {};
+    approvedRegistrations.forEach(reg => {
+      // Usar el nombre correcto del campo: grupoCiclistas
+      const grupoBici = reg.grupoCiclistas || reg.grupoBici || reg.grupo_bici || reg.grupobici || reg.grupo || "Sin especificar";
+      gruposBici[grupoBici] = (gruposBici[grupoBici] || 0) + 1;
+    });
+    
+    // Preparar resumen de grupos
+    const resumenGruposBici = Object.entries(gruposBici)
+      .map(([grupo, cantidad]) => `${grupo}: ${cantidad}`)
+      .join('<br>');
+      
     let htmlContent = `
     <!DOCTYPE html>
     <html>
     <head>
-        <meta charset="UTF-8">
-        <title>Lista de Participantes Confirmados</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            h1 { color: #333; text-align: center; }
-            .header-info { text-align: center; margin-bottom: 30px; color: #666; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
-            th { background-color: #f2f2f2; font-weight: bold; }
-            tr:nth-child(even) { background-color: #f9f9f9; }
-            .total { margin-top: 20px; font-weight: bold; text-align: right; }
-        </style>
+      <meta charset="UTF-8">
+      <title>Lista de Participantes Confirmados</title>
+      <style>
+        body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
+        h1, h2, h3 { color: #333; text-align: center; }
+        .header { text-align: center; margin-bottom: 15px; }
+        .summary { margin-bottom: 20px; border: 1px solid #ccc; padding: 10px; background-color: #f5f5f5; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 11px; }
+        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        @media print {
+          .no-break { page-break-inside: avoid; }
+          thead { display: table-header-group; }
+          tfoot { display: table-footer-group; }
+        }
+      </style>
     </head>
     <body>
-        <h1>Lista de Participantes Confirmados</h1>
-        <div class="header-info">
-            <p>Fecha de generación: ${new Date().toLocaleDateString()}</p>
-            <p>Total de participantes confirmados: ${approvedRegistrations.length}</p>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th>N°</th>
-                    <th>Apellido y Nombre</th>
-                    <th>DNI</th>
-                    <th>Email</th>
-                    <th>Teléfono</th>
-                    <th>Localidad</th>
-                    <th>Género</th>
-                    <th>Talle</th>
-                    <th>Fecha Nacimiento</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${approvedRegistrations.map((reg, index) => `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${reg.apellido || ''}, ${reg.nombre || ''}</td>
-                        <td>${reg.dni || ''}</td>
-                        <td>${reg.email || ''}</td>
-                        <td>${reg.telefono || ''}</td>
-                        <td>${reg.localidad || ''}</td>
-                        <td>${reg.genero || ''}</td>
-                        <td>${reg.talleRemera || ''}</td>
-                        <td>${reg.fechaNacimiento || ''}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
+      <div class="header">
+        <h2>Lista de Participantes</h2>
+        <p>Fecha de generación: ${new Date().toLocaleDateString()}</p>
+      </div>
+      <div class="summary">
+        <p>Total de participantes confirmados: <strong>${approvedRegistrations.length}</strong></p>
+        ${Object.keys(gruposBici).length > 0 ? 
+          `<p>Total por grupo de bici: ${resumenGruposBici}</p>` : 
+          '<p>No hay información de grupos de bici disponible</p>'}
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>N°</th>
+            <th>Apellido y Nombre</th>
+            <th>DNI</th>
+            <th>Teléfono</th>
+            <th>Tel. Emergencia</th>
+            <th>Grupo Sanguíneo</th>
+            <th>Grupo Bici</th>
+            <th>Localidad</th>
+            <th>Talle</th>
+            <th>Condiciones de Salud</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${approvedRegistrations.map((reg, index) => {
+            // Usar los nombres correctos de los campos
+            const grupoBici = reg.grupoCiclistas || reg.grupoBici || reg.grupo_bici || reg.grupobici || reg.grupo || '';
+            
+            // Manejar el campo de condiciones de salud que podría estar en formato de objeto
+            let condicionesDeSalud = '';
+            if (typeof reg.condicionesDeSalud === 'object' && reg.condicionesDeSalud !== null) {
+              condicionesDeSalud = reg.condicionesDeSalud.condicionesSalud || '';
+            } else if (typeof reg.condicionesSalud === 'object' && reg.condicionesSalud !== null) {
+              condicionesDeSalud = reg.condicionesSalud.condicionesSalud || '';
+            } else {
+              condicionesDeSalud = reg.condicionesDeSalud || reg.condicionesSalud || reg.condiciones_salud || reg.condicionSalud || reg.condiciones || '';
+            }
+            
+            const telefonoEmergencia = reg.telefonoEmergencia || reg.telefono_emergencia || reg.telEmergencia || reg.telefonoContacto || '';
+            const grupoSanguineo = reg.grupoSanguineo || reg.grupo_sanguineo || reg.gruposanguineo || reg.sangre || '';
+            
+            return `
+            <tr>
+              <td>${index + 1}</td>
+              <td>${reg.apellido || ''}, ${reg.nombre || ''}</td>
+              <td>${reg.dni || ''}</td>
+              <td>${reg.telefono || ''}</td>
+              <td>${telefonoEmergencia}</td>
+              <td>${grupoSanguineo}</td>
+              <td>${grupoBici}</td>
+              <td>${reg.localidad || ''}</td>
+              <td>${reg.talleRemera || ''}</td>
+              <td>${condicionesDeSalud}</td>
+            </tr>
+          `}).join('')}
+        </tbody>
+      </table>
     </body>
     </html>
-    `
-
-    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.setAttribute("href", url)
-    link.setAttribute("download", `participantes_confirmados_${new Date().toISOString().split("T")[0]}.html`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+    `;
+    
+    // Crear y descargar el archivo HTML (que puede ser convertido a PDF)
+    const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `participantes_confirmados_${new Date().toISOString().split("T")[0]}.html`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
-
   const getStatusBadge = (status) => {
     switch (status) {
       case "confirmado":
@@ -459,7 +406,6 @@ export default function AdminRegistrationsPage() {
         return <Badge className="bg-gray-500 hover:bg-gray-600">Pendiente</Badge>
     }
   }
-
   const getStatistics = () => {
     const total = filteredRegistrations.length
     const confirmados = filteredRegistrations.filter(reg => reg.estado === "confirmado").length
