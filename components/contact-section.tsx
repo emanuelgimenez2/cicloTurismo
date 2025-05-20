@@ -9,7 +9,7 @@ import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 
 // Datos predeterminados para cuando Firebase no está disponible
 const defaultContactData = {
-  phone: "+54 9 11 1234-5678",
+  phone: "+54 9 3456530720",
   address: "Federación, Entre Ríos, Argentina",
   mapUrl:
     "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d27326.25265830704!2d-57.94760566738281!3d-30.979729799999997!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95ae33e020a08b21%3A0x6a86cd05ca4d1ac9!2sFederaci%C3%B3n%2C%20Entre%20R%C3%ADos!5e0!3m2!1ses-419!2sar!4v1652364807261!5m2!1ses-419!2sar",
@@ -82,9 +82,9 @@ export default function ContactSection() {
             <div>
               <h3 className="font-medium">Teléfono</h3>
               <p className="text-gray-600">
-                <Link href={`tel:${contactData.phone.replace(/\D/g, "")}`} className="hover:text-violet-500">
-                  {contactData.phone}
-                </Link>
+              <Link href={`https://wa.me/${contactData.phone.replace(/\D/g, "")}`} className="hover:text-green-500">
+                <span>+54 9 3456 53-0720</span>
+              </Link>
               </p>
             </div>
           </div>

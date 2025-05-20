@@ -16,7 +16,7 @@ export default function ContactEditor() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [contactData, setContactData] = useState({
-    phone: "+54 9 11 1234-5678",
+    phone: "+54 9 3456530720",
     email: "contacto@cicloturismotermal.com",
     address: "Federación, Entre Ríos, Argentina",
     facebook: "https://facebook.com",
