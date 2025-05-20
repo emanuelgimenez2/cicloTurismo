@@ -25,7 +25,7 @@ const defaultSponsors = [
     id: "sponsor-3",
     name: "Pedal Power",
     logoUrl: "/sponsor 2.png?height=100&width=200",
-    url: "https://linktr.ee/serviteccdelu",
+    url: "https://www.instagram.com/pedal_powerbikersfederacion_er",
   },
   {
     id: "sponsor-4",
