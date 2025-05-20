@@ -17,9 +17,9 @@ const defaultBenefits = [
   { id: "8", text: "Vehículo de apoyo" },
 ]
 
-// Datos del evento - Actualicé la fecha al 21 de junio
+// Datos del evento 
 const eventData = [
-  { icon: Calendar, label: "Fecha", value: "21 de Junio" },
+  { icon: Calendar, label: "Fecha", value: "12 de Octubre" },
   { icon: Route, label: "Distancia", value: "50 KM caminos rurales" },
   { icon: MapPin, label: "Ubicación", value: "Federación, Entre Ríos, Argentina" },
   { icon: TrendingUp, label: "Nivel", value: "Intermedio Avanzado" },
