@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { auth } from "@/lib/firebase/firebase-config"
 import { signOut } from "firebase/auth"
 import { useToast } from "@/components/ui/use-toast"
-import { LayoutDashboard, Users, FileEdit, Settings, LogOut, Menu, X } from "lucide-react"
+import { LayoutDashboard, Users, FileEdit, Settings, LogOut, Menu, X, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
@@ -33,11 +33,21 @@ const navItems = [
   },
 ]
 
-export default function AdminSidebar() {
+export default function AdminNavbar() {
   const pathname = usePathname()
   const { toast } = useToast()
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [isMobileOpen, setIsMobileOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  // Add scroll event listener
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10)
+    }
+    
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   const handleSignOut = async () => {
     try {
@@ -53,75 +63,104 @@ export default function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile sidebar toggle */}
-      <div className="fixed top-4 left-4 z-50 md:hidden">
-        <Button variant="outline" size="icon" onClick={() => setIsMobileOpen(!isMobileOpen)} className="bg-white">
-          {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
-      </div>
+      <header className={cn(
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-200",
+        scrolled ? "bg-white shadow-md py-2" : "bg-white/90 backdrop-blur-sm py-3"
+      )}>
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center">
+              <h2 className="font-bold text-xl bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
+                Cicloturismo
+              </h2>
+            </div>
 
-      {/* Mobile sidebar overlay */}
-      {isMobileOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={() => setIsMobileOpen(false)} />
-      )}
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center space-x-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center px-3 py-2 rounded-md transition-colors text-sm font-medium",
+                    pathname === item.href
+                      ? "bg-gradient-to-r from-pink-100 to-blue-100 text-pink-700"
+                      : "text-gray-700 hover:bg-gray-100"
+                  )}
+                >
+                  <span className="flex items-center">
+                    {item.icon}
+                    <span className="ml-2">{item.title}</span>
+                  </span>
+                </Link>
+              ))}
+              
+              <Button
+                variant="ghost"
+                className="ml-2 text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={handleSignOut}
+              >
+                <LogOut className="h-5 w-5 mr-2" />
+                <span>Cerrar sesión</span>
+              </Button>
+            </nav>
 
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed top-0 left-0 z-40 h-screen bg-white border-r transition-all duration-300 md:relative",
-          isCollapsed ? "w-[70px]" : "w-64",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
-        )}
-      >
-        <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-4 border-b">
-            <h2
-              className={cn(
-                "font-bold bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent transition-all",
-                isCollapsed ? "text-sm" : "text-xl",
-              )}
+            {/* Mobile menu button */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="md:hidden"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              {isCollapsed ? "CT" : "Cicloturismo"}
-            </h2>
-            <Button variant="ghost" size="icon" onClick={() => setIsCollapsed(!isCollapsed)} className="hidden md:flex">
-              <Menu className="h-5 w-5" />
+              {isMobileMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
+              )}
             </Button>
           </div>
+        </div>
 
-          <nav className="flex-1 p-4 space-y-2">
+        {/* Mobile Navigation */}
+        <div className={cn(
+          "md:hidden overflow-hidden transition-all duration-300 border-t",
+          isMobileMenuOpen ? "max-h-64" : "max-h-0"
+        )}>
+          <div className="container mx-auto px-4 py-2 flex flex-col space-y-1">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={() => setIsMobileOpen(false)}
+                onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
-                  "flex items-center space-x-2 px-3 py-2 rounded-md transition-colors",
+                  "flex items-center px-3 py-2 rounded-md transition-colors",
                   pathname === item.href
                     ? "bg-gradient-to-r from-pink-100 to-blue-100 text-pink-700"
-                    : "hover:bg-gray-100",
+                    : "text-gray-700 hover:bg-gray-100"
                 )}
               >
                 {item.icon}
-                {!isCollapsed && <span>{item.title}</span>}
+                <span className="ml-2">{item.title}</span>
               </Link>
             ))}
-          </nav>
-
-          <div className="p-4 border-t">
+            
             <Button
               variant="ghost"
-              className={cn(
-                "w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50",
-                isCollapsed && "justify-center",
-              )}
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
               onClick={handleSignOut}
             >
               <LogOut className="h-5 w-5 mr-2" />
-              {!isCollapsed && <span>Cerrar sesión</span>}
+              <span>Cerrar sesión</span>
             </Button>
           </div>
         </div>
-      </aside>
+      </header>
+      
+      {/* Content padding for fixed header */}
+      <div className="pt-16">
+        {/* Main content would go here */}
+      </div>
     </>
   )
 }
