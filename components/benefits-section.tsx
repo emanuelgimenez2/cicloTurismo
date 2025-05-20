@@ -1,7 +1,9 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
 import { Check, Calendar, MapPin, Clock, Route, Navigation, TrendingUp, Users } from "lucide-react"
+import Contador from "@/components/Contador" // Importamos el componente Contador
 
 // Datos predeterminados para cuando Firebase no está disponible
 const defaultBenefits = [
@@ -15,9 +17,9 @@ const defaultBenefits = [
   { id: "8", text: "Vehículo de apoyo" },
 ]
 
-// Datos del evento
+// Datos del evento - Actualicé la fecha al 21 de junio
 const eventData = [
-  { icon: Calendar, label: "Fecha", value: "12 de Octubre" },
+  { icon: Calendar, label: "Fecha", value: "21 de Junio" },
   { icon: Route, label: "Distancia", value: "50 KM caminos rurales" },
   { icon: MapPin, label: "Ubicación", value: "Federación, Entre Ríos, Argentina" },
   { icon: TrendingUp, label: "Nivel", value: "Intermedio Avanzado" },
@@ -30,7 +32,7 @@ const eventData = [
 
 export default function BenefitsSection() {
   const [benefits] = useState(defaultBenefits)
-
+  
   return (
     <div className="container mx-auto px-4 space-y-16">
       {/* Sección Datos del Evento */}
@@ -66,6 +68,10 @@ export default function BenefitsSection() {
           })}
         </div>
       </div>
+
+      {/* Insertamos el componente Contador aquí, entre ambas secciones 
+           Sin pasar la prop eventDate para que use la configuración interna */}
+      <Contador />
 
       {/* Sección Beneficios de la Inscripción */}
       <div>
