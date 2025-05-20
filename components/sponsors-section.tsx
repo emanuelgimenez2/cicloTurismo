@@ -13,7 +13,7 @@ const defaultSponsors = [
     id: "sponsor-1",
     name: "Indumentaria  Deportiva Personalizada",
     logoUrl: "/sponsor 1.jpg?height=100&width=200",
-    url: "#",
+    url: "www.instagram.com/induo.sport/",
   },
   {
     id: "sponsor-2",
@@ -25,7 +25,7 @@ const defaultSponsors = [
     id: "sponsor-3",
     name: "Pedal Power",
     logoUrl: "/sponsor 2.png?height=100&width=200",
-    url: "",
+    url: "https://linktr.ee/serviteccdelu",
   },
   {
     id: "sponsor-4",
