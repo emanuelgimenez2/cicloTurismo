@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { collection, addDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { db } from "@/lib/firebase/firebase-config";
+import { db, storage } from "@/lib/firebase/firebase-config";
 
 import {
   Select,
@@ -765,25 +765,15 @@ export default function RegistrationForm() {
                       </div>
                     </RadioGroup>
                   </div>
-
-                  <div className="space-y-2">
+  <div className="space-y-2">
                     <Label htmlFor="grupoCiclistas">Grupo de ciclistas</Label>
-
                     <Input
-                      list="gruposCiclistas"
                       id="grupoCiclistas"
                       name="grupoCiclistas"
                       value={formData.grupoCiclistas}
                       onChange={handleInputChange}
                       placeholder="Ej: Team Riders, Ciclistas del Sur..."
                     />
-
-                    <datalist id="gruposCiclistas">
-                      <option value="Team Riders" />
-                      <option value="Ciclistas del Sur" />
-                      <option value="Bike Explorers" />
-                      <option value="Pedal Power" />
-                    </datalist>
                   </div>
 
                   <div className="space-y-2">
