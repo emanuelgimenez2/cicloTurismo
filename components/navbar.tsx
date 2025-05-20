@@ -82,52 +82,80 @@ export default function Navbar() {
             <span className="hidden lg:inline">Cicloturismo Termal</span>
           </span>
         </Link>
-{/* Navegación Móvil (desde lg para abajo) */}
-<Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-  <SheetTrigger asChild className="lg:hidden">
-    <Button
-      variant="ghost"
-      size="icon"
-      className={cn("h-12 w-12 flex items-center justify-center", !isScrolled && "text-white")}
-    >
-      {/* Reemplazando el ícono Menu con barras personalizadas */}
-      <div className="flex flex-col justify-center items-center gap-1.5">
-        <div className={cn("w-7 h-1 rounded-full bg-current", !isScrolled ? "bg-white" : "bg-gray-800")}></div>
-        <div className={cn("w-7 h-1 rounded-full bg-current", !isScrolled ? "bg-white" : "bg-gray-800")}></div>
-        <div className={cn("w-7 h-1 rounded-full bg-current", !isScrolled ? "bg-white" : "bg-gray-800")}></div>
-      </div>
-      <span className="sr-only">Toggle menu</span>
-    </Button>
-  </SheetTrigger>
 
-  <SheetContent side="right" className="w-[300px] sm:w-[400px]">
-    <DialogTitle>
-      <VisuallyHidden>Menú de navegación</VisuallyHidden>
-    </DialogTitle>
-    <DialogDescription className="sr-only">
-      Navegación principal del sitio web, contiene enlaces a las secciones y formulario de inscripción.
-    </DialogDescription>
+        {/* Navegación Desktop (desde lg para arriba) */}
+        <nav className="hidden lg:flex items-center space-x-6">
+          {navItems.slice(1).map((item) => (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary",
+                isScrolled
+                  ? "text-gray-900"
+                  : "text-white drop-shadow-md hover:text-gray-200"
+              )}
+            >
+              {item.name}
+            </Link>
+          ))}
+          <Link href="/inscripcion">
+            <Button
+              className={cn(
+                "bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 hover:from-pink-600 hover:via-violet-600 hover:to-blue-600",
+                !isScrolled && "shadow-lg"
+              )}
+            >
+              Inscribirme
+            </Button>
+          </Link>
+        </nav>
 
-    <nav className="flex flex-col gap-4 mt-8">
-      {navItems.map((item) => (
-        <Link
-          key={item.name}
-          href={item.href}
-          onClick={() => setIsMobileMenuOpen(false)}
-          className="text-lg font-medium transition-colors hover:text-primary"
-        >
-          {item.name}
-        </Link>
-      ))}
-      <Link href="/inscripcion" onClick={() => setIsMobileMenuOpen(false)}>
-        <Button className="w-full bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 hover:from-pink-600 hover:via-violet-600 hover:to-blue-600">
-          Inscribirme
-        </Button>
-      </Link>
-    </nav>
-  </SheetContent>
-</Sheet>
+        {/* Navegación Móvil (desde lg para abajo) */}
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetTrigger asChild className="lg:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={cn("h-12 w-12 flex items-center justify-center", !isScrolled && "text-white")}
+            >
+              {/* Menú hamburguesa personalizado */}
+              <div className="flex flex-col justify-center items-center gap-1.5">
+                <div className={cn("w-7 h-1 rounded-full bg-current", !isScrolled ? "bg-white" : "bg-gray-800")}></div>
+                <div className={cn("w-7 h-1 rounded-full bg-current", !isScrolled ? "bg-white" : "bg-gray-800")}></div>
+                <div className={cn("w-7 h-1 rounded-full bg-current", !isScrolled ? "bg-white" : "bg-gray-800")}></div>
+              </div>
+              <span className="sr-only">Toggle menu</span>
+            </Button>
+          </SheetTrigger>
 
+          <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+            <DialogTitle>
+              <VisuallyHidden>Menú de navegación</VisuallyHidden>
+            </DialogTitle>
+            <DialogDescription className="sr-only">
+              Navegación principal del sitio web, contiene enlaces a las secciones y formulario de inscripción.
+            </DialogDescription>
+
+            <nav className="flex flex-col gap-4 mt-8">
+              {navItems.map((item) => (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="text-lg font-medium transition-colors hover:text-primary"
+                >
+                  {item.name}
+                </Link>
+              ))}
+              <Link href="/inscripcion" onClick={() => setIsMobileMenuOpen(false)}>
+                <Button className="w-full bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 hover:from-pink-600 hover:via-violet-600 hover:to-blue-600">
+                  Inscribirme
+                </Button>
+              </Link>
+            </nav>
+          </SheetContent>
+        </Sheet>
       </div>
     </header>
   )
