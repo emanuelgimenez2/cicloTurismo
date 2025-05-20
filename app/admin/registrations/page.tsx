@@ -276,13 +276,10 @@ const exportApprovedToPDF = () => {
       .filter(reg => reg.estado === "confirmado")
       .sort((a, b) => a.apellido?.localeCompare(b.apellido) || 0);
       
-    if (approvedRegistrations.length === 0) {
-      alert("No hay inscripciones confirmadas para exportar");
-      return;
-    }
+    
     
     // Verificar campos disponibles (para debugging)
-    console.log("Muestra de datos:", approvedRegistrations[0]);
+   
     
     // Calcular totales por grupo de bici (comprobando diferentes posibles nombres de campo)
     const gruposBici = {};
@@ -350,16 +347,28 @@ const exportApprovedToPDF = () => {
             // Usar los nombres correctos de los campos
             const grupoBici = reg.grupoCiclistas || reg.grupoBici || reg.grupo_bici || reg.grupobici || reg.grupo || '';
             
-            // Manejar el campo de condiciones de salud que podría estar en formato de objeto
-            let condicionesDeSalud = '';
-            if (typeof reg.condicionesDeSalud === 'object' && reg.condicionesDeSalud !== null) {
-              condicionesDeSalud = reg.condicionesDeSalud.condicionesSalud || '';
-            } else if (typeof reg.condicionesSalud === 'object' && reg.condicionesSalud !== null) {
-              condicionesDeSalud = reg.condicionesSalud.condicionesSalud || '';
-            } else {
-              condicionesDeSalud = reg.condicionesDeSalud || reg.condicionesSalud || reg.condiciones_salud || reg.condicionSalud || reg.condiciones || '';
-            }
-            
+     // Manejar el campo condicionSalud (puede ser string, objeto o JSON string)
+let condicionesDeSalud = '';
+
+if (reg.condicionSalud) {
+    // Caso 1: Si es un string que parece JSON (ej: `{"condicionSalud":"estoy bien"}`)
+    if (typeof reg.condicionSalud === 'string' && reg.condicionSalud.trim().startsWith('{')) {
+        try {
+            const parsed = JSON.parse(reg.condicionSalud);
+            condicionesDeSalud = parsed.condicionSalud || parsed.condicionesSalud || '';
+        } catch (e) {
+            condicionesDeSalud = reg.condicionSalud; // Si falla el parseo, se queda como string
+        }
+    }
+    // Caso 2: Si es un objeto directo (ej: `{ condicionSalud: "estoy bien" }`)
+    else if (typeof reg.condicionSalud === 'object') {
+        condicionesDeSalud = reg.condicionSalud.condicionSalud || reg.condicionSalud.condicionesSalud || '';
+    }
+    // Caso 3: Si es un string normal (ej: "estoy re biennnnnn :)")
+    else {
+        condicionesDeSalud = reg.condicionSalud;
+    }
+}
             const telefonoEmergencia = reg.telefonoEmergencia || reg.telefono_emergencia || reg.telEmergencia || reg.telefonoContacto || '';
             const grupoSanguineo = reg.grupoSanguineo || reg.grupo_sanguineo || reg.gruposanguineo || reg.sangre || '';
             
