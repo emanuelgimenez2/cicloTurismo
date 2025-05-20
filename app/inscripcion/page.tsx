@@ -759,15 +759,24 @@ export default function RegistrationForm() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="grupoCiclistas">Grupo de ciclistas</Label>
-                    <Input
-                      id="grupoCiclistas"
-                      name="grupoCiclistas"
-                      value={formData.grupoCiclistas}
-                      onChange={handleInputChange}
-                      placeholder="Ej: Team Riders, Ciclistas del Sur..."
-                    />
-                  </div>
+  <Label htmlFor="grupoCiclistas">Grupo de ciclistas</Label>
+  
+  <Input
+    list="gruposCiclistas"
+    id="grupoCiclistas"
+    name="grupoCiclistas"
+    value={formData.grupoCiclistas}
+    onChange={handleInputChange}
+    placeholder="Ej: Team Riders, Ciclistas del Sur..."
+  />
+  
+  <datalist id="gruposCiclistas">
+    <option value="Team Riders" />
+    <option value="Ciclistas del Sur" />
+    <option value="Bike Explorers" />
+    <option value="Pedal Power" />
+  </datalist>
+</div>
 
                   <div className="space-y-2">
                     <Label htmlFor="talleRemera">Talle de remera</Label>
