@@ -528,14 +528,31 @@ export default function RegistrationForm() {
       else if (!validateName(formData.nombre)) errors.nombre = "El nombre solo debe contener letras"
 
       if (!formData.apellido) errors.apellido = "El apellido es obligatorio"
-      else if (!validateName(formData.apellido)) errors.apellido = "El nombre solo debe contener letras"
+      else if (!validateName(formData.apellido)) errors.apellido = "El apellido solo debe contener letras"
 
       if (!formData.dni) errors.dni = "El DNI es obligatorio"
       else if (!validateDNI(formData.dni)) errors.dni = "El DNI debe tener 7-8 dígitos"
 
-      if (formData.email && !validateEmail(formData.email)) errors.email = "Formato de email inválido"
+      if (!formData.fechaNacimiento) errors.fechaNacimiento = "La fecha de nacimiento es obligatoria"
 
-      if (formData.telefono && !validatePhone(formData.telefono)) errors.telefono = "Formato de teléfono inválido"
+      if (!formData.localidad) errors.localidad = "La localidad es obligatoria"
+
+      if (!formData.email) errors.email = "El email es obligatorio"
+      else if (!validateEmail(formData.email)) errors.email = "Formato de email inválido"
+
+      if (!formData.telefono) errors.telefono = "El teléfono es obligatorio"
+      else if (!validatePhone(formData.telefono)) errors.telefono = "Formato de teléfono inválido"
+
+      if (!formData.telefonoEmergencia) errors.telefonoEmergencia = "El teléfono de emergencia es obligatorio"
+      else if (!validatePhone(formData.telefonoEmergencia)) errors.telefonoEmergencia = "Formato de teléfono inválido"
+
+      if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
+
+      if (!formData.genero) errors.genero = "El género es obligatorio"
+
+      if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
+
+      if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
     } else if (step === 3) {
       if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
 
@@ -563,14 +580,31 @@ export default function RegistrationForm() {
     else if (!validateName(formData.nombre)) errors.nombre = "El nombre solo debe contener letras"
 
     if (!formData.apellido) errors.apellido = "El apellido es obligatorio"
-    else if (!validateName(formData.apellido)) errors.apellido = "El nombre solo debe contener letras"
+    else if (!validateName(formData.apellido)) errors.apellido = "El apellido solo debe contener letras"
 
     if (!formData.dni) errors.dni = "El DNI es obligatorio"
     else if (!validateDNI(formData.dni)) errors.dni = "El DNI debe tener 7-8 dígitos"
 
-    if (formData.email && !validateEmail(formData.email)) errors.email = "Formato de email inválido"
+    if (!formData.fechaNacimiento) errors.fechaNacimiento = "La fecha de nacimiento es obligatoria"
 
-    if (formData.telefono && !validatePhone(formData.telefono)) errors.telefono = "Formato de teléfono inválido"
+    if (!formData.localidad) errors.localidad = "La localidad es obligatoria"
+
+    if (!formData.email) errors.email = "El email es obligatorio"
+    else if (!validateEmail(formData.email)) errors.email = "Formato de email inválido"
+
+    if (!formData.telefono) errors.telefono = "El teléfono es obligatorio"
+    else if (!validatePhone(formData.telefono)) errors.telefono = "Formato de teléfono inválido"
+
+    if (!formData.telefonoEmergencia) errors.telefonoEmergencia = "El teléfono de emergencia es obligatorio"
+    else if (!validatePhone(formData.telefonoEmergencia)) errors.telefonoEmergencia = "Formato de teléfono inválido"
+
+    if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
+
+    if (!formData.genero) errors.genero = "El género es obligatorio"
+
+    if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
+
+    if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
 
     if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
 
@@ -751,14 +785,22 @@ export default function RegistrationForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="fechaNacimiento">Fecha de nacimiento</Label>
+                  <Label htmlFor="fechaNacimiento" className="flex justify-between">
+                    <span>Fecha de nacimiento *</span>
+                    {fieldErrors.fechaNacimiento && (
+                      <span className="text-red-500 text-xs">{fieldErrors.fechaNacimiento}</span>
+                    )}
+                  </Label>
                   <DatePicker date={birthDate} setDate={setBirthDate} placeholder="Seleccionar fecha" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="localidad" className="flex items-center gap-1">
-                    <MapPin className="h-3.5 w-3.5 text-gray-500" />
-                    <span>Localidad</span>
+                  <Label htmlFor="localidad" className="flex justify-between">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5 text-gray-500" />
+                      <span>Localidad *</span>
+                    </span>
+                    {fieldErrors.localidad && <span className="text-red-500 text-xs">{fieldErrors.localidad}</span>}
                   </Label>
                   <Input
                     id="localidad"
@@ -773,7 +815,7 @@ export default function RegistrationForm() {
                   <Label htmlFor="email" className="flex justify-between items-center">
                     <span className="flex items-center gap-1">
                       <Mail className="h-3.5 w-3.5 text-gray-500" />
-                      Email
+                      Email *
                     </span>
                     {fieldErrors.email && <span className="text-red-500 text-xs">{fieldErrors.email}</span>}
                   </Label>
@@ -792,7 +834,7 @@ export default function RegistrationForm() {
                   <Label htmlFor="telefono" className="flex justify-between items-center">
                     <span className="flex items-center gap-1">
                       <Phone className="h-3.5 w-3.5 text-gray-500" />
-                      Teléfono
+                      Teléfono *
                     </span>
                     {fieldErrors.telefono && <span className="text-red-500 text-xs">{fieldErrors.telefono}</span>}
                   </Label>
@@ -810,7 +852,7 @@ export default function RegistrationForm() {
                   <Label htmlFor="telefonoEmergencia" className="flex justify-between items-center">
                     <span className="flex items-center gap-1">
                       <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                      Teléfono de emergencia
+                      Teléfono de emergencia *
                     </span>
                     {fieldErrors.telefonoEmergencia && (
                       <span className="text-red-500 text-xs">{fieldErrors.telefonoEmergencia}</span>
@@ -827,9 +869,14 @@ export default function RegistrationForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="grupoSanguineo" className="flex items-center gap-1">
-                    <Heart className="h-3.5 w-3.5 text-red-500" />
-                    <span>Grupo sanguíneo</span>
+                  <Label htmlFor="grupoSanguineo" className="flex justify-between">
+                    <span className="flex items-center gap-1">
+                      <Heart className="h-3.5 w-3.5 text-red-500" />
+                      <span>Grupo sanguíneo *</span>
+                    </span>
+                    {fieldErrors.grupoSanguineo && (
+                      <span className="text-red-500 text-xs">{fieldErrors.grupoSanguineo}</span>
+                    )}
                   </Label>
                   <Select
                     name="grupoSanguineo"
@@ -854,7 +901,10 @@ export default function RegistrationForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="genero">Género</Label>
+                  <Label htmlFor="genero" className="flex justify-between">
+                    <span>Género *</span>
+                    {fieldErrors.genero && <span className="text-red-500 text-xs">{fieldErrors.genero}</span>}
+                  </Label>
                   <RadioGroup
                     value={formData.genero}
                     onValueChange={(value) => handleSelectChange("genero", value)}
@@ -882,9 +932,14 @@ export default function RegistrationForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="grupoCiclistas" className="flex items-center gap-1">
-                    <Users className="h-3.5 w-3.5 text-indigo-500" />
-                    <span>Grupo de ciclistas</span>
+                  <Label htmlFor="grupoCiclistas" className="flex justify-between">
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3.5 w-3.5 text-indigo-500" />
+                      <span>Grupo de ciclistas *</span>
+                    </span>
+                    {fieldErrors.grupoCiclistas && (
+                      <span className="text-red-500 text-xs">{fieldErrors.grupoCiclistas}</span>
+                    )}
                   </Label>
 
                   <Popover>
@@ -935,9 +990,12 @@ export default function RegistrationForm() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="talleRemera" className="flex items-center gap-1">
-                    <Shirt className="h-3.5 w-3.5 text-purple-500" />
-                    <span>Talle de remera</span>
+                  <Label htmlFor="talleRemera" className="flex justify-between">
+                    <span className="flex items-center gap-1">
+                      <Shirt className="h-3.5 w-3.5 text-purple-500" />
+                      <span>Talle de remera *</span>
+                    </span>
+                    {fieldErrors.talleRemera && <span className="text-red-500 text-xs">{fieldErrors.talleRemera}</span>}
                   </Label>
                   <Select
                     name="talleRemera"
