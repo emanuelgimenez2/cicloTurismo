@@ -802,10 +802,10 @@ export default function AdminRegistrationsPage() {
           transition={{ duration: 0.5 }}
         >
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            Administración de Inscripciones
+            Inscripciones
           </h1>
           <p className="text-muted-foreground mt-2 text-center max-w-xl">
-            Gestión de participantes para el evento {new Date().getFullYear()}
+            Gestión de participantes {new Date().getFullYear()}
           </p>
         </motion.div>
 

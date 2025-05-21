@@ -37,7 +37,6 @@ import {
   PieChartIcon,
   Clock,
   CalendarDays,
-  Download,
   RefreshCw,
 } from "lucide-react"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
@@ -195,27 +194,49 @@ export default function AdminDashboardPage() {
       validRegistrations.forEach((reg) => {
         try {
           if (reg.condicionSalud) {
-            let condicionSalud: string | CondicionSalud = reg.condicionSalud
-
-            if (typeof condicionSalud === "string") {
+            // Si es un string, intentamos parsearlo como JSON
+            if (typeof reg.condicionSalud === "string") {
               try {
-                condicionSalud = JSON.parse(condicionSalud) as CondicionSalud
+                // Si es un string JSON válido
+                if (reg.condicionSalud.trim().startsWith("{")) {
+                  const parsedCondicion = JSON.parse(reg.condicionSalud)
+
+                  // Verificamos si tiene alguna condición médica real
+                  if (
+                    parsedCondicion.tieneAlergias === true ||
+                    parsedCondicion.tomaMedicamentos === true ||
+                    parsedCondicion.tieneProblemasSalud === true ||
+                    (parsedCondicion.condicionSalud && parsedCondicion.condicionSalud.trim() !== "") ||
+                    (parsedCondicion.condicionesSalud && parsedCondicion.condicionesSalud.trim() !== "")
+                  ) {
+                    withHealthConditions++
+                  }
+                } else if (reg.condicionSalud.trim() !== "") {
+                  // Si es un string no vacío y no es JSON, lo consideramos como condición
+                  withHealthConditions++
+                }
               } catch (e) {
-                withHealthConditions++
-                return
+                // Si falla el parsing pero hay texto, lo consideramos como condición
+                if (reg.condicionSalud.trim() !== "") {
+                  withHealthConditions++
+                }
               }
             }
-
-            if (typeof condicionSalud === "object" && condicionSalud !== null) {
+            // Si es un objeto
+            else if (typeof reg.condicionSalud === "object" && reg.condicionSalud !== null) {
               if (
-                condicionSalud.tieneAlergias === true ||
-                condicionSalud.tomaMedicamentos === true ||
-                condicionSalud.tieneProblemasSalud === true
+                reg.condicionSalud.tieneAlergias === true ||
+                reg.condicionSalud.tomaMedicamentos === true ||
+                reg.condicionSalud.tieneProblemasSalud === true ||
+                (reg.condicionSalud.condicionSalud &&
+                  reg.condicionSalud.condicionSalud.trim &&
+                  reg.condicionSalud.condicionSalud.trim() !== "") ||
+                (reg.condicionSalud.condicionesSalud &&
+                  reg.condicionSalud.condicionesSalud.trim &&
+                  reg.condicionSalud.condicionesSalud.trim() !== "")
               ) {
                 withHealthConditions++
               }
-            } else {
-              withHealthConditions++
             }
           }
         } catch (error) {
@@ -453,7 +474,7 @@ export default function AdminDashboardPage() {
             Panel de Administración
           </h1>
           <p className="text-muted-foreground mt-2 text-center max-w-xl">
-            Estadísticas y análisis de inscripciones para el evento {new Date().getFullYear()}
+            Estadísticas y análisis {new Date().getFullYear()}
           </p>
         </motion.div>
 
@@ -500,18 +521,11 @@ export default function AdminDashboardPage() {
                 <SelectItem value="quarter">Último trimestre</SelectItem>
               </SelectContent>
             </Select>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
-            >
-              <Download className="h-4 w-4" /> Exportar
-            </Button>
           </div>
         </motion.div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -519,7 +533,7 @@ export default function AdminDashboardPage() {
           >
             <Card className="overflow-hidden border border-indigo-100 shadow-sm hover:shadow-md transition-all duration-300 h-full">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-indigo-600"></div>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-1 pt-3 px-3">
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-sm font-medium text-indigo-900">Inscripciones Activas</CardTitle>
@@ -530,7 +544,7 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 pb-3">
                 <div className="flex items-baseline gap-1">
                   <div className="text-3xl font-bold text-indigo-900">{stats.validRegistrations}</div>
                   <span className="text-sm text-indigo-700">/ {eventSettings?.cupoMaximo || 300}</span>
@@ -571,7 +585,7 @@ export default function AdminDashboardPage() {
           >
             <Card className="overflow-hidden border border-pink-100 shadow-sm hover:shadow-md transition-all duration-300 h-full">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-pink-600"></div>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-1 pt-3 px-3">
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-sm font-medium text-pink-900">Condiciones Médicas</CardTitle>
@@ -582,7 +596,7 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 pb-3">
                 <div className="flex items-baseline gap-1">
                   <div className="text-3xl font-bold text-pink-900">{stats.withHealthConditions}</div>
                   <span className="text-sm text-pink-700">participantes</span>
@@ -616,7 +630,7 @@ export default function AdminDashboardPage() {
           >
             <Card className="overflow-hidden border border-purple-100 shadow-sm hover:shadow-md transition-all duration-300 h-full">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-purple-600"></div>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-1 pt-3 px-3">
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-sm font-medium text-purple-900">Talle más solicitado</CardTitle>
@@ -627,7 +641,7 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 pb-3">
                 <div className="flex items-baseline gap-1">
                   <div className="text-3xl font-bold text-purple-900">{mostRequestedSize}</div>
                   <span className="text-sm text-purple-700">talle</span>
@@ -661,7 +675,7 @@ export default function AdminDashboardPage() {
           >
             <Card className="overflow-hidden border border-emerald-100 shadow-sm hover:shadow-md transition-all duration-300 h-full">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-1 pt-3 px-3">
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-sm font-medium text-emerald-900">Cupos Disponibles</CardTitle>
@@ -672,7 +686,7 @@ export default function AdminDashboardPage() {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-3 pb-3">
                 <div className="flex items-baseline gap-1">
                   <div className="text-3xl font-bold text-emerald-900">
                     {(eventSettings?.cupoMaximo || 300) - stats.validRegistrations}
