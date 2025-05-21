@@ -44,6 +44,7 @@ import {
   ZoomOut,
   RotateCw,
   Download,
+  Menu,
 } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -95,7 +96,8 @@ export default function AdminRegistrationsPage() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [refreshing, setRefreshing] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
+  const [itemsPerPage, setItemsPerPage] = useState(15) // Cambiado a 15 por defecto
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const topRef = useRef(null)
 
   const [sortField, setSortField] = useState("fechaInscripcion")
@@ -749,7 +751,7 @@ export default function AdminRegistrationsPage() {
         <div className="max-w-7xl mx-auto">
           <div ref={topRef} className="flex flex-col items-center justify-center mt-10 mb-8 px-4">
             <h1 className="text-3xl font-bold tracking-tight text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Administración de Inscripciones
+              Inscripciones
             </h1>
             <p className="text-muted-foreground mt-2 text-center">Cargando datos...</p>
           </div>
@@ -816,7 +818,7 @@ export default function AdminRegistrationsPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <Link href="/">
               <Button
                 variant="outline"
@@ -836,41 +838,124 @@ export default function AdminRegistrationsPage() {
               disabled={refreshing}
             >
               <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-              {refreshing ? "Actualizando..." : "Actualizar datos"}
+              <span className="hidden sm:inline">{refreshing ? "Actualizando..." : "Actualizar datos"}</span>
+              <span className="sm:hidden">{refreshing ? "..." : "Actualizar"}</span>
             </Button>
           </div>
-          <div className="flex items-center gap-2">
-            <Select value={yearFilter} onValueChange={setYearFilter}>
-              <SelectTrigger className="w-[180px] bg-white">
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4" />
-                  <SelectValue placeholder="Año" />
-                </div>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos los años</SelectItem>
-                {availableYears.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
-              onClick={exportApprovedToPDF}
-              disabled={registrations.filter((r) => r.estado === "confirmado").length === 0}
-            >
-              <FileText className="h-4 w-4" /> Exportar PDF
-            </Button>
-           
+
+          {/* Menú desplegable para móviles */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative w-full sm:w-auto">
+              <div className="sm:hidden w-full">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full flex justify-between items-center"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                >
+                  <span>Opciones</span>
+                  <Menu className="h-4 w-4 ml-2" />
+                </Button>
+
+                {mobileMenuOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-md shadow-lg z-50 border">
+                    <div className="p-2 space-y-2">
+                      <Select
+                        value={yearFilter}
+                        onValueChange={(value) => {
+                          setYearFilter(value)
+                          setMobileMenuOpen(false)
+                        }}
+                      >
+                        <SelectTrigger className="w-full bg-white">
+                          <div className="flex items-center gap-2">
+                            <CalendarDays className="h-4 w-4" />
+                            <SelectValue placeholder="Año" />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Todos los años</SelectItem>
+                          {availableYears.map((year) => (
+                            <SelectItem key={year} value={year.toString()}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
+                        onClick={() => {
+                          exportApprovedToPDF()
+                          setMobileMenuOpen(false)
+                        }}
+                        disabled={registrations.filter((r) => r.estado === "confirmado").length === 0}
+                      >
+                        <FileText className="h-4 w-4" /> Exportar PDF
+                      </Button>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
+                        onClick={() => {
+                          exportToExcel()
+                          setMobileMenuOpen(false)
+                        }}
+                        disabled={registrations.filter((r) => r.estado === "confirmado").length === 0}
+                      >
+                        <Download className="h-4 w-4" /> Exportar Excel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Opciones para pantallas más grandes */}
+            <div className="hidden sm:flex items-center gap-2">
+              <Select value={yearFilter} onValueChange={setYearFilter}>
+                <SelectTrigger className="w-[180px] bg-white">
+                  <div className="flex items-center gap-2">
+                    <CalendarDays className="h-4 w-4" />
+                    <SelectValue placeholder="Año" />
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los años</SelectItem>
+                  {availableYears.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
+                onClick={exportApprovedToPDF}
+                disabled={registrations.filter((r) => r.estado === "confirmado").length === 0}
+              >
+                <FileText className="h-4 w-4" /> Exportar PDF
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
+                onClick={exportToExcel}
+                disabled={registrations.filter((r) => r.estado === "confirmado").length === 0}
+              >
+                <Download className="h-4 w-4" /> Exportar Excel
+              </Button>
+            </div>
           </div>
         </motion.div>
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-4 mb-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -881,8 +966,8 @@ export default function AdminRegistrationsPage() {
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-sm font-medium text-indigo-900">Total Inscripciones</CardTitle>
-                    <CardDescription>Todas las inscripciones</CardDescription>
+                    <CardTitle className="text-sm font-medium text-indigo-900">Total</CardTitle>
+                    <CardDescription className="text-xs">Inscripciones</CardDescription>
                   </div>
                   <div className="p-2 rounded-full bg-indigo-50">
                     <Users className="h-5 w-5 text-indigo-600" />
@@ -891,8 +976,8 @@ export default function AdminRegistrationsPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-baseline gap-1">
-                  <div className="text-3xl font-bold text-indigo-900">{stats.total}</div>
-                  <span className="text-sm text-indigo-700">inscripciones</span>
+                  <div className="text-2xl md:text-3xl font-bold text-indigo-900">{stats.total}</div>
+                  <span className="text-xs md:text-sm text-indigo-700">inscripciones</span>
                 </div>
 
                 <div className="mt-3">
@@ -923,7 +1008,7 @@ export default function AdminRegistrationsPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-sm font-medium text-emerald-900">Confirmados</CardTitle>
-                    <CardDescription>Inscripciones aprobadas</CardDescription>
+                    <CardDescription className="text-xs">Aprobados</CardDescription>
                   </div>
                   <div className="p-2 rounded-full bg-emerald-50">
                     <CheckCircle className="h-5 w-5 text-emerald-600" />
@@ -932,8 +1017,8 @@ export default function AdminRegistrationsPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-baseline gap-1">
-                  <div className="text-3xl font-bold text-emerald-900">{stats.confirmados}</div>
-                  <span className="text-sm text-emerald-700">participantes</span>
+                  <div className="text-2xl md:text-3xl font-bold text-emerald-900">{stats.confirmados}</div>
+                  <span className="text-xs md:text-sm text-emerald-700">participantes</span>
                 </div>
 
                 <div className="mt-3">
@@ -962,7 +1047,7 @@ export default function AdminRegistrationsPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-sm font-medium text-amber-900">Pendientes</CardTitle>
-                    <CardDescription>Inscripciones en revisión</CardDescription>
+                    <CardDescription className="text-xs">En revisión</CardDescription>
                   </div>
                   <div className="p-2 rounded-full bg-amber-50">
                     <Clock className="h-5 w-5 text-amber-600" />
@@ -971,8 +1056,8 @@ export default function AdminRegistrationsPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-baseline gap-1">
-                  <div className="text-3xl font-bold text-amber-900">{stats.pendientes}</div>
-                  <span className="text-sm text-amber-700">por revisar</span>
+                  <div className="text-2xl md:text-3xl font-bold text-amber-900">{stats.pendientes}</div>
+                  <span className="text-xs md:text-sm text-amber-700">por revisar</span>
                 </div>
 
                 <div className="mt-3">
@@ -1001,7 +1086,7 @@ export default function AdminRegistrationsPage() {
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle className="text-sm font-medium text-rose-900">Rechazados</CardTitle>
-                    <CardDescription>Inscripciones no aprobadas</CardDescription>
+                    <CardDescription className="text-xs">No aprobados</CardDescription>
                   </div>
                   <div className="p-2 rounded-full bg-rose-50">
                     <XCircle className="h-5 w-5 text-rose-600" />
@@ -1010,8 +1095,8 @@ export default function AdminRegistrationsPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex items-baseline gap-1">
-                  <div className="text-3xl font-bold text-rose-900">{stats.rechazados}</div>
-                  <span className="text-sm text-rose-700">rechazados</span>
+                  <div className="text-2xl md:text-3xl font-bold text-rose-900">{stats.rechazados}</div>
+                  <span className="text-xs md:text-sm text-rose-700">rechazados</span>
                 </div>
 
                 <div className="mt-3">
@@ -1052,14 +1137,14 @@ export default function AdminRegistrationsPage() {
                       : ""}
                   </CardDescription>
                 </div>
-                <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
                   <div className="relative flex-1">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Buscar por nombre, apellido, DNI, email..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-8 bg-white"
+                      className="pl-8 bg-white w-full"
                     />
                   </div>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -1079,7 +1164,7 @@ export default function AdminRegistrationsPage() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-0 overflow-x-auto">
               {filteredRegistrations.length > 0 ? (
                 <div className="rounded-md">
                   <Table>
@@ -1215,7 +1300,7 @@ export default function AdminRegistrationsPage() {
                               className="hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                             >
                               <Eye className="h-4 w-4 mr-1" />
-                              Ver
+                              <span className="hidden sm:inline">Ver</span>
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -1249,11 +1334,11 @@ export default function AdminRegistrationsPage() {
               )}
             </CardContent>
             {filteredRegistrations.length > itemsPerPage && (
-              <CardFooter className="border-t bg-gray-50/50 py-4 flex justify-between items-center">
-                <div className="text-sm text-muted-foreground">
+              <CardFooter className="border-t bg-gray-50/50 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div className="text-sm text-muted-foreground order-2 sm:order-1">
                   Página {currentPage} de {totalPages}
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 order-1 sm:order-2">
                   <Button
                     variant="outline"
                     size="sm"
@@ -1263,35 +1348,37 @@ export default function AdminRegistrationsPage() {
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    // Show pages around current page
-                    let pageNum
-                    if (totalPages <= 5) {
-                      pageNum = i + 1
-                    } else if (currentPage <= 3) {
-                      pageNum = i + 1
-                    } else if (currentPage >= totalPages - 2) {
-                      pageNum = totalPages - 4 + i
-                    } else {
-                      pageNum = currentPage - 2 + i
-                    }
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      // Show pages around current page
+                      let pageNum
+                      if (totalPages <= 5) {
+                        pageNum = i + 1
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i
+                      } else {
+                        pageNum = currentPage - 2 + i
+                      }
 
-                    return (
-                      <Button
-                        key={i}
-                        variant={currentPage === pageNum ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => paginate(pageNum)}
-                        className={`h-8 w-8 p-0 ${
-                          currentPage === pageNum
-                            ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-                            : "hover:bg-indigo-50 hover:text-indigo-600"
-                        }`}
-                      >
-                        {pageNum}
-                      </Button>
-                    )
-                  })}
+                      return (
+                        <Button
+                          key={i}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => paginate(pageNum)}
+                          className={`h-8 w-8 p-0 ${
+                            currentPage === pageNum
+                              ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+                              : "hover:bg-indigo-50 hover:text-indigo-600"
+                          }`}
+                        >
+                          {pageNum}
+                        </Button>
+                      )
+                    })}
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
@@ -1302,27 +1389,33 @@ export default function AdminRegistrationsPage() {
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
-                <Select
-                  value={itemsPerPage.toString()}
-                  onValueChange={(value) => {
-                    setItemsPerPage(Number(value))
-                    setCurrentPage(1)
-                  }}
-                >
-                  <SelectTrigger className="w-[130px] h-8">
-                    <SelectValue placeholder="Filas por página" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10 por página</SelectItem>
-                    <SelectItem value="25">25 por página</SelectItem>
-                    <SelectItem value="50">50 por página</SelectItem>
-                    <SelectItem value="100">100 por página</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="order-3 sm:order-3 w-full sm:w-auto">
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={(value) => {
+                      setItemsPerPage(Number(value))
+                      setCurrentPage(1)
+                    }}
+                  >
+                    <SelectTrigger className="w-full sm:w-[130px] h-8">
+                      <SelectValue placeholder="Filas por página" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10 por página</SelectItem>
+                      <SelectItem value="15">15 por página</SelectItem>
+                      <SelectItem value="25">25 por página</SelectItem>
+                      <SelectItem value="50">50 por página</SelectItem>
+                      <SelectItem value="100">100 por página</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </CardFooter>
             )}
           </Card>
         </motion.div>
+
+        {/* Espacio adicional al final de la página */}
+        <div className="h-24 md:h-32"></div>
 
         {/* Scroll to top button */}
         <div className="fixed bottom-8 right-8 z-50">
