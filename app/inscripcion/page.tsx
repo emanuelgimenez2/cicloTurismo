@@ -334,6 +334,7 @@ export default function RegistrationForm() {
   const [currentStep, setCurrentStep] = useState(1)
   const topRef = useRef(null)
   const [birthDate, setBirthDate] = useState(undefined)
+  const [grupoCiclistasOpen, setGrupoCiclistasOpen] = useState(false)
 
   const totalSteps = 3
 
@@ -942,7 +943,7 @@ export default function RegistrationForm() {
                     )}
                   </Label>
 
-                  <Popover>
+                  <Popover open={grupoCiclistasOpen} onOpenChange={setGrupoCiclistasOpen}>
                     <PopoverTrigger asChild>
                       <div className="relative">
                         <Input
@@ -967,7 +968,10 @@ export default function RegistrationForm() {
                             variant="ghost"
                             size="sm"
                             className="justify-start font-normal text-left h-auto py-1.5"
-                            onClick={() => handleSelectChange("grupoCiclistas", "No pertenezco a ninguno")}
+                            onClick={() => {
+                              handleSelectChange("grupoCiclistas", "No pertenezco a ninguno")
+                              setGrupoCiclistasOpen(false)
+                            }}
                           >
                             No pertenezco a ninguno
                           </Button>
@@ -977,7 +981,10 @@ export default function RegistrationForm() {
                               variant="ghost"
                               size="sm"
                               className="justify-start font-normal text-left h-auto py-1.5"
-                              onClick={() => handleSelectChange("grupoCiclistas", grupo)}
+                              onClick={() => {
+                                handleSelectChange("grupoCiclistas", grupo)
+                                setGrupoCiclistasOpen(false)
+                              }}
                             >
                               {grupo}
                             </Button>
