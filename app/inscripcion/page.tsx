@@ -445,7 +445,8 @@ export default function RegistrationForm() {
   }
 
   const validateDNI = (value) => {
-    return /^\d{7,8}$/.test(value)
+    // Permitir cualquier número de dígitos (mínimo 1)
+    return /^\d+$/.test(value)
   }
 
   const validateEmail = (value) => {
@@ -511,6 +512,18 @@ export default function RegistrationForm() {
   const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (file) {
+      // Verificar el tamaño del archivo (10MB = 10 * 1024 * 1024 bytes)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: "Archivo demasiado grande",
+          description: "Por favor ingrese una foto de comprobante de menos de 10MB",
+          variant: "destructive",
+        })
+        // Limpiar el input de archivo
+        e.target.value = ""
+        return
+      }
+
       setFormData({
         ...formData,
         comprobantePago: file,
@@ -1341,9 +1354,9 @@ export default function RegistrationForm() {
                   Información importante
                 </h4>
                 <ul className="text-green-700 text-sm space-y-1">
-                  <li>• Fecha del evento: 12 de Octubrre de 2025</li>
-                  <li>• Lugar de acreditación: A Confirmar</li>
-                  <li>• Horario de acreditacion: 7:00 AM</li>
+                  <li>• Fecha del evento: 12 de Octubre de 2025</li>
+                  <li>• Lugar de acreditación: A confirmar</li>
+                  <li>• Horario de acreditación: 7:00 AM</li>
                   <li>• Horario de salida: 8:30 AM</li>
                 </ul>
               </div>
