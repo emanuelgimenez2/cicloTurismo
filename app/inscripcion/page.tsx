@@ -301,6 +301,25 @@ const gruposCiclistas = [
   "Panteras Bike",
 ]
 
+// Array de países con Argentina y Uruguay primero
+const paises = [
+  "Argentina",
+  "Uruguay",
+  "Bolivia",
+  "Brasil",
+  "Chile",
+  "Colombia",
+  "Ecuador",
+  "Paraguay",
+  "Perú",
+  "Venezuela",
+  "México",
+  "Estados Unidos",
+  "Canadá",
+  "España",
+  "Otro",
+]
+
 // Componente de pasos del formulario
 const FormSteps = ({ currentStep, totalSteps }) => {
   return (
@@ -346,7 +365,9 @@ export default function RegistrationForm() {
     localidad: "",
     email: "",
     telefono: "",
+    paisTelefono: "Argentina",
     telefonoEmergencia: "",
+    paisTelefonoEmergencia: "Argentina",
     grupoSanguineo: "",
     genero: "",
     grupoCiclistas: "",
@@ -394,7 +415,9 @@ export default function RegistrationForm() {
       localidad: "",
       email: "",
       telefono: "",
+      paisTelefono: "Argentina",
       telefonoEmergencia: "",
+      paisTelefonoEmergencia: "Argentina",
       grupoSanguineo: "",
       genero: "",
       grupoCiclistas: "",
@@ -430,9 +453,10 @@ export default function RegistrationForm() {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
   }
 
-  const validatePhone = (value) => {
+  function validatePhone(value) {
     if (!value) return true
-    return /^\d{10,15}$/.test(value.replace(/\D/g, ""))
+    // Permitir cualquier número de dígitos (mínimo 1)
+    return /^\d+$/.test(value.replace(/\D/g, ""))
   }
 
   const validateField = (name, value) => {
@@ -642,7 +666,53 @@ export default function RegistrationForm() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (!validateForm()) {
+    // Validar el formulario
+    const errors = {}
+
+    if (!formData.nombre) errors.nombre = "El nombre es obligatorio"
+    else if (!validateName(formData.nombre)) errors.nombre = "El nombre solo debe contener letras"
+
+    if (!formData.apellido) errors.apellido = "El apellido es obligatorio"
+    else if (!validateName(formData.apellido)) errors.apellido = "El apellido solo debe contener letras"
+
+    if (!formData.dni) errors.dni = "El DNI es obligatorio"
+    else if (!validateDNI(formData.dni)) errors.dni = "El DNI debe tener 7-8 dígitos"
+
+    if (!formData.fechaNacimiento) errors.fechaNacimiento = "La fecha de nacimiento es obligatoria"
+
+    if (!formData.localidad) errors.localidad = "La localidad es obligatoria"
+
+    if (!formData.email) errors.email = "El email es obligatorio"
+    else if (!validateEmail(formData.email)) errors.email = "Formato de email inválido"
+
+    if (!formData.telefono) errors.telefono = "El teléfono es obligatorio"
+    else if (!validatePhone(formData.telefono)) errors.telefono = "Formato de teléfono inválido"
+
+    if (!formData.telefonoEmergencia) errors.telefonoEmergencia = "El teléfono de emergencia es obligatorio"
+    else if (!validatePhone(formData.telefonoEmergencia)) errors.telefonoEmergencia = "Formato de teléfono inválido"
+
+    if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
+
+    if (!formData.genero) errors.genero = "El género es obligatorio"
+
+    if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
+
+    if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
+
+    if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
+
+    if (!formData.comprobantePago) errors.comprobantePago = "Debe adjuntar un comprobante de pago"
+
+    setFieldErrors(errors)
+
+    if (Object.keys(errors).length > 0) {
+      // Mostrar el primer error específico
+      const firstError = Object.values(errors)[0]
+      toast({
+        title: "Error en el formulario",
+        description: firstError,
+        variant: "destructive",
+      })
       return
     }
 
@@ -678,7 +748,9 @@ export default function RegistrationForm() {
         localidad: formData.localidad || "",
         email: formData.email || "",
         telefono: formData.telefono || "",
+        paisTelefono: formData.paisTelefono || "Argentina",
         telefonoEmergencia: formData.telefonoEmergencia || "",
+        paisTelefonoEmergencia: formData.paisTelefonoEmergencia || "Argentina",
         grupoSanguineo: formData.grupoSanguineo || "",
         genero: formData.genero || "",
         grupoCiclistas: formData.grupoCiclistas || "",
@@ -701,20 +773,13 @@ export default function RegistrationForm() {
 
       const docRef = await addDoc(collection(db, "participantes2025"), registrationData)
 
-      // Eliminamos el toast de éxito
-      // toast({
-      //   title: "¡Inscripción exitosa!",
-      //   description: "Tu inscripción ha sido registrada correctamente",
-      //   variant: "success",
-      // });
-
       setSubmitted(true)
       setShowSuccessDialog(true)
     } catch (error) {
       console.error("Error al enviar formulario:", error)
       toast({
         title: "Error",
-        description: "Hubo un problema al procesar tu inscripción. Por favor intenta nuevamente.",
+        description: `Error específico: ${error.message || "Hubo un problema al procesar tu inscripción"}`,
         variant: "destructive",
       })
     } finally {
@@ -839,14 +904,33 @@ export default function RegistrationForm() {
                     </span>
                     {fieldErrors.telefono && <span className="text-red-500 text-xs">{fieldErrors.telefono}</span>}
                   </Label>
-                  <Input
-                    id="telefono"
-                    name="telefono"
-                    value={formData.telefono}
-                    onChange={handleInputChange}
-                    className={fieldErrors.telefono ? "border-red-500" : ""}
-                    placeholder="Ej: 11 5555 5555"
-                  />
+                  <div className="flex gap-2">
+                    <Select
+                      name="paisTelefono"
+                      value={formData.paisTelefono || "Argentina"}
+                      onValueChange={(value) => handleSelectChange("paisTelefono", value)}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="País" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {paises.map((pais) => (
+                          <SelectItem key={pais} value={pais}>
+                            {pais}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      id="telefono"
+                      name="telefono"
+                      value={formData.telefono}
+                      onChange={handleInputChange}
+                      className={fieldErrors.telefono ? "border-red-500" : ""}
+                      placeholder="Ej: 11 5555 5555"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">Ingrese solo números, sin espacios ni guiones.</p>
                 </div>
 
                 <div className="space-y-2">
@@ -859,14 +943,33 @@ export default function RegistrationForm() {
                       <span className="text-red-500 text-xs">{fieldErrors.telefonoEmergencia}</span>
                     )}
                   </Label>
-                  <Input
-                    id="telefonoEmergencia"
-                    name="telefonoEmergencia"
-                    value={formData.telefonoEmergencia}
-                    onChange={handleInputChange}
-                    className={fieldErrors.telefonoEmergencia ? "border-red-500" : ""}
-                    placeholder="Ej: 11 4444 4444"
-                  />
+                  <div className="flex gap-2">
+                    <Select
+                      name="paisTelefonoEmergencia"
+                      value={formData.paisTelefonoEmergencia || "Argentina"}
+                      onValueChange={(value) => handleSelectChange("paisTelefonoEmergencia", value)}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="País" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {paises.map((pais) => (
+                          <SelectItem key={pais} value={pais}>
+                            {pais}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      id="telefonoEmergencia"
+                      name="telefonoEmergencia"
+                      value={formData.telefonoEmergencia}
+                      onChange={handleInputChange}
+                      className={fieldErrors.telefonoEmergencia ? "border-red-500" : ""}
+                      placeholder="Ej: 11 4444 4444"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">Ingrese solo números, sin espacios ni guiones.</p>
                 </div>
 
                 <div className="space-y-2">
@@ -1019,6 +1122,7 @@ export default function RegistrationForm() {
                       <SelectItem value="l">L</SelectItem>
                       <SelectItem value="xl">XL</SelectItem>
                       <SelectItem value="xxl">XXL</SelectItem>
+                      <SelectItem value="xxxl">XXXL</SelectItem>
                     </SelectContent>
                   </Select>
                   <TallesRemeraMejorado />
@@ -1237,9 +1341,10 @@ export default function RegistrationForm() {
                   Información importante
                 </h4>
                 <ul className="text-green-700 text-sm space-y-1">
-                  <li>• Fecha del evento: 15 de Junio de 2025</li>
-                  <li>• Lugar de acreditación: Plaza Central</li>
-                  <li>• Horario: 7:00 AM a 8:30 AM</li>
+                  <li>• Fecha del evento: 12 de Octubrre de 2025</li>
+                  <li>• Lugar de acreditación: A Confirmar</li>
+                  <li>• Horario de acreditacion: 7:00 AM</li>
+                  <li>• Horario de salida: 8:30 AM</li>
                 </ul>
               </div>
             </div>
@@ -1328,7 +1433,9 @@ export default function RegistrationForm() {
                         localidad: "",
                         email: "",
                         telefono: "",
+                        paisTelefono: "Argentina",
                         telefonoEmergencia: "",
+                        paisTelefonoEmergencia: "Argentina",
                         grupoSanguineo: "",
                         grupoCiclistas: "",
                         genero: "",
