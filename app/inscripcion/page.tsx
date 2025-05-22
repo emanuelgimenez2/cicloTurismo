@@ -533,14 +533,66 @@ export default function RegistrationForm() {
 
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
+      // Si no es una imagen, usar el método estándar
+      if (!file.type.startsWith("image/")) {
+        const reader = new FileReader()
+        reader.readAsDataURL(file)
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = (error) => reject(error)
+        return
+      }
+
+      // Para imágenes, comprimir antes de convertir a base64
       const reader = new FileReader()
-      reader.readAsDataURL(file)
-      reader.onload = () => {
-        resolve(reader.result)
+      reader.readAsArrayBuffer(file)
+      reader.onload = (event) => {
+        const img = new Image()
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")
+
+        const arrayBuffer = event.target.result
+        const blob = new Blob([arrayBuffer], { type: file.type })
+        const blobUrl = URL.createObjectURL(blob)
+
+        img.onload = () => {
+          URL.revokeObjectURL(blobUrl)
+
+          // Calcular nuevas dimensiones manteniendo la proporción
+          let width = img.width
+          let height = img.height
+          const MAX_WIDTH = 800
+          const MAX_HEIGHT = 800
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = Math.round((height * MAX_WIDTH) / width)
+              width = MAX_WIDTH
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = Math.round((width * MAX_HEIGHT) / height)
+              height = MAX_HEIGHT
+            }
+          }
+
+          canvas.width = width
+          canvas.height = height
+          ctx.drawImage(img, 0, 0, width, height)
+
+          // Convertir a base64 con calidad reducida (0.7 = 70%)
+          const dataUrl = canvas.toDataURL(file.type, 0.7)
+          resolve(dataUrl)
+        }
+
+        img.onerror = () => {
+          URL.revokeObjectURL(blobUrl)
+          reject(new Error("Error al cargar la imagen"))
+        }
+
+        img.src = blobUrl
       }
-      reader.onerror = (error) => {
-        reject(error)
-      }
+
+      reader.onerror = (error) => reject(error)
     })
   }
 
