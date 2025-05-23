@@ -43,8 +43,10 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCw,
-  Download,
   Menu,
+  Heart,
+  StickyNote,
+  FilterX,
 } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -73,12 +75,39 @@ const formatDate = (dateString) => {
   return dateString
 }
 
+// Función para extraer información de condiciones de salud
+const parseHealthConditions = (condicionSalud) => {
+  if (!condicionSalud) return { condicionesSalud: "", esCeliaco: "no" }
+
+  if (typeof condicionSalud === "string" && condicionSalud.trim().startsWith("{")) {
+    try {
+      const parsed = JSON.parse(condicionSalud)
+      return {
+        condicionesSalud: parsed.condicionesSalud || "",
+        esCeliaco: parsed.esCeliaco || "no",
+      }
+    } catch (e) {
+      return { condicionesSalud: condicionSalud, esCeliaco: "no" }
+    }
+  } else if (typeof condicionSalud === "object") {
+    return {
+      condicionesSalud: condicionSalud.condicionesSalud || "",
+      esCeliaco: condicionSalud.esCeliaco || "no",
+    }
+  } else {
+    return { condicionesSalud: condicionSalud || "", esCeliaco: "no" }
+  }
+}
+
 export default function AdminRegistrationsPage() {
   const [registrations, setRegistrations] = useState([])
   const [filteredRegistrations, setFilteredRegistrations] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [yearFilter, setYearFilter] = useState("all")
+  const [healthFilter, setHealthFilter] = useState("all") // Nuevo filtro
+  const [celiacFilter, setCeliacFilter] = useState("all") // Nuevo filtro
+  const [noteFilter, setNoteFilter] = useState("all") // Nuevo filtro
   const [loading, setLoading] = useState(true)
   const [availableYears, setAvailableYears] = useState([])
   const [selectedRegistration, setSelectedRegistration] = useState(null)
@@ -96,7 +125,7 @@ export default function AdminRegistrationsPage() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [refreshing, setRefreshing] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(15) // Cambiado a 15 por defecto
+  const [itemsPerPage, setItemsPerPage] = useState(15)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const topRef = useRef(null)
 
@@ -166,9 +195,42 @@ export default function AdminRegistrationsPage() {
       filtered = filtered.filter((reg) => reg.fechaInscripcion.getFullYear() === Number.parseInt(yearFilter))
     }
 
+    // Nuevo filtro por condiciones de salud
+    if (healthFilter !== "all") {
+      filtered = filtered.filter((reg) => {
+        const healthInfo = parseHealthConditions(reg.condicionSalud)
+        if (healthFilter === "with_conditions") {
+          return healthInfo.condicionesSalud && healthInfo.condicionesSalud.trim() !== ""
+        } else if (healthFilter === "without_conditions") {
+          return !healthInfo.condicionesSalud || healthInfo.condicionesSalud.trim() === ""
+        }
+        return true
+      })
+    }
+
+    // Nuevo filtro por celíacos
+    if (celiacFilter !== "all") {
+      filtered = filtered.filter((reg) => {
+        const healthInfo = parseHealthConditions(reg.condicionSalud)
+        return healthInfo.esCeliaco === celiacFilter
+      })
+    }
+
+    // Nuevo filtro por notas
+    if (noteFilter !== "all") {
+      filtered = filtered.filter((reg) => {
+        if (noteFilter === "with_notes") {
+          return reg.nota && reg.nota.trim() !== ""
+        } else if (noteFilter === "without_notes") {
+          return !reg.nota || reg.nota.trim() === ""
+        }
+        return true
+      })
+    }
+
     setFilteredRegistrations(filtered)
     setCurrentPage(1) // Reset to first page when filters change
-  }, [searchTerm, statusFilter, yearFilter, registrations])
+  }, [searchTerm, statusFilter, yearFilter, healthFilter, celiacFilter, noteFilter, registrations])
 
   // Ordenar los registros filtrados
   useEffect(() => {
@@ -362,16 +424,25 @@ export default function AdminRegistrationsPage() {
 
     // Calcular totales por grupo de bici
     const gruposBici = {}
-    approvedRegistrations.forEach((reg) => {
-      const grupoBici =
-        reg.grupoCiclistas || reg.grupoBici || reg.grupo_bici || reg.grupobici || reg.grupo || "Sin especificar"
-      gruposBici[grupoBici] = (gruposBici[grupoBici] || 0) + 1
-    })
+    const celiacos = { si: 0, no: 0 }
 
-    // Preparar resumen de grupos
-    const resumenGruposBici = Object.entries(gruposBici)
-      .map(([grupo, cantidad]) => `${grupo}: ${cantidad}`)
-      .join("<br>")
+    approvedRegistrations.forEach((reg) => {
+      // Normalizar el nombre del grupo (eliminar espacios extras)
+      const grupoBici = (
+        reg.grupoCiclistas ||
+        reg.grupoBici ||
+        reg.grupo_bici ||
+        reg.grupobici ||
+        reg.grupo ||
+        "Sin especificar"
+      ).trim()
+
+      gruposBici[grupoBici] = (gruposBici[grupoBici] || 0) + 1
+
+      // Contar celíacos
+      const healthInfo = parseHealthConditions(reg.condicionSalud)
+      celiacos[healthInfo.esCeliaco] = (celiacos[healthInfo.esCeliaco] || 0) + 1
+    })
 
     const htmlContent = `
   <!DOCTYPE html>
@@ -430,6 +501,13 @@ export default function AdminRegistrationsPage() {
       .summary strong {
         color: #4f46e5;
       }
+      .celiac-info {
+        background-color: #fef3c7;
+        border: 1px solid #f59e0b;
+        padding: 10px;
+        border-radius: 6px;
+        margin: 10px 0;
+      }
       table { 
         width: 100%; 
         border-collapse: collapse; 
@@ -459,6 +537,10 @@ export default function AdminRegistrationsPage() {
       }
       tr:hover {
         background-color: #eff6ff;
+      }
+      .celiac-yes {
+        background-color: #fef3c7 !important;
+        font-weight: bold;
       }
       .footer {
         text-align: center;
@@ -491,6 +573,12 @@ export default function AdminRegistrationsPage() {
     <div class="summary">
       <h3>Resumen</h3>
       <p>Total de participantes confirmados: <strong>${approvedRegistrations.length}</strong></p>
+      
+      <div class="celiac-info">
+        <p><strong>Información sobre celíacos:</strong></p>
+        <p>• Celíacos: <strong>${celiacos.si || 0}</strong> participantes</p>
+      </div>
+      
       ${
         Object.keys(gruposBici).length > 0
           ? `<p>Distribución por grupo de ciclistas:</p>
@@ -516,6 +604,7 @@ export default function AdminRegistrationsPage() {
           <th>Grupo Bici</th>
           <th>Localidad</th>
           <th>Talle</th>
+          <th>Celíaco</th>
           <th>Condiciones de Salud</th>
         </tr>
       </thead>
@@ -523,31 +612,13 @@ export default function AdminRegistrationsPage() {
         ${approvedRegistrations
           .map((reg, index) => {
             const grupoBici = reg.grupoCiclistas || reg.grupoBici || reg.grupo_bici || reg.grupobici || reg.grupo || ""
-
-            // Manejar el campo condicionSalud
-            let condicionesDeSalud = ""
-
-            if (reg.condicionSalud) {
-              if (typeof reg.condicionSalud === "string" && reg.condicionSalud.trim().startsWith("{")) {
-                try {
-                  const parsed = JSON.parse(reg.condicionSalud)
-                  condicionesDeSalud = parsed.condicionSalud || parsed.condicionesSalud || ""
-                } catch (e) {
-                  condicionesDeSalud = reg.condicionSalud
-                }
-              } else if (typeof reg.condicionSalud === "object") {
-                condicionesDeSalud = reg.condicionSalud.condicionSalud || reg.condicionSalud.condicionesSalud || ""
-              } else {
-                condicionesDeSalud = reg.condicionSalud
-              }
-            }
-
+            const healthInfo = parseHealthConditions(reg.condicionSalud)
             const telefonoEmergencia =
               reg.telefonoEmergencia || reg.telefono_emergencia || reg.telEmergencia || reg.telefonoContacto || ""
             const grupoSanguineo = reg.grupoSanguineo || reg.grupo_sanguineo || reg.gruposanguineo || reg.sangre || ""
 
             return `
-          <tr>
+          <tr ${healthInfo.esCeliaco === "si" ? 'class="celiac-yes"' : ""}>
             <td>${index + 1}</td>
             <td><strong>${reg.apellido || ""}, ${reg.nombre || ""}</strong></td>
             <td>${reg.dni || ""}</td>
@@ -557,7 +628,10 @@ export default function AdminRegistrationsPage() {
             <td>${grupoBici}</td>
             <td>${reg.localidad || ""}</td>
             <td style="text-transform: uppercase;">${reg.talleRemera || ""}</td>
-            <td>${condicionesDeSalud}</td>
+            <td style="font-weight: bold; color: ${healthInfo.esCeliaco === "si" ? "#d97706" : "#059669"};">
+              ${healthInfo.esCeliaco === "si" ? "SÍ" : "NO"}
+            </td>
+            <td>${healthInfo.condicionesSalud || "-"}</td>
           </tr>
         `
           })
@@ -585,6 +659,7 @@ export default function AdminRegistrationsPage() {
     URL.revokeObjectURL(url)
   }
 
+  /*
   const exportToExcel = () => {
     const approvedRegistrations = registrations
       .filter((reg) => reg.estado === "confirmado")
@@ -605,28 +680,13 @@ export default function AdminRegistrationsPage() {
       "Grupo Sanguíneo",
       "Talle Remera",
       "Grupo Ciclistas",
+      "Es Celíaco",
       "Condiciones de Salud",
     ]
 
     // Crear filas de datos
     const rows = approvedRegistrations.map((reg, index) => {
-      // Procesar condiciones de salud
-      let condicionesDeSalud = ""
-      if (reg.condicionSalud) {
-        if (typeof reg.condicionSalud === "string" && reg.condicionSalud.trim().startsWith("{")) {
-          try {
-            const parsed = JSON.parse(reg.condicionSalud)
-            condicionesDeSalud = parsed.condicionSalud || parsed.condicionesSalud || ""
-          } catch (e) {
-            condicionesDeSalud = reg.condicionSalud
-          }
-        } else if (typeof reg.condicionSalud === "object") {
-          condicionesDeSalud = reg.condicionSalud.condicionSalud || reg.condicionSalud.condicionesSalud || ""
-        } else {
-          condicionesDeSalud = reg.condicionSalud
-        }
-      }
-
+      const healthInfo = parseHealthConditions(reg.condicionSalud)
       const telefonoEmergencia =
         reg.telefonoEmergencia || reg.telefono_emergencia || reg.telEmergencia || reg.telefonoContacto || ""
       const grupoSanguineo = reg.grupoSanguineo || reg.grupo_sanguineo || reg.gruposanguineo || reg.sangre || ""
@@ -646,7 +706,8 @@ export default function AdminRegistrationsPage() {
         grupoSanguineo,
         reg.talleRemera || "",
         grupoBici,
-        condicionesDeSalud,
+        healthInfo.esCeliaco === "si" ? "SÍ" : "NO",
+        healthInfo.condicionesSalud || "",
       ]
     })
 
@@ -678,6 +739,7 @@ export default function AdminRegistrationsPage() {
     document.body.removeChild(link)
     URL.revokeObjectURL(url)
   }
+  */
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -730,8 +792,17 @@ export default function AdminRegistrationsPage() {
     }
   }
 
+  // Función para limpiar todos los filtros
+  const clearAllFilters = () => {
+    setSearchTerm("")
+    setStatusFilter("all")
+    setYearFilter("all")
+    setHealthFilter("all")
+    setCeliacFilter("all")
+    setNoteFilter("all")
+  }
+
   const stats = getStatistics()
-  const filteredStats = getStatistics()
 
   // Pagination
   const indexOfLastItem = currentPage * itemsPerPage
@@ -896,6 +967,7 @@ export default function AdminRegistrationsPage() {
                         <FileText className="h-4 w-4" /> Exportar PDF
                       </Button>
 
+                      {/*
                       <Button
                         variant="outline"
                         size="sm"
@@ -908,6 +980,7 @@ export default function AdminRegistrationsPage() {
                       >
                         <Download className="h-4 w-4" /> Exportar Excel
                       </Button>
+                      */}
                     </div>
                   </div>
                 )}
@@ -941,6 +1014,7 @@ export default function AdminRegistrationsPage() {
               >
                 <FileText className="h-4 w-4" /> Exportar PDF
               </Button>
+              {/*
               <Button
                 variant="outline"
                 size="sm"
@@ -950,6 +1024,7 @@ export default function AdminRegistrationsPage() {
               >
                 <Download className="h-4 w-4" /> Exportar Excel
               </Button>
+              */}
             </div>
           </div>
         </motion.div>
@@ -1137,7 +1212,9 @@ export default function AdminRegistrationsPage() {
                       : ""}
                   </CardDescription>
                 </div>
-                <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+
+                {/* Filtros principales */}
+                <div className="flex flex-col gap-4 w-full md:w-auto">
                   <div className="relative flex-1">
                     <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -1147,20 +1224,84 @@ export default function AdminRegistrationsPage() {
                       className="pl-8 bg-white w-full"
                     />
                   </div>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full md:w-40 bg-white">
-                      <div className="flex items-center gap-2">
-                        <Filter className="h-4 w-4" />
-                        <SelectValue placeholder="Estado" />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="pendiente">Pendiente</SelectItem>
-                      <SelectItem value="confirmado">Confirmado</SelectItem>
-                      <SelectItem value="rechazado">Rechazado</SelectItem>
-                    </SelectContent>
-                  </Select>
+
+                  {/* Filtros en una fila */}
+                  <div className="flex flex-wrap gap-2">
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-full md:w-32 bg-white">
+                        <div className="flex items-center gap-2">
+                          <Filter className="h-4 w-4" />
+                          <SelectValue placeholder="Estado" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="pendiente">Pendiente</SelectItem>
+                        <SelectItem value="confirmado">Confirmado</SelectItem>
+                        <SelectItem value="rechazado">Rechazado</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={healthFilter} onValueChange={setHealthFilter}>
+                      <SelectTrigger className="w-full md:w-40 bg-white">
+                        <div className="flex items-center gap-2">
+                          <Heart className="h-4 w-4" />
+                          <SelectValue placeholder="Condiciones" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="with_conditions">Con condiciones</SelectItem>
+                        <SelectItem value="without_conditions">Sin condiciones</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={celiacFilter} onValueChange={setCeliacFilter}>
+                      <SelectTrigger className="w-full md:w-32 bg-white">
+                        <div className="flex items-center gap-2">
+                          <AlertCircle className="h-4 w-4" />
+                          <SelectValue placeholder="Celíacos" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="si">Celíacos</SelectItem>
+                        <SelectItem value="no">No celíacos</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={noteFilter} onValueChange={setNoteFilter}>
+                      <SelectTrigger className="w-full md:w-32 bg-white">
+                        <div className="flex items-center gap-2">
+                          <StickyNote className="h-4 w-4" />
+                          <SelectValue placeholder="Notas" />
+                        </div>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas</SelectItem>
+                        <SelectItem value="with_notes">Con notas</SelectItem>
+                        <SelectItem value="without_notes">Sin notas</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    {/* Botón para limpiar filtros */}
+                    {(searchTerm ||
+                      statusFilter !== "all" ||
+                      yearFilter !== "all" ||
+                      healthFilter !== "all" ||
+                      celiacFilter !== "all" ||
+                      noteFilter !== "all") && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={clearAllFilters}
+                        className="flex items-center gap-1 text-xs"
+                      >
+                        <FilterX className="h-3 w-3" />
+                        Limpiar
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </CardHeader>
@@ -1237,27 +1378,8 @@ export default function AdminRegistrationsPage() {
                             )}
                           </div>
                         </TableHead>
-                        <TableHead
-                          className="font-semibold hidden lg:table-cell cursor-pointer hover:bg-gray-100 transition-colors"
-                          onClick={() => handleSort("talleRemera")}
-                        >
-                          <div className="flex items-center">
-                            Talle
-                            {sortField === "talleRemera" && (
-                              <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold hidden lg:table-cell cursor-pointer hover:bg-gray-100 transition-colors"
-                          onClick={() => handleSort("fechaNacimiento")}
-                        >
-                          <div className="flex items-center">
-                            Fecha Nac.
-                            {sortField === "fechaNacimiento" && (
-                              <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                            )}
-                          </div>
+                        <TableHead className="font-semibold hidden lg:table-cell">
+                          <div className="flex items-center">Celíaco</div>
                         </TableHead>
                         <TableHead
                           className="font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
@@ -1274,37 +1396,46 @@ export default function AdminRegistrationsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {currentItems.map((registration, index) => (
-                        <TableRow key={registration.id} className="hover:bg-gray-50/80 transition-colors border-b">
-                          <TableCell className="font-medium text-center text-gray-500">
-                            {indexOfFirstItem + index + 1}
-                          </TableCell>
-                          <TableCell className="font-medium">{registration.nombre || "-"}</TableCell>
-                          <TableCell>{registration.apellido || "-"}</TableCell>
-                          <TableCell>{registration.dni || "-"}</TableCell>
-                          <TableCell className="max-w-xs truncate hidden md:table-cell">
-                            {registration.email || "-"}
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell">{registration.telefono || "-"}</TableCell>
-                          <TableCell className="hidden lg:table-cell">{registration.localidad || "-"}</TableCell>
-                          <TableCell className="uppercase hidden lg:table-cell">
-                            {registration.talleRemera || "-"}
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell">{registration.fechaNacimiento || "-"}</TableCell>
-                          <TableCell>{getStatusBadge(registration.estado)}</TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openDetailsModal(registration)}
-                              className="hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                            >
-                              <Eye className="h-4 w-4 mr-1" />
-                              <span className="hidden sm:inline">Ver</span>
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                      {currentItems.map((registration, index) => {
+                        const healthInfo = parseHealthConditions(registration.condicionSalud)
+                        return (
+                          <TableRow key={registration.id} className="hover:bg-gray-50/80 transition-colors border-b">
+                            <TableCell className="font-medium text-center text-gray-500">
+                              {indexOfFirstItem + index + 1}
+                            </TableCell>
+                            <TableCell className="font-medium">{registration.nombre || "-"}</TableCell>
+                            <TableCell>{registration.apellido || "-"}</TableCell>
+                            <TableCell>{registration.dni || "-"}</TableCell>
+                            <TableCell className="max-w-xs truncate hidden md:table-cell">
+                              {registration.email || "-"}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell">{registration.telefono || "-"}</TableCell>
+                            <TableCell className="hidden lg:table-cell">{registration.localidad || "-"}</TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              <Badge
+                                variant={healthInfo.esCeliaco === "si" ? "destructive" : "secondary"}
+                                className={
+                                  healthInfo.esCeliaco === "si" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : ""
+                                }
+                              >
+                                {healthInfo.esCeliaco === "si" ? "SÍ" : "NO"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{getStatusBadge(registration.estado)}</TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openDetailsModal(registration)}
+                                className="hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                <span className="hidden sm:inline">Ver</span>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
                     </TableBody>
                   </Table>
                 </div>
@@ -1312,21 +1443,22 @@ export default function AdminRegistrationsPage() {
                 <div className="flex flex-col items-center justify-center py-12 px-4">
                   <Users className="h-12 w-12 text-gray-300 mb-4" />
                   <p className="text-muted-foreground text-center mb-2">
-                    {searchTerm || statusFilter !== "all" || yearFilter !== "all"
+                    {searchTerm ||
+                    statusFilter !== "all" ||
+                    yearFilter !== "all" ||
+                    healthFilter !== "all" ||
+                    celiacFilter !== "all" ||
+                    noteFilter !== "all"
                       ? "No se encontraron inscripciones con los filtros aplicados"
                       : "No hay inscripciones registradas"}
                   </p>
-                  {(searchTerm || statusFilter !== "all" || yearFilter !== "all") && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSearchTerm("")
-                        setStatusFilter("all")
-                        setYearFilter("all")
-                      }}
-                      className="mt-2"
-                    >
+                  {(searchTerm ||
+                    statusFilter !== "all" ||
+                    yearFilter !== "all" ||
+                    healthFilter !== "all" ||
+                    celiacFilter !== "all" ||
+                    noteFilter !== "all") && (
+                    <Button variant="outline" size="sm" onClick={clearAllFilters} className="mt-2">
                       Limpiar filtros
                     </Button>
                   )}
@@ -1503,42 +1635,30 @@ export default function AdminRegistrationsPage() {
                         <p className="text-sm">{selectedRegistration.grupoSanguineo || "-"}</p>
                       </div>
                       <div>
+                        <Label className="text-xs font-medium text-gray-500">¿Es Celíaco?</Label>
+                        <div className="mt-1">
+                          <Badge
+                            variant={
+                              parseHealthConditions(selectedRegistration.condicionSalud).esCeliaco === "si"
+                                ? "destructive"
+                                : "secondary"
+                            }
+                            className={
+                              parseHealthConditions(selectedRegistration.condicionSalud).esCeliaco === "si"
+                                ? "bg-amber-100 text-amber-800 hover:bg-amber-200"
+                                : ""
+                            }
+                          >
+                            {parseHealthConditions(selectedRegistration.condicionSalud).esCeliaco === "si"
+                              ? "SÍ"
+                              : "NO"}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div>
                         <Label className="text-xs font-medium text-gray-500">Condiciones de Salud</Label>
                         <p className="text-sm break-words">
-                          {(() => {
-                            // Primero intentamos con condicionesSalud
-                            if (selectedRegistration.condicionesSalud) {
-                              return selectedRegistration.condicionesSalud
-                            }
-
-                            // Si no existe, procesamos condicionSalud
-                            if (selectedRegistration.condicionSalud) {
-                              // Si es string que parece JSON
-                              if (
-                                typeof selectedRegistration.condicionSalud === "string" &&
-                                selectedRegistration.condicionSalud.trim().startsWith("{")
-                              ) {
-                                try {
-                                  const parsed = JSON.parse(selectedRegistration.condicionSalud)
-                                  return parsed.condicionesSalud || parsed.condicionSalud || "-"
-                                } catch (e) {
-                                  return selectedRegistration.condicionSalud
-                                }
-                              }
-                              // Si es objeto
-                              else if (typeof selectedRegistration.condicionSalud === "object") {
-                                return (
-                                  selectedRegistration.condicionesSalud ||
-                                  selectedRegistration.condicionSalud.condicionSalud ||
-                                  JSON.stringify(selectedRegistration.condicionSalud)
-                                )
-                              }
-                              // Si es string normal
-                              return selectedRegistration.condicionSalud
-                            }
-
-                            return "-"
-                          })()}
+                          {parseHealthConditions(selectedRegistration.condicionSalud).condicionesSalud || "-"}
                         </p>
                       </div>
                     </CardContent>
@@ -1643,7 +1763,7 @@ export default function AdminRegistrationsPage() {
                   <Card className="border border-gray-200 shadow-sm">
                     <CardHeader className="pb-2 bg-gray-50/50">
                       <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
+                        <StickyNote className="h-4 w-4" />
                         Nota (opcional)
                       </CardTitle>
                     </CardHeader>
