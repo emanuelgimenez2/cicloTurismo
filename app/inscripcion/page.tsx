@@ -373,6 +373,7 @@ export default function RegistrationForm() {
     grupoCiclistas: "",
     talleRemera: "",
     condicionesSalud: "",
+    esCeliaco: "",
     aceptaCondiciones: false,
     comprobantePago: null,
     comprobantePagoUrl: "",
@@ -423,6 +424,7 @@ export default function RegistrationForm() {
       grupoCiclistas: "",
       talleRemera: "",
       condicionesSalud: "",
+      esCeliaco: "",
       aceptaCondiciones: false,
       comprobantePago: null,
       comprobantePagoUrl: "",
@@ -512,11 +514,11 @@ export default function RegistrationForm() {
   const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      // Verificar el tamaño del archivo (10MB = 10 * 1024 * 1024 bytes)
-      if (file.size > 10 * 1024 * 1024) {
+      // Verificar el tamaño del archivo (30MB = 30 * 1024 * 1024 bytes)
+      if (file.size > 30 * 1024 * 1024) {
         toast({
           title: "Archivo demasiado grande",
-          description: "Por favor ingrese una foto de comprobante de menos de 10MB",
+          description: "El archivo excede el límite de 30MB. Por favor, seleccione un archivo más pequeño.",
           variant: "destructive",
         })
         // Limpiar el input de archivo
@@ -533,16 +535,23 @@ export default function RegistrationForm() {
 
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
-      // Si no es una imagen, usar el método estándar
-      if (!file.type.startsWith("image/")) {
+      // Si no es una imagen, usar el método estándar sin compresión
+      if (!file.type.startsWith("image/") || !file.type.match(/jpeg|jpg|png/i)) {
         const reader = new FileReader()
         reader.readAsDataURL(file)
         reader.onload = () => resolve(reader.result)
-        reader.onerror = (error) => reject(error)
+        reader.onerror = (error) => {
+          reject(error)
+          toast({
+            title: "Error al procesar el archivo",
+            description: "No se pudo procesar el archivo. Intente con otro formato.",
+            variant: "destructive",
+          })
+        }
         return
       }
 
-      // Para imágenes, comprimir antes de convertir a base64
+      // Para imágenes JPG/PNG, comprimir antes de convertir a base64
       const reader = new FileReader()
       reader.readAsArrayBuffer(file)
       reader.onload = (event) => {
@@ -560,8 +569,8 @@ export default function RegistrationForm() {
           // Calcular nuevas dimensiones manteniendo la proporción
           let width = img.width
           let height = img.height
-          const MAX_WIDTH = 800
-          const MAX_HEIGHT = 800
+          const MAX_WIDTH = 1200
+          const MAX_HEIGHT = 1200
 
           if (width > height) {
             if (width > MAX_WIDTH) {
@@ -579,20 +588,33 @@ export default function RegistrationForm() {
           canvas.height = height
           ctx.drawImage(img, 0, 0, width, height)
 
-          // Convertir a base64 con calidad reducida (0.7 = 70%)
-          const dataUrl = canvas.toDataURL(file.type, 0.7)
+          // Convertir a base64 con calidad reducida (0.5 = 50%)
+          // Esto reducirá significativamente el tamaño del archivo
+          const dataUrl = canvas.toDataURL(file.type, 0.5)
           resolve(dataUrl)
         }
 
         img.onerror = () => {
           URL.revokeObjectURL(blobUrl)
+          toast({
+            title: "Error al procesar la imagen",
+            description: "No se pudo procesar la imagen. Intente con otro formato.",
+            variant: "destructive",
+          })
           reject(new Error("Error al cargar la imagen"))
         }
 
         img.src = blobUrl
       }
 
-      reader.onerror = (error) => reject(error)
+      reader.onerror = (error) => {
+        toast({
+          title: "Error al leer el archivo",
+          description: "No se pudo leer el archivo. Intente con otro formato.",
+          variant: "destructive",
+        })
+        reject(error)
+      }
     })
   }
 
@@ -643,6 +665,8 @@ export default function RegistrationForm() {
       if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
 
       if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
+    } else if (step === 2) {
+      if (!formData.esCeliaco) errors.esCeliaco = "Debe indicar si es celíaco o no"
     } else if (step === 3) {
       if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
 
@@ -695,6 +719,8 @@ export default function RegistrationForm() {
     if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
 
     if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
+
+    if (!formData.esCeliaco) errors.esCeliaco = "Debe indicar si es celíaco o no"
 
     if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
 
@@ -801,6 +827,7 @@ export default function RegistrationForm() {
       // Estructura para condiciones de salud y medicamentos
       const condicionSalud = {
         condicionesSalud: formData.condicionesSalud || "",
+        esCeliaco: formData.esCeliaco || "no",
       }
 
       // Datos completos para Firestore según el formulario
@@ -1221,6 +1248,37 @@ export default function RegistrationForm() {
                   especiales de salud, puede dejar este campo en blanco.
                 </p>
               </div>
+
+              <div className="space-y-2 mt-4 border-t pt-4">
+                <Label htmlFor="esCeliaco" className="flex justify-between">
+                  <span className="flex items-center gap-1">
+                    <AlertCircle className="h-3.5 w-3.5 text-amber-500" />
+                    <span>¿Es usted celíaco? *</span>
+                  </span>
+                  {fieldErrors.esCeliaco && <span className="text-red-500 text-xs">{fieldErrors.esCeliaco}</span>}
+                </Label>
+                <RadioGroup
+                  value={formData.esCeliaco}
+                  onValueChange={(value) => handleSelectChange("esCeliaco", value)}
+                  className="flex flex-col space-y-1 mt-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="si" id="celiaco-si" />
+                    <Label htmlFor="celiaco-si" className="font-normal">
+                      Sí
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="no" id="celiaco-no" />
+                    <Label htmlFor="celiaco-no" className="font-normal">
+                      No
+                    </Label>
+                  </div>
+                </RadioGroup>
+                <p className="text-xs text-gray-500 mt-1">
+                  *Esta información es necesaria para la preparación del desayuno incluido en el evento.
+                </p>
+              </div>
             </div>
           </div>
         )
@@ -1228,29 +1286,51 @@ export default function RegistrationForm() {
         return (
           <div className="space-y-6">
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 shadow-sm">
-              <h3 className="font-medium text-lg mb-2 text-blue-800 flex items-center gap-2">
+              <h3 className="font-medium text-lg mb-4 text-blue-800 flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
                 Información de pago
               </h3>
-              <Alert className="bg-white border-blue-200 mb-4">
-                <AlertCircle className="h-4 w-4 text-blue-500" />
-                <AlertTitle className="text-blue-800">Datos de transferencia</AlertTitle>
-                <AlertDescription className="text-blue-700">
-                  <ul className="list-disc pl-5 mt-2 space-y-1">
-                    <li>Banco: UALA</li>
-                    <li>Titular: Brunilda Cristina Schubert</li>
-                    <li>CUIT: 27-24600582-1</li>
-                    <li>CBU: 0000007900272460058219</li>
-                    <li>Alias: CICLO.TERMAL.UALA</li>
-                    <li>
-                      <strong>Importe: $35.000</strong>
-                    </li>
-                  </ul>
-                  <p className="mt-3 text-sm font-medium">
-                    En el concepto de la transferencia, incluya su nombre, apellido y DNI.
-                  </p>
-                </AlertDescription>
-              </Alert>
+
+              {/* Grid responsive para los dos datos de pago */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+                {/* Dato de pago 1 - UALA */}
+                <Alert className="bg-white border-blue-200">
+                  <AlertCircle className="h-4 w-4 text-blue-500" />
+                  <AlertTitle className="text-blue-800">Dato de pago 1 - Argentina</AlertTitle>
+                  <AlertDescription className="text-blue-700">
+                    <ul className="list-disc pl-5 mt-2 space-y-1">
+                      <li>Banco: UALA</li>
+                      <li>Titular: Brunilda Cristina Schubert</li>
+                      <li>CUIT: 27-24600582-1</li>
+                      <li>CBU: 0000007900272460058219</li>
+                      <li>Alias: CICLO.TERMAL.UALA</li>
+                      <li>
+                        <strong>Importe: $35.000</strong>
+                      </li>
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+
+                {/* Dato de pago 2 - PREX Uruguay */}
+                <Alert className="bg-white border-green-200">
+                  <AlertCircle className="h-4 w-4 text-green-500" />
+                  <AlertTitle className="text-green-800">Dato de pago 2 - Uruguay</AlertTitle>
+                  <AlertDescription className="text-green-700">
+                    <ul className="list-disc pl-5 mt-2 space-y-1">
+                      <li>Tarjeta: PREX -- Proximamente </li>
+                      {/* <li>Banco: BROU</li> 
+                      <li>Titular: Brunilda Cristina Schubert</li>
+                      <li>Número: **** **** **** 1234</li>
+                      <li>CVV: ***</li>
+                      <li>Vencimiento: 12/26</li>
+                      <li>
+                        <strong>Importe: $35.000 (ARS)</strong>
+                      </li>
+                      */}
+                    </ul>
+                  </AlertDescription>
+                </Alert>
+              </div>
 
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -1407,8 +1487,8 @@ export default function RegistrationForm() {
                 </h4>
                 <ul className="text-green-700 text-sm space-y-1">
                   <li>• Fecha del evento: 12 de Octubre de 2025</li>
-                  <li>• Lugar de acreditación: A confirmar</li>
-                  <li>• Horario de acreditación: 7:00 AM</li>
+                  <li>• Lugar de acreditación: Dirección de deportes</li>
+                  <li>• Horario de acreditación: 7:30 AM</li>
                   <li>• Horario de salida: 8:30 AM</li>
                 </ul>
               </div>
@@ -1509,6 +1589,7 @@ export default function RegistrationForm() {
                         aceptaCondiciones: false,
                         comprobantePago: null,
                         comprobantePagoUrl: "",
+                        esCeliaco: "",
                       })
                       setBirthDate(undefined)
                       setFieldErrors({})
