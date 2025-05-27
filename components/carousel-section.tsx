@@ -24,8 +24,8 @@ const defaultSlides = [
     imageUrl: "/foto 2.jpg?height=600&width=1200",
     title: "Recorre los paisajes de Entre Ríos",
     subtitle: "50 km de aventura y naturaleza",
-    buttonText: "Conoce más",
-    buttonUrl: "/#beneficios",
+    buttonText: "evento",
+    buttonUrl: "/#evento",
   },
   {
     id: "default-3",

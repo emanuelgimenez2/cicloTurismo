@@ -17,7 +17,7 @@ const navItems = [
   { name: "Cicloturismo Termal", href: "/#top" }, // Solo en móvil
   { name: "Inicio", href: "/#inicio" },
   { name: "Nuestra Historia", href: "/#historia" },
-  { name: "Evento", href: "/#Evento" },
+  { name: "Evento", href: "/#evento" },
   { name: "Fotos", href: "/#fotos" },
   { name: "Sponsors", href: "/#sponsors" },
   { name: "Contacto", href: "/#contacto" },
