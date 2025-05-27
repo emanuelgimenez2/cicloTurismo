@@ -6,6 +6,7 @@ import BenefitsSection from "@/components/benefits-section"
 import PhotosSection from "@/components/photos-section"
 import SponsorsSection from "@/components/sponsors-section"
 import ContactSection from "@/components/contact-section"
+import CyclingMap from "@/components/cycling-map"
 
 export default function Home() {
   return (
@@ -18,9 +19,10 @@ export default function Home() {
         <section id="historia" className="py-16">
           <JerseySection />
         </section>
-        <section id="beneficios" className="py-16 bg-gradient-to-r from-violet-50 to-blue-50">
-          <BenefitsSection />
-        </section>
+       <section id="beneficios" className="py-16 bg-gradient-to-r from-violet-50 to-blue-50">
+  <BenefitsSection />
+
+</section>
         <section id="fotos" className="py-16">
           <PhotosSection />
         </section>
