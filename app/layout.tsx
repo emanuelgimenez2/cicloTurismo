@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "Cicloturismo Termal de Federación - Segunda Edición",
   description: "Evento de cicloturismo en Federación, Entre Ríos, Argentina - 12 de octubre de 2025",
   generator: "v0.dev",
-  metadataBase: new URL("https://ciclo-turismo-583o.vercel.app"),
+  metadataBase: new URL("https://ciclo-turismo.vercel.app"),
   openGraph: {
     title: "Cicloturismo Termal de Federación - Segunda Edición",
     description: "Evento de cicloturismo en Federación, Entre Ríos, Argentina - 12 de octubre de 2025",
