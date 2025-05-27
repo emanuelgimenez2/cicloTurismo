@@ -17,27 +17,27 @@ const defaultSponsors = [
   },
   {
     id: "sponsor-2",
-    name: "Foxes Bikes Ciclo Tours",
-    logoUrl: "/sponsor 3.png?height=100&width=200",
-    url: "https://linktr.ee/Foxesbikesciclotours",
+    name: "SetviTec",
+    logoUrl: "/sponsor 5.jpg?height=100&width=200",
+    url: "https://linktr.ee/serviteccdelu",
   },
   {
     id: "sponsor-3",
-    name: "Pedal Power",
-    logoUrl: "/sponsor 2.png?height=100&width=200",
-    url: "https://www.instagram.com/pedal_powerbikersfederacion_er",
-  },
-  {
-    id: "sponsor-4",
     name: "El Mangrullo",
     logoUrl: "/sponsor 4.jpg?height=100&width=200",
     url: "https://linktr.ee/elmangrullo",
   },
   {
-    id: "sponsor-5",
-    name: "SetviTec",
-    logoUrl: "/sponsor 5.jpg?height=100&width=200",
-    url: "https://linktr.ee/serviteccdelu",
+    id: "sponsor-4",
+    name: "Foxes Bikes Ciclo Tours",
+    logoUrl: "/sponsor 3.png?height=100&width=200",
+    url: "https://linktr.ee/Foxesbikesciclotours",
+  },
+  {
+    id: "sponsor-",
+    name: "Pedal Power",
+    logoUrl: "/sponsor 2.png?height=100&width=200",
+    url: "https://www.instagram.com/pedal_powerbikersfederacion_er",
   },
 ]
 
