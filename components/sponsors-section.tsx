@@ -55,7 +55,7 @@ export default function SponsorsSection() {
       }
 
       try {
-        const sponsorsRef = collection(db, "sponsor")
+        const sponsorsRef = collection(db, "sponsors")
         const currentYearSponsors = query(
           sponsorsRef,
           where("year", "==", eventSettings?.currentYear || new Date().getFullYear()),
