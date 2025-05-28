@@ -25,7 +25,7 @@ const defaultSponsors = [
     id: "sponsor-3",
     name: "El Mangrullo",
     logoUrl: "/sponsor 4.jpg?height=100&width=200",
-    url: "https://linktr.ee/elmangrullo",
+    url: "https://linktr.ee/ElMangrullo",
   },
   {
     id: "sponsor-4",
@@ -37,7 +37,7 @@ const defaultSponsors = [
     id: "sponsor-",
     name: "Pedal Power",
     logoUrl: "/sponsor 2.png?height=100&width=200",
-    url: "https://www.instagram.com/pedal_powerbikersfederacion_er",
+    url: "https://linktr.ee/PedalPowerBike",
   },
 ]
 
@@ -55,7 +55,7 @@ export default function SponsorsSection() {
       }
 
       try {
-        const sponsorsRef = collection(db, "sponsors")
+        const sponsorsRef = collection(db, "sponsor")
         const currentYearSponsors = query(
           sponsorsRef,
           where("year", "==", eventSettings?.currentYear || new Date().getFullYear()),
