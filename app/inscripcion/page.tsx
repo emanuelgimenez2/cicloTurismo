@@ -1305,7 +1305,7 @@ export default function RegistrationForm() {
                       <li>CBU: 0000007900272460058219</li>
                       <li>Alias: CICLO.TERMAL.UALA</li>
                       <li>
-                        <strong>Importe: $35.000</strong>
+                        <strong>Importe: $35.000 (ARS)</strong>
                       </li>
                     </ul>
                   </AlertDescription>
@@ -1317,16 +1317,14 @@ export default function RegistrationForm() {
                   <AlertTitle className="text-green-800">Dato de pago 2 - Uruguay</AlertTitle>
                   <AlertDescription className="text-green-700">
                     <ul className="list-disc pl-5 mt-2 space-y-1">
-                      <li>Tarjeta: PREX -- Proximamente </li>
-                      {/* <li>Banco: BROU</li> 
+                      <li>Banco: Prex</li> 
                       <li>Titular: Brunilda Cristina Schubert</li>
-                      <li>Número: **** **** **** 1234</li>
-                      <li>CVV: ***</li>
-                      <li>Vencimiento: 12/26</li>
+                      <li>CUIT: 27-24600582-1</li>
+                      <li>CVV: 0000013000032296357520</li>
+                      <li>Alias: CICLOTURISMOTERMAL</li>
                       <li>
-                        <strong>Importe: $35.000 (ARS)</strong>
+                        <strong>Importe: $1.300 (UYU)</strong>
                       </li>
-                      */}
                     </ul>
                   </AlertDescription>
                 </Alert>
