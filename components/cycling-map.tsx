@@ -4,8 +4,7 @@ import type React from "react"
 
 import { useEffect, useRef, useState } from "react"
 import { MapPin, Droplets, Flag, Bike, FileUp } from "lucide-react"
-import L from "leaflet"
-import "leaflet/dist/leaflet.css"
+
 import { renderToString } from "react-dom/server"
 
 // Estilos para animaciones y efectos que no se pueden lograr fácilmente con Tailwind
