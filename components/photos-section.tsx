@@ -14,32 +14,32 @@ const defaultPhotos = [
   {
     id: "photo-1",
     url: "/foto 1 pc.jpg?height=300&width=300",
-    description: "Participantes en la línea de salida",
+    description: "",
   },
   {
     id: "photo-2",
     url: "/foto 2 pc.jpg?height=300&width=300",
-    description: "Recorriendo los paisajes de Entre Ríos",
+    description: "",
   },
   {
     id: "photo-3",
     url: "/foto 3 pc.jpg?height=300&width=300",
-    description: "Parada de hidratación",
+    description: "",
   },
   {
     id: "photo-4",
     url: "/foto 4 pc.jpg?height=300&width=300",
-    description: "Llegada a las termas",
+    description: "",
   },
   {
     id: "photo-5",
     url: "/foto 5 pc.jpg?height=300&width=300",
-    description: "Entrega de premios",
+    description: "",
   },
   {
     id: "photo-6",
     url: "/foto 6 pc.jpg?height=300&width=300",
-    description: "Entrega de premios",
+    description: "",
   },
 ]
 

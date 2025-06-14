@@ -1,10 +1,11 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
-import Image from "next/image"
 import Link from "next/link"
 import { db } from "../lib/firebase/firebase-config"
-import { collection, getDocs, query, where, orderBy, DocumentData } from "firebase/firestore"
+import { collection, getDocs, query, where, orderBy } from "firebase/firestore"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 
 // Tipos TypeScript
@@ -14,6 +15,7 @@ interface Sponsor {
   logoUrl: string
   url: string
   year?: number
+  order?: number
 }
 
 interface SponsorFirestoreData {
@@ -25,6 +27,7 @@ interface SponsorFirestoreData {
   image?: string
   logo?: string
   logoUrl?: string
+  order?: number
 }
 
 interface FirebaseContextType {
@@ -44,53 +47,53 @@ export default function SponsorsSection(): JSX.Element {
 
   // Función tipada para convertir base64 a Data URL
   const processImageData = (imageData: unknown, sponsorName: string): ImageProcessingResult => {
-    if (!imageData || typeof imageData !== 'string') {
+    if (!imageData || typeof imageData !== "string") {
       return "/placeholder.svg"
     }
 
     try {
       // Si ya es una URL completa (http/https), usarla directamente
-      if (imageData.startsWith('http://') || imageData.startsWith('https://')) {
+      if (imageData.startsWith("http://") || imageData.startsWith("https://")) {
         return imageData
       }
 
       // Si ya es una Data URL completa, usarla directamente
-      if (imageData.startsWith('data:image/')) {
+      if (imageData.startsWith("data:image/")) {
         return imageData
       }
 
       // Si es base64 puro, agregar el prefijo
       if (imageData.length > 0) {
         // Limpiar espacios y saltos de línea
-        const cleanBase64: string = imageData.replace(/\s/g, '')
-        
+        const cleanBase64: string = imageData.replace(/\s/g, "")
+
         // Validar que sea base64 válido
         if (!/^[A-Za-z0-9+/]*={0,2}$/.test(cleanBase64)) {
           return "/placeholder.svg"
         }
 
         // Detectar tipo de imagen por los primeros caracteres del base64
-        let mimeType: string = 'image/jpeg' // Por defecto
-        
+        let mimeType = "image/jpeg" // Por defecto
+
         try {
           const binaryString: string = atob(cleanBase64.substring(0, 20))
           const bytes: Uint8Array = new Uint8Array(binaryString.length)
-          
+
           for (let i = 0; i < binaryString.length; i++) {
             bytes[i] = binaryString.charCodeAt(i)
           }
-          
+
           // PNG signature: 89 50 4E 47
-          if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) {
-            mimeType = 'image/png'
+          if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) {
+            mimeType = "image/png"
           }
           // JPEG signature: FF D8 FF
-          else if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
-            mimeType = 'image/jpeg'
+          else if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) {
+            mimeType = "image/jpeg"
           }
           // GIF signature: 47 49 46 38
           else if (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) {
-            mimeType = 'image/gif'
+            mimeType = "image/gif"
           }
         } catch (detectionError: unknown) {
           // Error detectando tipo, usar JPEG por defecto
@@ -101,7 +104,6 @@ export default function SponsorsSection(): JSX.Element {
       }
 
       return "/placeholder.svg"
-
     } catch (error: unknown) {
       return "/placeholder.svg"
     }
@@ -120,17 +122,17 @@ export default function SponsorsSection(): JSX.Element {
 
       try {
         const currentYear: number = eventSettings?.currentYear || new Date().getFullYear()
-        
+
         // Debug: Ver todos los documentos primero
         const allSponsorsSnapshot = await getDocs(collection(db, "sponsors"))
-        
+
         // Intentar consulta con filtro
         let snapshot = allSponsorsSnapshot
         try {
           const sponsorsQuery = query(
             collection(db, "sponsors"),
             where("year", "==", currentYear),
-            orderBy("name", "asc")
+            orderBy("name", "asc"),
           )
           snapshot = await getDocs(sponsorsQuery)
         } catch (queryError: unknown) {
@@ -142,35 +144,43 @@ export default function SponsorsSection(): JSX.Element {
           setSponsors([])
         } else {
           const sponsorsData: Sponsor[] = []
-          
+
           snapshot.docs.forEach((doc) => {
             const data: SponsorFirestoreData = doc.data() as SponsorFirestoreData
             const sponsorName: string = data.name || `Sponsor ${doc.id}`
-            
+
             // Intentar obtener la imagen de diferentes campos posibles
             const imageData: unknown = data.imageBase64 || data.image || data.logo || data.logoUrl
             const logoUrl: string = processImageData(imageData, sponsorName)
-            
+
             const sponsor: Sponsor = {
               id: doc.id,
               name: sponsorName,
               logoUrl: logoUrl,
               url: data.website || data.url || "#",
-              year: data.year
+              year: data.year,
+              order: typeof data.order === "number" ? data.order : 999, // Usar el valor exacto de Firebase o 999 como fallback
             }
-            
+
             sponsorsData.push(sponsor)
           })
 
           // Filtrar por año si no se pudo hacer en la query
-          const filteredSponsors: Sponsor[] = sponsorsData.filter((sponsor: Sponsor) => 
-            !sponsor.year || sponsor.year === currentYear
+          const filteredSponsors: Sponsor[] = sponsorsData.filter(
+            (sponsor: Sponsor) => !sponsor.year || sponsor.year === currentYear,
           )
 
-          setSponsors(filteredSponsors)
+          // Ordenar por el campo order
+          const sortedSponsors: Sponsor[] = filteredSponsors.sort((a: Sponsor, b: Sponsor) => {
+            const orderA = typeof a.order === "number" ? a.order : 999
+            const orderB = typeof b.order === "number" ? b.order : 999
+            return orderA - orderB
+          })
+
+          setSponsors(sortedSponsors)
         }
       } catch (error: unknown) {
-        const errorMessage: string = error instanceof Error ? error.message : 'Error desconocido'
+        const errorMessage: string = error instanceof Error ? error.message : "Error desconocido"
         setError(`Error al cargar sponsors: ${errorMessage}`)
         setSponsors([])
       } finally {
@@ -210,9 +220,7 @@ export default function SponsorsSection(): JSX.Element {
         <div className="bg-red-50 border border-red-200 rounded-lg p-6">
           <p className="text-red-600 font-medium">Error al cargar sponsors</p>
           <p className="text-red-500 text-sm mt-2">{error}</p>
-          <p className="text-gray-500 text-xs mt-2">
-            Revisa la consola del navegador para más detalles
-          </p>
+          <p className="text-gray-500 text-xs mt-2">Revisa la consola del navegador para más detalles</p>
         </div>
       </div>
     )
@@ -226,9 +234,7 @@ export default function SponsorsSection(): JSX.Element {
           Nuestros Sponsors
         </h2>
         <div className="w-24 h-1 bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 mx-auto mb-4"></div>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          Empresas que hacen posible este evento
-        </p>
+        <p className="text-lg text-gray-600 max-w-2xl mx-auto">Empresas que hacen posible este evento</p>
       </div>
 
       {/* Sponsors Grid */}
@@ -237,10 +243,7 @@ export default function SponsorsSection(): JSX.Element {
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-8">
             <p className="text-gray-500 text-lg mb-2">No hay sponsors disponibles</p>
             <p className="text-gray-400 text-sm">
-              {isFirebaseAvailable ? 
-                "No se encontraron sponsors para el año actual" : 
-                "Firebase no está disponible"
-              }
+              {isFirebaseAvailable ? "No se encontraron sponsors para el año actual" : "Firebase no está disponible"}
             </p>
           </div>
         </div>
@@ -257,7 +260,7 @@ export default function SponsorsSection(): JSX.Element {
               >
                 <div className="relative aspect-square w-full bg-white rounded-lg overflow-hidden shadow-md transition-all duration-300 group-hover:shadow-lg group-hover:scale-105 border border-gray-100">
                   <img
-                    src={sponsor.logoUrl}
+                    src={sponsor.logoUrl || "/placeholder.svg"}
                     alt={`Logo de ${sponsor.name}`}
                     className="w-full h-full object-contain p-4"
                     onError={(e) => handleImageError(e, sponsor.name)}
@@ -270,12 +273,10 @@ export default function SponsorsSection(): JSX.Element {
               </Link>
             ))}
           </div>
-          
+
           {/* Call to Action */}
           <div className="text-center mt-8 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6">
-            <p className="text-lg text-gray-700 font-medium mb-2">
-              ¿Querés ser parte de nuestros sponsors?
-            </p>
+            <p className="text-lg text-gray-700 font-medium mb-2">¿Querés ser parte de nuestros sponsors?</p>
             <p className="text-base text-gray-600">
               Contactate con nosotros para conocer las oportunidades de patrocinio
             </p>
