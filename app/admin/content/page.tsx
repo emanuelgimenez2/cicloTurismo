@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState } from "react"
@@ -13,6 +12,7 @@ import SponsorsEditor from "@/components/admin/sponsors-editor"
 import PhotosEditor from "@/components/admin/photos-editor"
 import ContactEditor from "@/components/admin/contact-editor"
 import FormEditor from "@/components/admin/form-editor"
+import HistoryEditor from "@/components/admin/history-editor"
 
 const tabs = [
   {
@@ -27,15 +27,36 @@ const tabs = [
     icon: Images,
     description: "Edita las imágenes y el botón del carrusel en la página de inicio",
   },
-  { value: "jersey", label: "Remera", icon: Shirt, description: "Edita la información e imagen de la remera oficial" },
+  {
+    value: "jersey",
+    label: "Remera",
+    icon: Shirt,
+    description: "Edita la información e imagen de la remera oficial",
+  },
+  {
+    value: "historia",
+    label: "Historia",
+    icon: FileText,
+    description: "Administra las secciones de historia del evento",
+  },
   {
     value: "benefits",
     label: "Beneficios",
     icon: Gift,
     description: "Edita la lista de beneficios incluidos en la inscripción",
   },
-  { value: "photos", label: "Fotos", icon: Camera, description: "Administra las fotos del evento" },
-  { value: "contact", label: "Contacto", icon: Phone, description: "Edita la información de contacto y el mapa" },
+  {
+    value: "photos",
+    label: "Fotos",
+    icon: Camera,
+    description: "Administra las fotos del evento",
+  },
+  {
+    value: "contact",
+    label: "Contacto",
+    icon: Phone,
+    description: "Edita la información de contacto y el mapa",
+  },
   {
     value: "form",
     label: "Formulario",
@@ -125,7 +146,7 @@ export default function AdminContentPage() {
         {/* Desktop Tabs */}
         <Tabs defaultValue="sponsors" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="hidden lg:block">
-            <TabsList className="grid grid-cols-7 h-auto p-1">
+            <TabsList className="grid grid-cols-8 h-auto p-1">
               {tabs.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value} className="flex flex-col items-center gap-1 p-3 h-auto">
                   <tab.icon className="h-4 w-4" />
@@ -167,6 +188,18 @@ export default function AdminContentPage() {
               </CardHeader>
               <CardContent className="p-4 lg:p-6">
                 <JerseyEditor />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="historia">
+            <Card>
+              <CardHeader className="hidden lg:block">
+                <CardTitle>Historia del Evento</CardTitle>
+                <CardDescription>Administra las secciones de historia del evento</CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 lg:p-6">
+                <HistoryEditor />
               </CardContent>
             </Card>
           </TabsContent>

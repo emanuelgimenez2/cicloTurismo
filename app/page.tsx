@@ -2,6 +2,7 @@ import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 import CarouselSection from "@/components/carousel-section"
 import JerseySection from "@/components/jersey-section"
+import HistorySection from "@/components/history-section"
 import BenefitsSection from "@/components/benefits-section"
 import PhotosSection from "@/components/photos-section"
 import SponsorsSection from "@/components/sponsors-section"
@@ -17,8 +18,13 @@ export default function Home() {
           <CarouselSection />
         </section>
         <section id="historia" className="py-16">
+          <HistorySection />
+        </section>
+        {/*
+        <section id="historia" className="py-16">
           <JerseySection />
         </section>
+        */}
         <section id="evento" className="py-16 bg-gradient-to-r from-violet-50 to-blue-50">
           <BenefitsSection />
         </section>
