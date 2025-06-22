@@ -16,24 +16,6 @@ import HistoryEditor from "@/components/admin/history-editor"
 
 const tabs = [
   {
-    value: "sponsors",
-    label: "Sponsors",
-    icon: Award,
-    description: "Administra los logos, nombres y enlaces de los sponsors",
-  },
-  {
-    value: "carousel",
-    label: "Carrusel",
-    icon: Images,
-    description: "Edita las imágenes y el botón del carrusel en la página de inicio",
-  },
-  {
-    value: "jersey",
-    label: "Remera",
-    icon: Shirt,
-    description: "Edita la información e imagen de la remera oficial",
-  },
-  {
     value: "historia",
     label: "Historia",
     icon: FileText,
@@ -46,6 +28,18 @@ const tabs = [
     description: "Edita la lista de beneficios incluidos en la inscripción",
   },
   {
+    value: "jersey",
+    label: "Remera",
+    icon: Shirt,
+    description: "Edita la información e imagen de la remera oficial",
+  },
+  {
+    value: "sponsors",
+    label: "Sponsors",
+    icon: Award,
+    description: "Administra los logos, nombres y enlaces de los sponsors",
+  },
+  {
     value: "photos",
     label: "Fotos",
     icon: Camera,
@@ -56,12 +50,6 @@ const tabs = [
     label: "Contacto",
     icon: Phone,
     description: "Edita la información de contacto y el mapa",
-  },
-  {
-    value: "form",
-    label: "Formulario",
-    icon: FileText,
-    description: "Personaliza los campos del formulario de inscripción",
   },
 ]
 
@@ -146,7 +134,7 @@ export default function AdminContentPage() {
         {/* Desktop Tabs */}
         <Tabs defaultValue="sponsors" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="hidden lg:block">
-            <TabsList className="grid grid-cols-8 h-auto p-1">
+            <TabsList className="grid grid-cols-6 h-auto p-1">
               {tabs.map((tab) => (
                 <TabsTrigger key={tab.value} value={tab.value} className="flex flex-col items-center gap-1 p-3 h-auto">
                   <tab.icon className="h-4 w-4" />
@@ -256,3 +244,19 @@ export default function AdminContentPage() {
     </div>
   )
 }
+
+
+
+  {/*{
+    value: "carousel",
+    label: "Carrusel",
+    icon: Images,
+    description: "Edita las imágenes y el botón del carrusel en la página de inicio",
+  },
+  {
+    value: "form",
+    label: "Formulario",
+    icon: FileText,
+    description: "Personaliza los campos del formulario de inscripción",
+  },
+  */}
