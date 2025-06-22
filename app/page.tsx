@@ -23,9 +23,11 @@ export default function Home() {
         <section id="evento" className="py-16 bg-gradient-to-r from-violet-50 to-blue-50">
           <BenefitsSection />
         </section>
-        <section id="historia" className="py-16">
+        {/**/}
+          <section id="remera" className="py-16">
           <JerseySection />
         </section>
+        {/**/}
         <section id="fotos" className="py-16">
           <PhotosSection />
         </section>

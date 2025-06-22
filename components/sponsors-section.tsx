@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { db } from "../lib/firebase/firebase-config"
-import { collection, getDocs, query, where, orderBy } from "firebase/firestore"
+import { collection, getDocs, query, orderBy } from "firebase/firestore"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 
 // Tipos TypeScript
@@ -42,7 +42,7 @@ type ImageProcessingResult = string
 export default function SponsorsSection(): JSX.Element {
   const { eventSettings, isFirebaseAvailable }: FirebaseContextType = useFirebaseContext()
   const [sponsors, setSponsors] = useState<Sponsor[]>([])
-  const [loading, setLoading] = useState<boolean>(true)
+  const [loading, setLoading] = useState<boolean>(false) // Cambiar de true a false
   const [error, setError] = useState<string | null>(null)
 
   // Función tipada para convertir base64 a Data URL
@@ -111,73 +111,56 @@ export default function SponsorsSection(): JSX.Element {
 
   useEffect(() => {
     const fetchSponsors = async (): Promise<void> => {
-      setLoading(true)
-      setError(null)
-
       if (!isFirebaseAvailable) {
         setSponsors([])
-        setLoading(false)
         return
       }
+
+      setLoading(true)
+      setError(null)
 
       try {
         const currentYear: number = eventSettings?.currentYear || new Date().getFullYear()
 
-        // Debug: Ver todos los documentos primero
-        const allSponsorsSnapshot = await getDocs(collection(db, "sponsors"))
+        // Optimizar consulta directa
+        const sponsorsQuery = query(collection(db, "sponsors"), orderBy("order", "asc"))
+        const snapshot = await getDocs(sponsorsQuery)
 
-        // Intentar consulta con filtro
-        let snapshot = allSponsorsSnapshot
-        try {
-          const sponsorsQuery = query(
-            collection(db, "sponsors"),
-            where("year", "==", currentYear),
-            orderBy("name", "asc"),
-          )
-          snapshot = await getDocs(sponsorsQuery)
-        } catch (queryError: unknown) {
-          // Si falla la consulta con filtros, usar consulta simple
-          snapshot = allSponsorsSnapshot
-        }
-
-        if (snapshot.empty) {
-          setSponsors([])
-        } else {
+        if (!snapshot.empty) {
           const sponsorsData: Sponsor[] = []
 
           snapshot.docs.forEach((doc) => {
             const data: SponsorFirestoreData = doc.data() as SponsorFirestoreData
-            const sponsorName: string = data.name || `Sponsor ${doc.id}`
 
-            // Intentar obtener la imagen de diferentes campos posibles
-            const imageData: unknown = data.imageBase64 || data.image || data.logo || data.logoUrl
-            const logoUrl: string = processImageData(imageData, sponsorName)
+            // Filtrar por año en el cliente si es necesario
+            if (!data.year || data.year === currentYear) {
+              const sponsorName: string = data.name || `Sponsor ${doc.id}`
+              const imageData: unknown = data.imageBase64 || data.image || data.logo || data.logoUrl
+              const logoUrl: string = processImageData(imageData, sponsorName)
 
-            const sponsor: Sponsor = {
-              id: doc.id,
-              name: sponsorName,
-              logoUrl: logoUrl,
-              url: data.website || data.url || "#",
-              year: data.year,
-              order: typeof data.order === "number" ? data.order : 999, // Usar el valor exacto de Firebase o 999 como fallback
+              const sponsor: Sponsor = {
+                id: doc.id,
+                name: sponsorName,
+                logoUrl: logoUrl,
+                url: data.website || data.url || "#",
+                year: data.year,
+                order: typeof data.order === "number" ? data.order : 999,
+              }
+
+              sponsorsData.push(sponsor)
             }
-
-            sponsorsData.push(sponsor)
           })
 
-          // Filtrar por año si no se pudo hacer en la query
-          const filteredSponsors: Sponsor[] = sponsorsData.filter(
-            (sponsor: Sponsor) => !sponsor.year || sponsor.year === currentYear,
-          )
-
-          // Ordenar por el campo order
-          const sortedSponsors: Sponsor[] = filteredSponsors.sort((a: Sponsor, b: Sponsor) => {
+          // Ordenar por order
+          sponsorsData.sort((a: Sponsor, b: Sponsor) => {
             const orderA = typeof a.order === "number" ? a.order : 999
             const orderB = typeof b.order === "number" ? b.order : 999
             return orderA - orderB
           })
 
-          setSponsors(sortedSponsors)
+          setSponsors(sponsorsData)
+        } else {
+          setSponsors([])
         }
       } catch (error: unknown) {
         const errorMessage: string = error instanceof Error ? error.message : "Error desconocido"

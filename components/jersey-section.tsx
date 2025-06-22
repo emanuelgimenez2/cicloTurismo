@@ -41,16 +41,17 @@ const defaultJerseyData: JerseyData = {
 export default function JerseySection() {
   const { eventSettings, isFirebaseAvailable } = useFirebaseContext()
   const [jerseyData, setJerseyData] = useState(defaultJerseyData)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // Cambiar de true a false
 
   useEffect(() => {
     const fetchJerseyData = async () => {
+      // Solo cargar si Firebase está disponible y la sección debe mostrarse
       if (!isFirebaseAvailable) {
         setJerseyData(defaultJerseyData)
-        setLoading(false)
         return
       }
 
+      setLoading(true)
       try {
         const currentYear = eventSettings?.currentYear || new Date().getFullYear()
         const jerseyDoc = doc(db, "jersey", "info")
@@ -59,7 +60,7 @@ export default function JerseySection() {
         if (docSnap.exists()) {
           const data = docSnap.data()
           if (data.year === currentYear) {
-            setJerseyData({
+            const newData = {
               title: data.title || defaultJerseyData.title,
               description: data.description || defaultJerseyData.description,
               imageUrl: data.imageUrl || defaultJerseyData.imageUrl,
@@ -67,7 +68,8 @@ export default function JerseySection() {
               callToActionTitle: data.callToActionTitle || defaultJerseyData.callToActionTitle,
               callToActionDescription: data.callToActionDescription || defaultJerseyData.callToActionDescription,
               features: data.features || defaultJerseyData.features,
-            })
+            }
+            setJerseyData(newData)
           }
         }
       } catch (error) {
@@ -81,19 +83,19 @@ export default function JerseySection() {
     fetchJerseyData()
   }, [eventSettings, isFirebaseAvailable])
 
+  if (!jerseyData.showSection) {
+    return null
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 text-center py-12">
         <div className="flex justify-center items-center space-x-2">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
-          <p className="text-gray-600">Cargando información de la remera...</p>
+          <p className="text-gray-600">Cargando información...</p>
         </div>
       </div>
     )
-  }
-
-  if (!jerseyData.showSection) {
-    return null
   }
 
   return (

@@ -142,7 +142,7 @@ function CollapsibleText({ html, imageUrl, contactLink }: { html: string; imageU
 export default function HistorySection() {
   const { eventSettings, isFirebaseAvailable } = useFirebaseContext()
   const [historyItems, setHistoryItems] = useState<HistoryItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [imageModal, setImageModal] = useState<{ show: boolean; src: string; alt: string }>({
     show: false,
     src: "",
@@ -155,16 +155,15 @@ export default function HistorySection() {
 
   useEffect(() => {
     const fetchHistoryData = async () => {
-      // Mostrar loading inmediatamente
-      setLoading(true)
-
       if (!isFirebaseAvailable) {
-        setLoading(false)
+        setHistoryItems([])
         return
       }
 
+      setLoading(true)
       try {
         const currentYear = eventSettings?.currentYear || new Date().getFullYear()
+        // Optimizar consulta
         const historyQuery = query(collection(db, "historia"), orderBy("order", "asc"))
         const querySnapshot = await getDocs(historyQuery)
 
@@ -182,6 +181,7 @@ export default function HistorySection() {
         setHistoryItems(historyData)
       } catch (error) {
         console.error("Error fetching history data:", error)
+        setHistoryItems([])
       } finally {
         setLoading(false)
       }
