@@ -1,4 +1,4 @@
-"use client"
+{/*"use client"
 
 import type React from "react"
 
@@ -804,7 +804,7 @@ export default function CyclingMap() {
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">Federación, Entre Ríos - Circuito Rural</p>
       </div>
 
-      {/* Sección de carga de archivos */}
+      //Sección de carga de archivos 
       <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-md p-6 border border-gray-100">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex-1">
@@ -855,7 +855,7 @@ export default function CyclingMap() {
         </div>
       </div>
 
-      {/* Mapa */}
+      //Mapa 
       <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100">
         <div ref={mapRef} className="w-full h-[500px] relative">
           {!isMapLoaded && (
@@ -866,7 +866,7 @@ export default function CyclingMap() {
         </div>
       </div>
 
-      {/* Leyenda */}
+      // Leyenda 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto">
         <div className="flex items-center space-x-3 bg-white p-4 rounded-lg shadow-md border border-gray-100 hover:shadow-lg transition-shadow">
           <div className="h-10 w-10 rounded-full bg-gradient-to-r from-emerald-500 to-green-600 flex items-center justify-center shadow-md">
@@ -909,7 +909,7 @@ export default function CyclingMap() {
         </div>
       </div>
 
-      {/* Estadísticas */}
+      //Estadísticas 
       <div className="bg-white rounded-xl shadow-md p-6 max-w-5xl mx-auto">
         <h3 className="text-xl font-semibold text-gray-800 mb-4">Información del Recorrido</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -933,3 +933,4 @@ export default function CyclingMap() {
     </div>
   )
 }
+*/}
