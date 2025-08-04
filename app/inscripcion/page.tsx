@@ -1,19 +1,17 @@
 "use client"
-
 import { DialogFooter } from "@/components/ui/dialog"
-
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { collection, addDoc } from "firebase/firestore"
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
-import { db, storage } from "@/lib/firebase/firebase-config"
+import { collection, getDocs, query, orderBy, setDoc, doc } from "firebase/firestore"
+// Eliminar importaciones de Firebase Storage
+// import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
+import { db } from "@/lib/firebase/firebase-config" // Asegúrate de que 'storage' ya no se importa
 import { format, parse } from "date-fns"
 import { es } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
-
 import { cn } from "@/lib/utils"
 import { Calendar } from "@/components/ui/calendar"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -46,6 +44,12 @@ import {
   ChevronRight,
 } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
+import emailjs from "@emailjs/browser" // Importa EmailJS
+
+// Inicializa EmailJS
+if (typeof window !== "undefined") {
+  emailjs.init("azc3nwXCG2ojZsRsB") // Usando la clave proporcionada en tu ejemplo
+}
 
 // Modificación 1: Mejorar el DatePicker para selección de fecha de nacimiento
 // Reemplazar el componente DatePicker actual con esta versión mejorada
@@ -53,11 +57,9 @@ function DatePicker({ date, setDate, className, placeholder = "Seleccionar fecha
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [year, setYear] = useState(date ? date.getFullYear() : new Date().getFullYear())
   const [month, setMonth] = useState(date ? date.getMonth() : new Date().getMonth())
-
   // Generar array de años (desde 100 años atrás hasta el año actual)
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 100 }, (_, i) => currentYear - i)
-
   // Nombres de los meses en español
   const months = [
     "Enero",
@@ -73,7 +75,6 @@ function DatePicker({ date, setDate, className, placeholder = "Seleccionar fecha
     "Noviembre",
     "Diciembre",
   ]
-
   // Actualizar el calendario cuando cambia el año o mes
   useEffect(() => {
     if (calendarOpen) {
@@ -82,7 +83,6 @@ function DatePicker({ date, setDate, className, placeholder = "Seleccionar fecha
       document.querySelector('[data-calendar-root="true"]')?.setAttribute("data-view-date", newDate.toISOString())
     }
   }, [year, month, calendarOpen])
-
   return (
     <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
       <PopoverTrigger asChild>
@@ -109,7 +109,6 @@ function DatePicker({ date, setDate, className, placeholder = "Seleccionar fecha
               ))}
             </SelectContent>
           </Select>
-
           <Select value={year.toString()} onValueChange={(value) => setYear(Number.parseInt(value))}>
             <SelectTrigger className="w-[90px] h-8">
               <SelectValue placeholder="Año" />
@@ -147,11 +146,9 @@ function DatePicker({ date, setDate, className, placeholder = "Seleccionar fecha
     </Popover>
   )
 }
-
-// Toast personalizado para el ejemplo
+// Toast personalizado para el ejemploconst useToast = () => {
 const useToast = () => {
   const [toasts, setToasts] = useState([])
-
   const toast = ({ title, description, variant = "default" }) => {
     const id = Date.now()
     const newToast = { id, title, description, variant }
@@ -160,15 +157,12 @@ const useToast = () => {
       setToasts((prev) => prev.filter((t) => t.id !== id))
     }, 3000)
   }
-
   return { toast, toasts }
 }
-
 // Componente Toast
 const Toast = ({ toast, onClose }) => {
   const bgColor =
     toast.variant === "destructive" ? "bg-red-500" : toast.variant === "success" ? "bg-green-500" : "bg-blue-500"
-
   return (
     <div
       className={`${bgColor} text-white p-3 rounded-lg shadow-lg mb-2 transition-all animate-in slide-in-from-right-5`}
@@ -178,7 +172,6 @@ const Toast = ({ toast, onClose }) => {
     </div>
   )
 }
-
 // Contenedor de toasts
 const ToastContainer = ({ toasts }) => (
   <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
@@ -187,13 +180,16 @@ const ToastContainer = ({ toasts }) => (
     ))}
   </div>
 )
-
 // Componente de guía de talles mejorado
 const TallesRemeraMejorado = () => {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" size="sm" className="mt-2 text-xs flex items-center gap-1 text-blue-600">
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-2 text-xs flex items-center gap-1 text-blue-600 bg-transparent"
+        >
           <Info className="h-3 w-3" />
           Ver guía de talles
         </Button>
@@ -280,7 +276,6 @@ const TallesRemeraMejorado = () => {
     </Popover>
   )
 }
-
 // Modificación 2: Añadir array de grupos de ciclistas y lógica para agregar nuevos grupos
 // Añadir este array después de la definición del componente TallesRemeraMejorado
 const gruposCiclistas = [
@@ -300,7 +295,6 @@ const gruposCiclistas = [
   "Bici Chicas",
   "Panteras Bike",
 ]
-
 // Array de países con Argentina y Uruguay primero
 const paises = [
   "Argentina",
@@ -319,7 +313,6 @@ const paises = [
   "España",
   "Otro",
 ]
-
 // Componente de pasos del formulario
 const FormSteps = ({ currentStep, totalSteps }) => {
   return (
@@ -342,7 +335,6 @@ const FormSteps = ({ currentStep, totalSteps }) => {
     </div>
   )
 }
-
 export default function RegistrationForm() {
   const { toast, toasts } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -354,9 +346,7 @@ export default function RegistrationForm() {
   const topRef = useRef(null)
   const [birthDate, setBirthDate] = useState(undefined)
   const [grupoCiclistasOpen, setGrupoCiclistasOpen] = useState(false)
-
   const totalSteps = 3
-
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
@@ -376,9 +366,8 @@ export default function RegistrationForm() {
     esCeliaco: "",
     aceptaCondiciones: false,
     comprobantePago: null,
-    comprobantePagoUrl: "",
+    comprobantePagoUrl: "", // Esta URL ya no se usará para Firebase Storage
   })
-
   // Actualizar formData cuando cambia la fecha de nacimiento
   useEffect(() => {
     if (birthDate) {
@@ -388,7 +377,6 @@ export default function RegistrationForm() {
       })
     }
   }, [birthDate])
-
   // Inicializar la fecha de nacimiento si ya existe en formData
   useEffect(() => {
     if (formData.fechaNacimiento && !birthDate) {
@@ -402,11 +390,9 @@ export default function RegistrationForm() {
       }
     }
   }, [formData.fechaNacimiento])
-
   // Modificación 4: Actualizar la función handleCloseSuccessDialog para limpiar el formulario
   const handleCloseSuccessDialog = () => {
     setShowSuccessDialog(false)
-
     // Limpiar el formulario
     setFormData({
       nombre: "",
@@ -432,36 +418,29 @@ export default function RegistrationForm() {
     setBirthDate(undefined)
     setFieldErrors({})
     setCurrentStep(1)
-
     // Hacer scroll al inicio
     window.scrollTo({ top: 0, behavior: "smooth" })
     topRef.current?.scrollIntoView({ behavior: "smooth" })
   }
-
   const goToHomePage = () => {
     window.location.href = "/"
   }
-
   const validateName = (value) => {
     return /^[A-Za-zÁáÉéÍíÓóÚúÜüÑñ\s]+$/.test(value)
   }
-
   const validateDNI = (value) => {
     // Permitir cualquier número de dígitos (mínimo 1)
     return /^\d+$/.test(value)
   }
-
   const validateEmail = (value) => {
     if (!value) return true
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
   }
-
   function validatePhone(value) {
     if (!value) return true
     // Permitir cualquier número de dígitos (mínimo 1)
     return /^\d+$/.test(value.replace(/\D/g, ""))
   }
-
   const validateField = (name, value) => {
     switch (name) {
       case "nombre":
@@ -478,16 +457,13 @@ export default function RegistrationForm() {
         return ""
     }
   }
-
   const handleInputChange = (e) => {
     const { name, value, type } = e.target
     const newValue = type === "checkbox" ? e.target.checked : value
-
     setFormData({
       ...formData,
       [name]: newValue,
     })
-
     if (["nombre", "apellido", "dni", "email", "telefono"].includes(name)) {
       const error = validateField(name, newValue)
       setFieldErrors({
@@ -496,25 +472,23 @@ export default function RegistrationForm() {
       })
     }
   }
-
   const handleCheckboxChange = (name, checked) => {
     setFormData({
       ...formData,
       [name]: checked,
     })
   }
-
   const handleSelectChange = (name, value) => {
     setFormData({
       ...formData,
       [name]: value,
     })
   }
-
   const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (file) {
       // Verificar el tamaño del archivo (30MB = 30 * 1024 * 1024 bytes)
+      // Este límite es para la subida, pero el límite de Firestore es 1MB
       if (file.size > 30 * 1024 * 1024) {
         toast({
           title: "Archivo demasiado grande",
@@ -525,14 +499,13 @@ export default function RegistrationForm() {
         e.target.value = ""
         return
       }
-
       setFormData({
         ...formData,
         comprobantePago: file,
       })
     }
   }
-
+  // La función convertToBase64 se usará para guardar en Firestore
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       // Si no es una imagen, usar el método estándar sin compresión
@@ -550,7 +523,6 @@ export default function RegistrationForm() {
         }
         return
       }
-
       // Para imágenes JPG/PNG, comprimir antes de convertir a base64
       const reader = new FileReader()
       reader.readAsArrayBuffer(file)
@@ -558,20 +530,16 @@ export default function RegistrationForm() {
         const img = new Image()
         const canvas = document.createElement("canvas")
         const ctx = canvas.getContext("2d")
-
         const arrayBuffer = event.target.result
         const blob = new Blob([arrayBuffer], { type: file.type })
         const blobUrl = URL.createObjectURL(blob)
-
         img.onload = () => {
           URL.revokeObjectURL(blobUrl)
-
           // Calcular nuevas dimensiones manteniendo la proporción
           let width = img.width
           let height = img.height
           const MAX_WIDTH = 1200
           const MAX_HEIGHT = 1200
-
           if (width > height) {
             if (width > MAX_WIDTH) {
               height = Math.round((height * MAX_WIDTH) / width)
@@ -583,17 +551,14 @@ export default function RegistrationForm() {
               height = MAX_HEIGHT
             }
           }
-
           canvas.width = width
           canvas.height = height
           ctx.drawImage(img, 0, 0, width, height)
-
           // Convertir a base64 con calidad reducida (0.5 = 50%)
           // Esto reducirá significativamente el tamaño del archivo
           const dataUrl = canvas.toDataURL(file.type, 0.5)
           resolve(dataUrl)
         }
-
         img.onerror = () => {
           URL.revokeObjectURL(blobUrl)
           toast({
@@ -603,10 +568,8 @@ export default function RegistrationForm() {
           })
           reject(new Error("Error al cargar la imagen"))
         }
-
         img.src = blobUrl
       }
-
       reader.onerror = (error) => {
         toast({
           title: "Error al leer el archivo",
@@ -617,64 +580,37 @@ export default function RegistrationForm() {
       }
     })
   }
-
-  const uploadFile = async (file) => {
-    if (!file) return null
-
-    try {
-      const storageRef = ref(storage, `comprobantes/${formData.dni || "user"}_${Date.now()}_${file.name}`)
-      const snapshot = await uploadBytes(storageRef, file)
-      const downloadURL = await getDownloadURL(snapshot.ref)
-      return downloadURL
-    } catch (error) {
-      console.error("Error subiendo archivo:", error)
-      throw error
-    }
-  }
+  // La función uploadFile ya no es necesaria
+  // const uploadFile = async (file) => { ... }
 
   const validateStep = (step) => {
     const errors = {}
-
     if (step === 1) {
       if (!formData.nombre) errors.nombre = "El nombre es obligatorio"
       else if (!validateName(formData.nombre)) errors.nombre = "El nombre solo debe contener letras"
-
       if (!formData.apellido) errors.apellido = "El apellido es obligatorio"
       else if (!validateName(formData.apellido)) errors.apellido = "El apellido solo debe contener letras"
-
       if (!formData.dni) errors.dni = "El DNI es obligatorio"
       else if (!validateDNI(formData.dni)) errors.dni = "El DNI debe tener 7-8 dígitos"
-
       if (!formData.fechaNacimiento) errors.fechaNacimiento = "La fecha de nacimiento es obligatoria"
-
       if (!formData.localidad) errors.localidad = "La localidad es obligatoria"
-
       if (!formData.email) errors.email = "El email es obligatorio"
       else if (!validateEmail(formData.email)) errors.email = "Formato de email inválido"
-
       if (!formData.telefono) errors.telefono = "El teléfono es obligatorio"
       else if (!validatePhone(formData.telefono)) errors.telefono = "Formato de teléfono inválido"
-
       if (!formData.telefonoEmergencia) errors.telefonoEmergencia = "El teléfono de emergencia es obligatorio"
       else if (!validatePhone(formData.telefonoEmergencia)) errors.telefonoEmergencia = "Formato de teléfono inválido"
-
       if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
-
       if (!formData.genero) errors.genero = "El género es obligatorio"
-
       if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
-
       if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
     } else if (step === 2) {
       if (!formData.esCeliaco) errors.esCeliaco = "Debe indicar si es celíaco o no"
     } else if (step === 3) {
       if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
-
       if (!formData.comprobantePago) errors.comprobantePago = "Debe adjuntar un comprobante de pago"
     }
-
     setFieldErrors(errors)
-
     if (Object.keys(errors).length > 0) {
       toast({
         title: "Hay errores en el formulario",
@@ -683,51 +619,32 @@ export default function RegistrationForm() {
       })
       return false
     }
-
     return true
   }
-
   const validateForm = () => {
     const errors = {}
-
     if (!formData.nombre) errors.nombre = "El nombre es obligatorio"
     else if (!validateName(formData.nombre)) errors.nombre = "El nombre solo debe contener letras"
-
     if (!formData.apellido) errors.apellido = "El apellido es obligatorio"
     else if (!validateName(formData.apellido)) errors.apellido = "El apellido solo debe contener letras"
-
     if (!formData.dni) errors.dni = "El DNI es obligatorio"
     else if (!validateDNI(formData.dni)) errors.dni = "El DNI debe tener 7-8 dígitos"
-
     if (!formData.fechaNacimiento) errors.fechaNacimiento = "La fecha de nacimiento es obligatoria"
-
     if (!formData.localidad) errors.localidad = "La localidad es obligatoria"
-
     if (!formData.email) errors.email = "El email es obligatorio"
     else if (!validateEmail(formData.email)) errors.email = "Formato de email inválido"
-
     if (!formData.telefono) errors.telefono = "El teléfono es obligatorio"
     else if (!validatePhone(formData.telefono)) errors.telefono = "Formato de teléfono inválido"
-
     if (!formData.telefonoEmergencia) errors.telefonoEmergencia = "El teléfono de emergencia es obligatorio"
     else if (!validatePhone(formData.telefonoEmergencia)) errors.telefonoEmergencia = "Formato de teléfono inválido"
-
     if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
-
     if (!formData.genero) errors.genero = "El género es obligatorio"
-
     if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
-
     if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
-
     if (!formData.esCeliaco) errors.esCeliaco = "Debe indicar si es celíaco o no"
-
     if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
-
     if (!formData.comprobantePago) errors.comprobantePago = "Debe adjuntar un comprobante de pago"
-
     setFieldErrors(errors)
-
     if (Object.keys(errors).length > 0) {
       toast({
         title: "Hay errores en el formulario",
@@ -736,66 +653,85 @@ export default function RegistrationForm() {
       })
       return false
     }
-
     return true
   }
-
   const nextStep = () => {
     if (validateStep(currentStep)) {
       setCurrentStep(currentStep + 1)
       window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
-
   const prevStep = () => {
     setCurrentStep(currentStep - 1)
     window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+  // Función para obtener el siguiente número de inscripción
+  const getNextRegistrationNumber = async () => {
+    try {
+      const registrationsRef = collection(db, "participantes2025")
+      const allRegistrations = query(registrationsRef, orderBy("fechaInscripcion", "asc"))
+      const snapshot = await getDocs(allRegistrations)
+      // El número de inscripción será el total de documentos + 1
+      return snapshot.size + 1
+    } catch (error) {
+      console.error("Error obteniendo número de inscripción:", error)
+      // En caso de error, usar timestamp como fallback
+      return Date.now()
+    }
+  }
+
+  // Nueva función para enviar el email al administrador
+  // Ahora solo recibe participantData y no un comprobanteUrl
+  const sendAdminNotificationEmail = async (participantData) => {
+    try {
+      const templateParams = {
+        nombre: participantData.nombre,
+        apellido: participantData.apellido,
+        comprobanteUrl: participantData.comprobantePago || "", // URL del comprobante de pago
+        emailIara: "iara37699@gmail.com", // Email fijo del administrador
+      }
+
+      await emailjs.send("default_service", "template_f7yvb9x", templateParams)
+      console.log("Email de notificación al administrador enviado con éxito.")
+      return true
+    } catch (error) {
+      console.error("Error al enviar el correo de notificación al administrador:", error)
+      toast({
+        title: "Error al enviar email",
+        description: `No se pudo enviar el correo de confirmación al administrador: ${error.message || JSON.stringify(error)}`,
+        variant: "destructive",
+      })
+      return false
+    }
   }
 
   // Modificación 3: Actualizar el componente RegistrationForm para implementar los cambios
   // Modificar la función handleSubmit para eliminar el toast de éxito
   const handleSubmit = async (e) => {
     e.preventDefault()
-
     // Validar el formulario
     const errors = {}
-
     if (!formData.nombre) errors.nombre = "El nombre es obligatorio"
     else if (!validateName(formData.nombre)) errors.nombre = "El nombre solo debe contener letras"
-
     if (!formData.apellido) errors.apellido = "El apellido es obligatorio"
     else if (!validateName(formData.apellido)) errors.apellido = "El apellido solo debe contener letras"
-
     if (!formData.dni) errors.dni = "El DNI es obligatorio"
     else if (!validateDNI(formData.dni)) errors.dni = "El DNI debe tener 7-8 dígitos"
-
     if (!formData.fechaNacimiento) errors.fechaNacimiento = "La fecha de nacimiento es obligatoria"
-
     if (!formData.localidad) errors.localidad = "La localidad es obligatoria"
-
     if (!formData.email) errors.email = "El email es obligatorio"
     else if (!validateEmail(formData.email)) errors.email = "Formato de email inválido"
-
     if (!formData.telefono) errors.telefono = "El teléfono es obligatorio"
     else if (!validatePhone(formData.telefono)) errors.telefono = "Formato de teléfono inválido"
-
     if (!formData.telefonoEmergencia) errors.telefonoEmergencia = "El teléfono de emergencia es obligatorio"
     else if (!validatePhone(formData.telefonoEmergencia)) errors.telefonoEmergencia = "Formato de teléfono inválido"
-
     if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
-
     if (!formData.genero) errors.genero = "El género es obligatorio"
-
     if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
-
     if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
-
     if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
-
     if (!formData.comprobantePago) errors.comprobantePago = "Debe adjuntar un comprobante de pago"
-
     setFieldErrors(errors)
-
     if (Object.keys(errors).length > 0) {
       // Mostrar el primer error específico
       const firstError = Object.values(errors)[0]
@@ -806,22 +742,25 @@ export default function RegistrationForm() {
       })
       return
     }
-
     setIsSubmitting(true)
-
     try {
-      let fileUrl = ""
+      // Obtener el número de inscripción
+      const numeroInscripcion = await getNextRegistrationNumber()
       let imagenBase64 = ""
 
-      if (formData.comprobantePago && storage) {
-        try {
-          fileUrl = await uploadFile(formData.comprobantePago)
-        } catch (error) {
-          console.error("Error en subida a Storage, usando Base64 como respaldo", error)
-          imagenBase64 = await convertToBase64(formData.comprobantePago)
-        }
-      } else if (formData.comprobantePago) {
+      if (formData.comprobantePago) {
+        // Convertir a Base64 para guardar en Firestore
         imagenBase64 = await convertToBase64(formData.comprobantePago)
+        // Advertir si el Base64 es muy grande (Firestore tiene límite de 1MB por documento)
+        if (imagenBase64.length * 0.75 > 1024 * 1024) {
+          // Aproximación de bytes de Base64
+          toast({
+            title: "Advertencia de tamaño de archivo",
+            description:
+              "El comprobante de pago es muy grande y podría exceder el límite de 1MB de Firestore. Se guardará, pero podría haber problemas.",
+            variant: "destructive",
+          })
+        }
       }
 
       // Estructura para condiciones de salud y medicamentos
@@ -829,7 +768,6 @@ export default function RegistrationForm() {
         condicionesSalud: formData.condicionesSalud || "",
         esCeliaco: formData.esCeliaco || "no",
       }
-
       // Datos completos para Firestore según el formulario
       const registrationData = {
         // Datos personales
@@ -841,29 +779,35 @@ export default function RegistrationForm() {
         email: formData.email || "",
         telefono: formData.telefono || "",
         paisTelefono: formData.paisTelefono || "Argentina",
-        telefonoEmergencia: formData.telefonoEmergencia || "",
+        telefonoEmergencia: "", // Asegúrate de que este campo se maneje correctamente
         paisTelefonoEmergencia: formData.paisTelefonoEmergencia || "Argentina",
         grupoSanguineo: formData.grupoSanguineo || "",
         genero: formData.genero || "",
         grupoCiclistas: formData.grupoCiclistas || "",
         talleRemera: formData.talleRemera || "",
-
         // Condiciones de salud (ahora como texto completo)
         condicionSalud: JSON.stringify(condicionSalud),
-
-        // Datos del comprobante de pago
-        comprobantePagoUrl: fileUrl,
-        imagenBase64: fileUrl ? "" : imagenBase64,
+        // Datos del comprobante de pago (ahora solo Base64)
+        comprobantePagoUrl: "", // Ya no se usa URL de Storage
+        imagenBase64: imagenBase64, // Guarda el Base64 directamente
         nombreArchivo: formData.comprobantePago?.name || "comprobante.jpg",
-
         // Metadatos
         fechaInscripcion: new Date().toISOString(),
         year: new Date().getFullYear(),
         estado: "pendiente",
         aceptaTerminos: formData.aceptaCondiciones,
+        // Agregar número de inscripción
+        numeroInscripcion: numeroInscripcion,
       }
+      // Crear el nombre del documento: "nombre apellido numeroInscripcion"
+      const documentName = `${formData.nombre} ${formData.apellido} ${numeroInscripcion.toString().padStart(3, "0")}`
+      // Usar setDoc en lugar de addDoc para especificar el nombre del documento
+      const docRef = doc(db, "participantes2025", documentName)
+      await setDoc(docRef, registrationData)
 
-      const docRef = await addDoc(collection(db, "participantes2025"), registrationData)
+      // Enviar email al administrador con los datos del inscripto
+      // NO se envía Base64 aquí para evitar el error 413
+      await sendAdminNotificationEmail(registrationData)
 
       setSubmitted(true)
       setShowSuccessDialog(true)
@@ -878,11 +822,9 @@ export default function RegistrationForm() {
       setIsSubmitting(false)
     }
   }
-
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
-
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -909,7 +851,6 @@ export default function RegistrationForm() {
                     required
                   />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="apellido" className="flex justify-between">
                     <span>Apellido *</span>
@@ -925,7 +866,6 @@ export default function RegistrationForm() {
                     required
                   />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="dni" className="flex justify-between">
                     <span>DNI *</span>
@@ -941,7 +881,6 @@ export default function RegistrationForm() {
                     required
                   />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="fechaNacimiento" className="flex justify-between">
                     <span>Fecha de nacimiento *</span>
@@ -951,7 +890,6 @@ export default function RegistrationForm() {
                   </Label>
                   <DatePicker date={birthDate} setDate={setBirthDate} placeholder="Seleccionar fecha" />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="localidad" className="flex justify-between">
                     <span className="flex items-center gap-1">
@@ -968,7 +906,6 @@ export default function RegistrationForm() {
                     placeholder="Ej: Buenos Aires"
                   />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="email" className="flex justify-between items-center">
                     <span className="flex items-center gap-1">
@@ -987,7 +924,6 @@ export default function RegistrationForm() {
                     placeholder="Ej: ejemplo@correo.com"
                   />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="telefono" className="flex justify-between items-center">
                     <span className="flex items-center gap-1">
@@ -1024,7 +960,6 @@ export default function RegistrationForm() {
                   </div>
                   <p className="text-xs text-gray-500">Ingrese solo números, sin espacios ni guiones.</p>
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="telefonoEmergencia" className="flex justify-between items-center">
                     <span className="flex items-center gap-1">
@@ -1063,7 +998,6 @@ export default function RegistrationForm() {
                   </div>
                   <p className="text-xs text-gray-500">Ingrese solo números, sin espacios ni guiones.</p>
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="grupoSanguineo" className="flex justify-between">
                     <span className="flex items-center gap-1">
@@ -1095,7 +1029,6 @@ export default function RegistrationForm() {
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="genero" className="flex justify-between">
                     <span>Género *</span>
@@ -1126,7 +1059,6 @@ export default function RegistrationForm() {
                     </div>
                   </RadioGroup>
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="grupoCiclistas" className="flex justify-between">
                     <span className="flex items-center gap-1">
@@ -1137,7 +1069,6 @@ export default function RegistrationForm() {
                       <span className="text-red-500 text-xs">{fieldErrors.grupoCiclistas}</span>
                     )}
                   </Label>
-
                   <Popover open={grupoCiclistasOpen} onOpenChange={setGrupoCiclistasOpen}>
                     <PopoverTrigger asChild>
                       <div className="relative">
@@ -1190,7 +1121,6 @@ export default function RegistrationForm() {
                   </Popover>
                   <p className="text-xs text-gray-500">Escriba el nombre de su grupo o seleccione uno de la lista.</p>
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="talleRemera" className="flex justify-between">
                     <span className="flex items-center gap-1">
@@ -1248,7 +1178,6 @@ export default function RegistrationForm() {
                   especiales de salud, puede dejar este campo en blanco.
                 </p>
               </div>
-
               <div className="space-y-2 mt-4 border-t pt-4">
                 <Label htmlFor="esCeliaco" className="flex justify-between">
                   <span className="flex items-center gap-1">
@@ -1290,7 +1219,6 @@ export default function RegistrationForm() {
                 <DollarSign className="h-5 w-5" />
                 Información de pago
               </h3>
-
               {/* Grid responsive para los dos datos de pago */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                 {/* Dato de pago 1 - UALA */}
@@ -1310,14 +1238,13 @@ export default function RegistrationForm() {
                     </ul>
                   </AlertDescription>
                 </Alert>
-
                 {/* Dato de pago 2 - PREX Uruguay */}
                 <Alert className="bg-white border-green-200">
                   <AlertCircle className="h-4 w-4 text-green-500" />
                   <AlertTitle className="text-green-800">Dato de pago 2 - Uruguay</AlertTitle>
                   <AlertDescription className="text-green-700">
                     <ul className="list-disc pl-5 mt-2 space-y-1">
-                      <li>Banco: Prex</li> 
+                      <li>Banco: Prex</li>
                       <li>Titular: Brunilda Cristina Schubert</li>
                       <li>CUIT: 27-24600582-1</li>
                       <li>CVV: 0000013000032296357520</li>
@@ -1329,7 +1256,6 @@ export default function RegistrationForm() {
                   </AlertDescription>
                 </Alert>
               </div>
-
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="comprobantePago" className="flex justify-between">
@@ -1373,7 +1299,6 @@ export default function RegistrationForm() {
                 </div>
               </div>
             </div>
-
             <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 shadow-sm">
               <h3 className="font-medium text-lg mb-4 text-yellow-800">Términos y Condiciones</h3>
               <div className="space-y-3 text-sm text-gray-700">
@@ -1408,7 +1333,6 @@ export default function RegistrationForm() {
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
-
                 <div className="flex items-start space-x-2 mt-4">
                   <Checkbox
                     id="aceptaCondiciones"
@@ -1437,14 +1361,11 @@ export default function RegistrationForm() {
         return null
     }
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-blue-50 pb-10">
       <ToastContainer toasts={toasts} />
-
       <main className="container mx-auto px-4 py-8">
         <div ref={topRef}></div>
-
         <div className="max-w-4xl mx-auto mb-6">
           <Button
             onClick={goToHomePage}
@@ -1455,29 +1376,33 @@ export default function RegistrationForm() {
             Volver a la página principal
           </Button>
         </div>
-
         <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-          <DialogContent className="bg-white max-w-md overflow-hidden p-0">
+          <DialogContent
+            className="bg-white max-w-md overflow-hidden p-0"
+            onOpenAutoFocus={(event) => {
+              // Asegura que el foco se mueva al botón "Entendido" cuando el diálogo se abre
+              event.preventDefault()
+              document.getElementById("understood-button")?.focus()
+            }}
+          >
             <div className="bg-gradient-to-r from-green-400 to-emerald-500 p-6">
               <div className="mx-auto w-16 h-16 bg-white rounded-full flex items-center justify-center mb-4">
                 <CheckCircle2 className="h-10 w-10 text-green-500" />
               </div>
               <DialogTitle className="text-2xl font-bold text-white text-center">¡Inscripción Exitosa!</DialogTitle>
             </div>
-
             <div className="p-6">
               <DialogDescription className="text-gray-700 text-base mb-4">
-                <p className="mb-3">
+                <div className="mb-3">
                   Tu inscripción al <span className="font-semibold">Cicloturismo Termal</span> ha sido registrada
                   exitosamente.
-                </p>
-                <p className="mb-3">
+                </div>
+                <div className="mb-3">
                   Pronto recibirás un correo de confirmación con todos los detalles de tu participación y los próximos
                   pasos a seguir.
-                </p>
-                <p>Recuerda que deberás presentar tu DNI el día del evento para la acreditación.</p>
+                </div>
+                <div>Recuerda que deberás presentar tu DNI el día del evento para la acreditación.</div>
               </DialogDescription>
-
               <div className="bg-green-50 border border-green-100 rounded-lg p-4 mb-4">
                 <h4 className="text-green-800 font-medium flex items-center gap-2 mb-2">
                   <Info className="h-4 w-4" />
@@ -1491,21 +1416,20 @@ export default function RegistrationForm() {
                 </ul>
               </div>
             </div>
-
             <DialogFooter className="bg-gray-50 p-4 flex flex-col gap-2">
               <Button
+                id="understood-button" // Añade un ID para poder enfocarlo
                 onClick={handleCloseSuccessDialog}
                 className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
               >
                 Entendido
               </Button>
-              <Button variant="outline" onClick={goToHomePage} className="w-full">
+              <Button variant="outline" onClick={goToHomePage} className="w-full bg-transparent">
                 Volver a la página principal
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
         <Card className="max-w-4xl mx-auto shadow-lg border-0">
           <CardHeader className="bg-gradient-to-r from-pink-100 to-blue-100 rounded-t-lg">
             <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
@@ -1521,11 +1445,15 @@ export default function RegistrationForm() {
               {renderStep()}
             </form>
           </CardContent>
-
           <CardFooter className="bg-gray-50 rounded-b-lg flex flex-col sm:flex-row gap-3 justify-between">
             <div className="flex gap-3 w-full sm:w-auto">
               {currentStep > 1 && (
-                <Button type="button" variant="outline" onClick={prevStep} className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={prevStep}
+                  className="flex items-center gap-1 bg-transparent"
+                >
                   <ChevronLeft className="h-4 w-4" />
                   Anterior
                 </Button>
@@ -1578,7 +1506,7 @@ export default function RegistrationForm() {
                         telefono: "",
                         paisTelefono: "Argentina",
                         telefonoEmergencia: "",
-                        paisTelefonoEmergencia: "Argentina",
+                        telefonoEmergencia: "Argentina",
                         grupoSanguineo: "",
                         grupoCiclistas: "",
                         genero: "",
@@ -1603,7 +1531,6 @@ export default function RegistrationForm() {
             </TooltipProvider>
           </CardFooter>
         </Card>
-
         <div className="text-center mt-8 text-sm text-gray-500">
           <p>© 2024 Cicloturismo Termal - Todos los derechos reservados</p>
         </div>

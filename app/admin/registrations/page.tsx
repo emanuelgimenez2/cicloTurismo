@@ -33,7 +33,6 @@ import {
   Users,
   CheckCircle,
   Clock,
-  AlertCircle,
   XCircle,
   RefreshCw,
   CalendarDays,
@@ -42,11 +41,24 @@ import {
   ChevronRight,
   ZoomIn,
   ZoomOut,
-  RotateCw,
-  Menu,
   Heart,
   StickyNote,
   FilterX,
+  ChevronDown,
+  ChevronUp,
+  Mail,
+  User,
+  Shirt,
+  Phone,
+  MapPin,
+  Calendar,
+  Droplet,
+  Bike,
+  ClipboardCheck,
+  WheatOff,
+  Stethoscope,
+  ClipboardList,
+  NotebookPen,
 } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -63,10 +75,10 @@ if (typeof window !== "undefined") {
 const formatDate = (dateString) => {
   if (!dateString) return null
 
-  // Si ya está en formato día/mes/año, lo dejamos igual
+  // If it's already in day/month/year format, keep it
   if (dateString.includes("/")) return dateString
 
-  // Si está en formato ISO (YYYY-MM-DD)
+  // If it's in ISO format (YYYY-MM-DD)
   if (dateString.includes("-")) {
     const [year, month, day] = dateString.split("-")
     return `${day}/${month}/${year}`
@@ -105,9 +117,9 @@ export default function AdminRegistrationsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [yearFilter, setYearFilter] = useState("all")
-  const [healthFilter, setHealthFilter] = useState("all") // Nuevo filtro
-  const [celiacFilter, setCeliacFilter] = useState("all") // Nuevo filtro
-  const [noteFilter, setNoteFilter] = useState("all") // Nuevo filtro
+  const [healthFilter, setHealthFilter] = useState("all")
+  const [celiacFilter, setCeliacFilter] = useState("all")
+  const [noteFilter, setNoteFilter] = useState("all")
   const [loading, setLoading] = useState(true)
   const [availableYears, setAvailableYears] = useState([])
   const [selectedRegistration, setSelectedRegistration] = useState(null)
@@ -126,11 +138,8 @@ export default function AdminRegistrationsPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(15)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [showFilters, setShowFilters] = useState(false)
   const topRef = useRef(null)
-
-  const [sortField, setSortField] = useState("fechaInscripcion")
-  const [sortDirection, setSortDirection] = useState("desc")
 
   const scrollToTop = () => {
     topRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -143,23 +152,37 @@ export default function AdminRegistrationsPage() {
   }
 
   const fetchRegistrations = async () => {
+    setLoading(true)
     try {
       const registrationsRef = collection(db, "participantes2025")
-      const allRegistrations = query(registrationsRef, orderBy("fechaInscripcion", "desc"))
-      const snapshot = await getDocs(allRegistrations)
+      const allRegistrationsQuery = query(registrationsRef, orderBy("fechaInscripcion", "desc"))
+      const snapshot = await getDocs(allRegistrationsQuery)
 
       const registrationsData = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
-        fechaInscripcion: doc.data().fechaInscripcion?.toDate?.() || new Date(),
+        fechaInscripcion: doc.data().fechaInscripcion?.toDate?.() || null,
         fechaNacimiento: formatDate(doc.data().fechaNacimiento) || "-",
       }))
 
-      const years = [...new Set(registrationsData.map((reg) => reg.fechaInscripcion.getFullYear()))]
+      // Aplicar el ordenamiento inicial: primero pendientes, luego por número de inscripción descendente
+      registrationsData.sort((a, b) => {
+        const aStatus = a.estado || "pendiente"
+        const bStatus = b.estado || "pendiente"
+
+        if (aStatus === "pendiente" && bStatus !== "pendiente") return -1
+        if (aStatus !== "pendiente" && bStatus === "pendiente") return 1
+
+        const aNum = a.numeroInscripcion || 0
+        const bNum = b.numeroInscripcion || 0
+        return bNum - aNum
+      })
+
+      const years = [...new Set(registrationsData.map((reg) => reg.fechaInscripcion?.getFullYear()).filter(Boolean))]
       setAvailableYears(years.sort((a, b) => b - a))
 
       setRegistrations(registrationsData)
-      setFilteredRegistrations(registrationsData)
+      setFilteredRegistrations(registrationsData) // filteredRegistrations ya estará ordenado inicialmente
     } catch (error) {
       console.error("Error fetching registrations:", error)
     } finally {
@@ -192,10 +215,9 @@ export default function AdminRegistrationsPage() {
     }
 
     if (yearFilter !== "all") {
-      filtered = filtered.filter((reg) => reg.fechaInscripcion.getFullYear() === Number.parseInt(yearFilter))
+      filtered = filtered.filter((reg) => reg.fechaInscripcion?.getFullYear() === Number.parseInt(yearFilter))
     }
 
-    // Nuevo filtro por condiciones de salud
     if (healthFilter !== "all") {
       filtered = filtered.filter((reg) => {
         const healthInfo = parseHealthConditions(reg.condicionSalud)
@@ -208,7 +230,6 @@ export default function AdminRegistrationsPage() {
       })
     }
 
-    // Nuevo filtro por celíacos
     if (celiacFilter !== "all") {
       filtered = filtered.filter((reg) => {
         const healthInfo = parseHealthConditions(reg.condicionSalud)
@@ -216,7 +237,6 @@ export default function AdminRegistrationsPage() {
       })
     }
 
-    // Nuevo filtro por notas
     if (noteFilter !== "all") {
       filtered = filtered.filter((reg) => {
         if (noteFilter === "with_notes") {
@@ -228,41 +248,26 @@ export default function AdminRegistrationsPage() {
       })
     }
 
-    setFilteredRegistrations(filtered)
-    setCurrentPage(1) // Reset to first page when filters change
-  }, [searchTerm, statusFilter, yearFilter, healthFilter, celiacFilter, noteFilter, registrations])
+    // Ordenar: primero pendientes, luego por número de inscripción descendente (más reciente primero)
+    // Esta lógica ya se aplica en fetchRegistrations para la carga inicial,
+    // pero se mantiene aquí para re-ordenar si los filtros cambian y afectan el orden.
+    filtered.sort((a, b) => {
+      // Prioridad 1: Estado pendiente va primero
+      const aStatus = a.estado || "pendiente"
+      const bStatus = b.estado || "pendiente"
 
-  // Ordenar los registros filtrados
-  useEffect(() => {
-    setFilteredRegistrations((prev) => {
-      const sorted = [...prev].sort((a, b) => {
-        let aValue = a[sortField]
-        let bValue = b[sortField]
+      if (aStatus === "pendiente" && bStatus !== "pendiente") return -1
+      if (aStatus !== "pendiente" && bStatus === "pendiente") return 1
 
-        // Manejar valores nulos o undefined
-        if (aValue === undefined || aValue === null) aValue = ""
-        if (bValue === undefined || bValue === null) bValue = ""
-
-        // Convertir a string para comparación si no son fechas
-        if (typeof aValue !== "object" && typeof bValue !== "object") {
-          aValue = String(aValue).toLowerCase()
-          bValue = String(bValue).toLowerCase()
-        }
-
-        // Ordenar fechas
-        if (sortField === "fechaInscripcion") {
-          return sortDirection === "asc" ? new Date(aValue) - new Date(bValue) : new Date(bValue) - new Date(aValue)
-        }
-
-        // Ordenamiento normal
-        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1
-        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1
-        return 0
-      })
-
-      return sorted
+      // Prioridad 2: Por número de inscripción descendente (más alto primero)
+      const aNum = a.numeroInscripcion || 0
+      const bNum = b.numeroInscripcion || 0
+      return bNum - aNum
     })
-  }, [sortField, sortDirection, filteredRegistrations.length])
+
+    setFilteredRegistrations(filtered)
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter, yearFilter, healthFilter, celiacFilter, noteFilter, registrations])
 
   const loadComprobante = async (registration) => {
     setLoadingComprobante(true)
@@ -350,7 +355,7 @@ export default function AdminRegistrationsPage() {
         localidad: participant.localidad || "",
         genero: participant.genero || "",
         talleRemera: participant.talleRemera || "",
-        fechaInscripcion: participant.fechaInscripcion.toLocaleDateString("es-ES"),
+        fechaInscripcion: participant.fechaInscripcion?.toLocaleDateString("es-ES") || "",
       }
 
       const response = await emailjs.send("default_service", "template_2fg4bhx", templateParams)
@@ -420,14 +425,17 @@ export default function AdminRegistrationsPage() {
   const exportApprovedToPDF = () => {
     const approvedRegistrations = registrations
       .filter((reg) => reg.estado === "confirmado")
-      .sort((a, b) => a.apellido?.localeCompare(b.apellido) || 0)
+      .sort((a, b) => {
+        // Ordenar por número de inscripción ascendente para el PDF
+        const aNum = a.numeroInscripcion || 0
+        const bNum = b.numeroInscripcion || 0
+        return aNum - bNum
+      })
 
-    // Calcular totales por grupo de bici
     const gruposBici = {}
     const celiacos = { si: 0, no: 0 }
 
     approvedRegistrations.forEach((reg) => {
-      // Normalizar el nombre del grupo (eliminar espacios extras)
       const grupoBici = (
         reg.grupoCiclistas ||
         reg.grupoBici ||
@@ -439,7 +447,6 @@ export default function AdminRegistrationsPage() {
 
       gruposBici[grupoBici] = (gruposBici[grupoBici] || 0) + 1
 
-      // Contar celíacos
       const healthInfo = parseHealthConditions(reg.condicionSalud)
       celiacos[healthInfo.esCeliaco] = (celiacos[healthInfo.esCeliaco] || 0) + 1
     })
@@ -451,21 +458,21 @@ export default function AdminRegistrationsPage() {
     <meta charset="UTF-8">
     <title>Lista de Participantes Confirmados</title>
     <style>
-      body { 
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-        margin: 20px; 
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 20px;
         font-size: 12px;
         color: #333;
         background-color: #f9fafb;
       }
-      h1, h2, h3 { 
-        color: #4f46e5; 
-        text-align: center; 
+      h1, h2, h3 {
+        color: #4f46e5;
+        text-align: center;
         margin-bottom: 0.5em;
       }
-      .header { 
-        text-align: center; 
-        margin-bottom: 20px; 
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
         padding: 20px;
         background: linear-gradient(to right, #6366f1, #8b5cf6);
         color: white;
@@ -481,10 +488,10 @@ export default function AdminRegistrationsPage() {
         margin: 5px 0 0;
         opacity: 0.9;
       }
-      .summary { 
-        margin-bottom: 20px; 
-        border: 1px solid #e5e7eb; 
-        padding: 15px; 
+      .summary {
+        margin-bottom: 20px;
+        border: 1px solid #e5e7eb;
+        padding: 15px;
         background-color: white;
         border-radius: 8px;
         box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
@@ -508,23 +515,23 @@ export default function AdminRegistrationsPage() {
         border-radius: 6px;
         margin: 10px 0;
       }
-      table { 
-        width: 100%; 
-        border-collapse: collapse; 
-        margin-top: 10px; 
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
         font-size: 11px;
         background-color: white;
         border-radius: 8px;
         overflow: hidden;
         box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
       }
-      th, td { 
-        border: 1px solid #e5e7eb; 
-        padding: 8px; 
-        text-align: left; 
+      th, td {
+        border: 1px solid #e5e7eb;
+        padding: 8px;
+        text-align: left;
       }
-      th { 
-        background-color: #f3f4f6; 
+      th {
+        background-color: #f3f4f6;
         font-weight: bold;
         color: #4b5563;
       }
@@ -532,8 +539,8 @@ export default function AdminRegistrationsPage() {
         text-align: center;
         width: 40px;
       }
-      tr:nth-child(even) { 
-        background-color: #f9fafb; 
+      tr:nth-child(even) {
+        background-color: #f9fafb;
       }
       tr:hover {
         background-color: #eff6ff;
@@ -569,16 +576,16 @@ export default function AdminRegistrationsPage() {
         day: "numeric",
       })}</p>
     </div>
-    
+
     <div class="summary">
       <h3>Resumen</h3>
       <p>Total de participantes confirmados: <strong>${approvedRegistrations.length}</strong></p>
-      
+
       <div class="celiac-info">
         <p><strong>Información sobre celíacos:</strong></p>
         <p>• Celíacos: <strong>${celiacos.si || 0}</strong> participantes</p>
       </div>
-      
+
       ${
         Object.keys(gruposBici).length > 0
           ? `<p>Distribución por grupo de ciclistas:</p>
@@ -591,7 +598,7 @@ export default function AdminRegistrationsPage() {
           : "<p>No hay información de grupos de ciclistas disponible</p>"
       }
     </div>
-    
+
     <table>
       <thead>
         <tr>
@@ -610,7 +617,7 @@ export default function AdminRegistrationsPage() {
       </thead>
       <tbody>
         ${approvedRegistrations
-          .map((reg, index) => {
+          .map((reg) => {
             const grupoBici = reg.grupoCiclistas || reg.grupoBici || reg.grupo_bici || reg.grupobici || reg.grupo || ""
             const healthInfo = parseHealthConditions(reg.condicionSalud)
             const telefonoEmergencia =
@@ -619,7 +626,7 @@ export default function AdminRegistrationsPage() {
 
             return `
           <tr ${healthInfo.esCeliaco === "si" ? 'class="celiac-yes"' : ""}>
-            <td>${index + 1}</td>
+            <td>${reg.numeroInscripcion || "-"}</td>
             <td><strong>${reg.apellido || ""}, ${reg.nombre || ""}</strong></td>
             <td>${reg.dni || ""}</td>
             <td>${reg.telefono || ""}</td>
@@ -638,7 +645,7 @@ export default function AdminRegistrationsPage() {
           .join("")}
       </tbody>
     </table>
-    
+
     <div class="footer">
       <p>Este documento es confidencial y contiene información personal de los participantes.</p>
       <p>Generado automáticamente desde el sistema de administración de inscripciones.</p>
@@ -647,7 +654,6 @@ export default function AdminRegistrationsPage() {
   </html>
   `
 
-    // Crear y descargar el archivo HTML (que puede ser convertido a PDF)
     const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8;" })
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
@@ -659,116 +665,34 @@ export default function AdminRegistrationsPage() {
     URL.revokeObjectURL(url)
   }
 
-  /*
-  const exportToExcel = () => {
-    const approvedRegistrations = registrations
-      .filter((reg) => reg.estado === "confirmado")
-      .sort((a, b) => a.apellido?.localeCompare(b.apellido) || 0)
-
-    // Crear un array con los encabezados
-    const headers = [
-      "N°",
-      "Apellido",
-      "Nombre",
-      "DNI",
-      "Email",
-      "Teléfono",
-      "Tel. Emergencia",
-      "Localidad",
-      "Fecha Nacimiento",
-      "Género",
-      "Grupo Sanguíneo",
-      "Talle Remera",
-      "Grupo Ciclistas",
-      "Es Celíaco",
-      "Condiciones de Salud",
-    ]
-
-    // Crear filas de datos
-    const rows = approvedRegistrations.map((reg, index) => {
-      const healthInfo = parseHealthConditions(reg.condicionSalud)
-      const telefonoEmergencia =
-        reg.telefonoEmergencia || reg.telefono_emergencia || reg.telEmergencia || reg.telefonoContacto || ""
-      const grupoSanguineo = reg.grupoSanguineo || reg.grupo_sanguineo || reg.gruposanguineo || reg.sangre || ""
-      const grupoBici = reg.grupoCiclistas || reg.grupoBici || reg.grupo_bici || reg.grupobici || reg.grupo || ""
-
-      return [
-        index + 1,
-        reg.apellido || "",
-        reg.nombre || "",
-        reg.dni || "",
-        reg.email || "",
-        reg.telefono || "",
-        telefonoEmergencia,
-        reg.localidad || "",
-        reg.fechaNacimiento || "",
-        reg.genero || "",
-        grupoSanguineo,
-        reg.talleRemera || "",
-        grupoBici,
-        healthInfo.esCeliaco === "si" ? "SÍ" : "NO",
-        healthInfo.condicionesSalud || "",
-      ]
-    })
-
-    // Crear el contenido CSV
-    const csvContent = [
-      headers.join(","),
-      ...rows.map((row) =>
-        row
-          .map((cell) => {
-            // Escapar comas y comillas en los valores
-            const cellStr = String(cell || "")
-            if (cellStr.includes(",") || cellStr.includes('"') || cellStr.includes("\n")) {
-              return `"${cellStr.replace(/"/g, '""')}"`
-            }
-            return cellStr
-          })
-          .join(","),
-      ),
-    ].join("\n")
-
-    // Crear y descargar el archivo CSV
-    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement("a")
-    link.setAttribute("href", url)
-    link.setAttribute("download", `participantes_confirmados_${new Date().toISOString().split("T")[0]}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }
-  */
-
   const getStatusBadge = (status) => {
     switch (status) {
       case "confirmado":
         return (
-          <Badge className="bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-0">
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Confirmado
+          <Badge className="bg-green-600 hover:bg-green-700 text-white border-0 text-xs px-2 py-1">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            <span className="hidden sm:inline">Confirmado</span>
           </Badge>
         )
       case "pendiente":
         return (
-          <Badge className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white border-0">
-            <Clock className="h-3 w-3 mr-1" />
-            Pendiente
+          <Badge className="bg-yellow-600 hover:bg-yellow-700 text-white border-0 text-xs px-2 py-1">
+            <Clock className="w-3 h-3 mr-1" />
+            <span className="hidden sm:inline">Pendiente</span>
           </Badge>
         )
       case "rechazado":
         return (
-          <Badge className="bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white border-0">
-            <XCircle className="h-3 w-3 mr-1" />
-            Rechazado
+          <Badge className="bg-red-600 hover:bg-red-700 text-white border-0 text-xs px-2 py-1">
+            <XCircle className="w-3 h-3 mr-1" />
+            <span className="hidden sm:inline">Rechazado</span>
           </Badge>
         )
       default:
         return (
-          <Badge className="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white border-0">
-            <AlertCircle className="h-3 w-3 mr-1" />
-            Pendiente
+          <Badge className="bg-gray-600 hover:bg-gray-700 text-white border-0 text-xs px-2 py-1">
+            <Clock className="w-3 h-3 mr-1" />
+            <span className="hidden sm:inline">Pendiente</span>
           </Badge>
         )
     }
@@ -783,16 +707,6 @@ export default function AdminRegistrationsPage() {
     return { total, confirmados, pendientes, rechazados }
   }
 
-  const handleSort = (field) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc")
-    } else {
-      setSortField(field)
-      setSortDirection("asc")
-    }
-  }
-
-  // Función para limpiar todos los filtros
   const clearAllFilters = () => {
     setSearchTerm("")
     setStatusFilter("all")
@@ -818,44 +732,45 @@ export default function AdminRegistrationsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 md:p-6">
         <div className="max-w-7xl mx-auto">
-          <div ref={topRef} className="flex flex-col items-center justify-center mt-10 mb-8 px-4">
-            <h1 className="text-3xl font-bold tracking-tight text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          <div ref={topRef} className="flex flex-col items-center justify-center mt-6 mb-6 px-2">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Inscripciones
             </h1>
-            <p className="text-muted-foreground mt-2 text-center">Cargando datos...</p>
+            <p className="text-muted-foreground mt-2 text-center text-sm">
+              Cargando todos los datos de inscripciones...
+            </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
+          <div className="grid gap-3 grid-cols-2 md:grid-cols-4 mb-4">
             {[...Array(4)].map((_, i) => (
               <Card key={i} className="overflow-hidden">
-                <CardHeader className="pb-2">
-                  <Skeleton className="h-4 w-24" />
+                <CardHeader className="pb-2 px-3 pt-3">
+                  <Skeleton className="h-3 w-16" />
                 </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-8 w-16 mb-2" />
-                  <Skeleton className="h-3 w-full" />
+                <CardContent className="px-3 pb-3">
+                  <Skeleton className="h-6 w-12 mb-2" />
+                  <Skeleton className="h-2 w-full" />
                 </CardContent>
               </Card>
             ))}
           </div>
 
           <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-4 w-64" />
+            <CardHeader className="px-3 py-4">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-3 w-48" />
             </CardHeader>
-            <CardContent>
-              <div className="flex flex-col md:flex-row gap-4 mb-6">
-                <Skeleton className="h-10 w-full md:w-1/2" />
+            <CardContent className="px-3">
+              <div className="flex flex-col gap-3 mb-4">
+                <Skeleton className="h-9 w-full" />
                 <div className="flex gap-2">
-                  <Skeleton className="h-10 w-32" />
-                  <Skeleton className="h-10 w-32" />
-                  <Skeleton className="h-10 w-40" />
+                  <Skeleton className="h-9 w-24" />
+                  <Skeleton className="h-9 w-24" />
                 </div>
               </div>
-              <Skeleton className="h-[400px] w-full rounded-md" />
+              <Skeleton className="h-[300px] w-full rounded-md" />
             </CardContent>
           </Card>
         </div>
@@ -864,27 +779,27 @@ export default function AdminRegistrationsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           ref={topRef}
-          className="flex flex-col items-center justify-center mt-6 mb-8 px-4"
+          className="flex flex-col items-center justify-center mt-4 mb-6 px-2"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-4xl font-bold tracking-tight text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
             Inscripciones
           </h1>
-          <p className="text-muted-foreground mt-2 text-center max-w-xl">
+          <p className="text-muted-foreground mt-2 text-center max-w-xl text-sm md:text-base">
             Gestión de participantes {new Date().getFullYear()}
           </p>
         </motion.div>
 
         {/* Navigation and Actions */}
         <motion.div
-          className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6"
+          className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -894,143 +809,60 @@ export default function AdminRegistrationsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
+                className="flex items-center gap-2 shadow-sm hover:shadow-md transition-all text-xs bg-transparent"
               >
-                <Home className="h-4 w-4" /> Volver al inicio
+                <Home className="h-3 w-3" />
+                <span className="hidden sm:inline">Volver al inicio</span>
+                <span className="sm:hidden">Inicio</span>
               </Button>
             </Link>
             <Button
               variant="outline"
               size="sm"
-              className={`flex items-center gap-2 shadow-sm hover:shadow-md transition-all ${
+              className={`flex items-center gap-2 shadow-sm hover:shadow-md transition-all text-xs ${
                 refreshing ? "opacity-70" : ""
               }`}
               onClick={handleRefresh}
               disabled={refreshing}
             >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">{refreshing ? "Actualizando..." : "Actualizar datos"}</span>
+              <RefreshCw className={`h-3 w-3 ${refreshing ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">{refreshing ? "Actualizando..." : "Actualizar"}</span>
               <span className="sm:hidden">{refreshing ? "..." : "Actualizar"}</span>
             </Button>
           </div>
 
-          {/* Menú desplegable para móviles */}
           <div className="flex items-center gap-2 w-full sm:w-auto">
-            <div className="relative w-full sm:w-auto">
-              <div className="sm:hidden w-full">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full flex justify-between items-center"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                >
-                  <span>Opciones</span>
-                  <Menu className="h-4 w-4 ml-2" />
-                </Button>
-
-                {mobileMenuOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-md shadow-lg z-50 border">
-                    <div className="p-2 space-y-2">
-                      <Select
-                        value={yearFilter}
-                        onValueChange={(value) => {
-                          setYearFilter(value)
-                          setMobileMenuOpen(false)
-                        }}
-                      >
-                        <SelectTrigger className="w-full bg-white">
-                          <div className="flex items-center gap-2">
-                            <CalendarDays className="h-4 w-4" />
-                            <SelectValue placeholder="Año" />
-                          </div>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Todos los años</SelectItem>
-                          {availableYears.map((year) => (
-                            <SelectItem key={year} value={year.toString()}>
-                              {year}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
-                        onClick={() => {
-                          exportApprovedToPDF()
-                          setMobileMenuOpen(false)
-                        }}
-                        disabled={registrations.filter((r) => r.estado === "confirmado").length === 0}
-                      >
-                        <FileText className="h-4 w-4" /> Exportar PDF
-                      </Button>
-
-                      {/*
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
-                        onClick={() => {
-                          exportToExcel()
-                          setMobileMenuOpen(false)
-                        }}
-                        disabled={registrations.filter((r) => r.estado === "confirmado").length === 0}
-                      >
-                        <Download className="h-4 w-4" /> Exportar Excel
-                      </Button>
-                      */}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Opciones para pantallas más grandes */}
-            <div className="hidden sm:flex items-center gap-2">
-              <Select value={yearFilter} onValueChange={setYearFilter}>
-                <SelectTrigger className="w-[180px] bg-white">
-                  <div className="flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4" />
-                    <SelectValue placeholder="Año" />
-                  </div>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los años</SelectItem>
-                  {availableYears.map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
-                onClick={exportApprovedToPDF}
-                disabled={registrations.filter((r) => r.estado === "confirmado").length === 0}
-              >
-                <FileText className="h-4 w-4" /> Exportar PDF
-              </Button>
-              {/*
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 shadow-sm hover:shadow-md transition-all"
-                onClick={exportToExcel}
-                disabled={registrations.filter((r) => r.estado === "confirmado").length === 0}
-              >
-                <Download className="h-4 w-4" /> Exportar Excel
-              </Button>
-              */}
-            </div>
+            <Select value={yearFilter} onValueChange={setYearFilter}>
+              <SelectTrigger className="w-full sm:w-32 bg-white text-xs h-8">
+                <div className="flex items-center gap-1">
+                  <CalendarDays className="h-3 w-3" />
+                  <SelectValue placeholder="Año" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                {availableYears.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1 shadow-sm hover:shadow-md transition-all text-xs h-8 bg-transparent"
+              onClick={exportApprovedToPDF}
+              disabled={registrations.filter((r) => r.estado === "confirmado").length === 0}
+            >
+              <FileText className="h-3 w-3" />
+              <span className="hidden sm:inline">PDF</span>
+            </Button>
           </div>
         </motion.div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-2 lg:grid-cols-4 mb-6">
+        {/* Stats Cards - Compact Mobile Version */}
+        <div className="grid gap-2 grid-cols-2 md:grid-cols-4 mb-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1038,33 +870,25 @@ export default function AdminRegistrationsPage() {
           >
             <Card className="overflow-hidden border border-indigo-100 shadow-sm hover:shadow-md transition-all duration-300 h-full">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-indigo-600"></div>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-1 px-2 pt-2 md:px-3 md:pt-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-sm font-medium text-indigo-900">Total</CardTitle>
+                    <CardTitle className="text-xs font-medium text-indigo-900">Total</CardTitle>
                     <CardDescription className="text-xs">Inscripciones</CardDescription>
                   </div>
-                  <div className="p-2 rounded-full bg-indigo-50">
-                    <Users className="h-5 w-5 text-indigo-600" />
+                  <div className="p-1 rounded-full bg-indigo-50">
+                    <Users className="h-3 w-3 text-indigo-600" />
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-2 pb-2 md:px-3 md:pb-3">
                 <div className="flex items-baseline gap-1">
-                  <div className="text-2xl md:text-3xl font-bold text-indigo-900">{stats.total}</div>
-                  <span className="text-xs md:text-sm text-indigo-700">inscripciones</span>
+                  <div className="text-lg md:text-xl font-bold text-indigo-900">{stats.total}</div>
                 </div>
-
-                <div className="mt-3">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span>Filtrados</span>
-                    <span className="font-medium">
-                      {filteredRegistrations.length} ({Math.round((filteredRegistrations.length / stats.total) * 100)}%)
-                    </span>
-                  </div>
+                <div className="mt-2">
                   <Progress
-                    value={(filteredRegistrations.length / stats.total) * 100}
-                    className="h-2"
+                    value={100}
+                    className="h-1"
                     indicatorClassName="bg-gradient-to-r from-indigo-500 to-indigo-600"
                   />
                 </div>
@@ -1079,31 +903,28 @@ export default function AdminRegistrationsPage() {
           >
             <Card className="overflow-hidden border border-emerald-100 shadow-sm hover:shadow-md transition-all duration-300 h-full">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-emerald-600"></div>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-1 px-2 pt-2 md:px-3 md:pt-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-sm font-medium text-emerald-900">Confirmados</CardTitle>
+                    <CardTitle className="text-xs font-medium text-emerald-900">Confirmados</CardTitle>
                     <CardDescription className="text-xs">Aprobados</CardDescription>
                   </div>
-                  <div className="p-2 rounded-full bg-emerald-50">
-                    <CheckCircle className="h-5 w-5 text-emerald-600" />
+                  <div className="p-1 rounded-full bg-emerald-50">
+                    <CheckCircle className="h-3 w-3 text-emerald-600" />
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-2 pb-2 md:px-3 md:pb-3">
                 <div className="flex items-baseline gap-1">
-                  <div className="text-2xl md:text-3xl font-bold text-emerald-900">{stats.confirmados}</div>
-                  <span className="text-xs md:text-sm text-emerald-700">participantes</span>
-                </div>
-
-                <div className="mt-3">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span>Del total</span>
-                    <span className="font-medium">{Math.round((stats.confirmados / stats.total) * 100)}%</span>
+                  <div className="text-lg md:text-xl font-bold text-emerald-900">{stats.confirmados}</div>
+                  <div className="text-xs text-emerald-600">
+                    {stats.total > 0 ? Math.round((stats.confirmados / stats.total) * 100) : 0}%
                   </div>
+                </div>
+                <div className="mt-2">
                   <Progress
-                    value={(stats.confirmados / stats.total) * 100}
-                    className="h-2"
+                    value={stats.total > 0 ? (stats.confirmados / stats.total) * 100 : 0}
+                    className="h-1"
                     indicatorClassName="bg-gradient-to-r from-emerald-500 to-emerald-600"
                   />
                 </div>
@@ -1118,31 +939,28 @@ export default function AdminRegistrationsPage() {
           >
             <Card className="overflow-hidden border border-amber-100 shadow-sm hover:shadow-md transition-all duration-300 h-full">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-amber-600"></div>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-1 px-2 pt-2 md:px-3 md:pt-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-sm font-medium text-amber-900">Pendientes</CardTitle>
+                    <CardTitle className="text-xs font-medium text-amber-900">Pendientes</CardTitle>
                     <CardDescription className="text-xs">En revisión</CardDescription>
                   </div>
-                  <div className="p-2 rounded-full bg-amber-50">
-                    <Clock className="h-5 w-5 text-amber-600" />
+                  <div className="p-1 rounded-full bg-amber-50">
+                    <Clock className="h-3 w-3 text-amber-600" />
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-2 pb-2 md:px-3 md:pb-3">
                 <div className="flex items-baseline gap-1">
-                  <div className="text-2xl md:text-3xl font-bold text-amber-900">{stats.pendientes}</div>
-                  <span className="text-xs md:text-sm text-amber-700">por revisar</span>
-                </div>
-
-                <div className="mt-3">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span>Del total</span>
-                    <span className="font-medium">{Math.round((stats.pendientes / stats.total) * 100)}%</span>
+                  <div className="text-lg md:text-xl font-bold text-amber-900">{stats.pendientes}</div>
+                  <div className="text-xs text-amber-600">
+                    {stats.total > 0 ? Math.round((stats.pendientes / stats.total) * 100) : 0}%
                   </div>
+                </div>
+                <div className="mt-2">
                   <Progress
-                    value={(stats.pendientes / stats.total) * 100}
-                    className="h-2"
+                    value={stats.total > 0 ? (stats.pendientes / stats.total) * 100 : 0}
+                    className="h-1"
                     indicatorClassName="bg-gradient-to-r from-amber-500 to-amber-600"
                   />
                 </div>
@@ -1157,31 +975,28 @@ export default function AdminRegistrationsPage() {
           >
             <Card className="overflow-hidden border border-rose-100 shadow-sm hover:shadow-md transition-all duration-300 h-full">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 to-rose-600"></div>
-              <CardHeader className="pb-2">
+              <CardHeader className="pb-1 px-2 pt-2 md:px-3 md:pt-3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle className="text-sm font-medium text-rose-900">Rechazados</CardTitle>
+                    <CardTitle className="text-xs font-medium text-rose-900">Rechazados</CardTitle>
                     <CardDescription className="text-xs">No aprobados</CardDescription>
                   </div>
-                  <div className="p-2 rounded-full bg-rose-50">
-                    <XCircle className="h-5 w-5 text-rose-600" />
+                  <div className="p-1 rounded-full bg-rose-50">
+                    <XCircle className="h-3 w-3 text-rose-600" />
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-2 pb-2 md:px-3 md:pb-3">
                 <div className="flex items-baseline gap-1">
-                  <div className="text-2xl md:text-3xl font-bold text-rose-900">{stats.rechazados}</div>
-                  <span className="text-xs md:text-sm text-rose-700">rechazados</span>
-                </div>
-
-                <div className="mt-3">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span>Del total</span>
-                    <span className="font-medium">{Math.round((stats.rechazados / stats.total) * 100)}%</span>
+                  <div className="text-lg md:text-xl font-bold text-rose-900">{stats.rechazados}</div>
+                  <div className="text-xs text-rose-600">
+                    {stats.total > 0 ? Math.round((stats.rechazados / stats.total) * 100) : 0}%
                   </div>
+                </div>
+                <div className="mt-2">
                   <Progress
-                    value={(stats.rechazados / stats.total) * 100}
-                    className="h-2"
+                    value={stats.total > 0 ? (stats.rechazados / stats.total) * 100 : 0}
+                    className="h-1"
                     indicatorClassName="bg-gradient-to-r from-rose-500 to-rose-600"
                   />
                 </div>
@@ -1197,14 +1012,14 @@ export default function AdminRegistrationsPage() {
           transition={{ duration: 0.5, delay: 0.6 }}
         >
           <Card className="shadow-sm hover:shadow-md transition-all duration-300 border-0 overflow-hidden bg-white">
-            <CardHeader className="border-b bg-gray-50/50 pb-4">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <CardHeader className="border-b bg-gray-50/50 pb-3 px-3 pt-3">
+              <div className="flex flex-col gap-3">
                 <div>
-                  <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                    <Users className="h-5 w-5 text-indigo-600" />
+                  <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                    <Users className="h-4 w-4 text-indigo-600" />
                     Lista de Inscripciones
                   </CardTitle>
-                  <CardDescription className="mt-1">
+                  <CardDescription className="mt-1 text-xs">
                     Mostrando {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredRegistrations.length)} de{" "}
                     {filteredRegistrations.length} inscripciones
                     {filteredRegistrations.length !== registrations.length
@@ -1213,29 +1028,43 @@ export default function AdminRegistrationsPage() {
                   </CardDescription>
                 </div>
 
-                {/* Filtros principales */}
-                <div className="flex flex-col gap-4 w-full md:w-auto">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar por nombre, apellido, DNI, email..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-8 bg-white w-full"
-                    />
-                  </div>
+                {/* Search */}
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nombre, apellido, DNI..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-7 bg-white text-xs h-8"
+                  />
+                </div>
 
-                  {/* Filtros en una fila */}
-                  <div className="flex flex-wrap gap-2">
+                {/* Mobile Filters Toggle */}
+                <div className="md:hidden">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="w-full flex items-center justify-between text-xs h-8"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Filter className="h-3 w-3" />
+                      Filtros
+                    </div>
+                    {showFilters ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  </Button>
+                </div>
+
+                {/* Filters - Hidden on mobile unless toggled */}
+                <div className={`${showFilters ? "block" : "hidden"} md:block`}>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-full md:w-32 bg-white">
-                        <div className="flex items-center gap-2">
-                          <Filter className="h-4 w-4" />
-                          <SelectValue placeholder="Estado" />
-                        </div>
+                      <SelectTrigger className="bg-white text-xs h-8">
+                        <ClipboardList className="h-4 w-4 mr-1" />
+                        <SelectValue placeholder="Estado" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
+                        <SelectItem value="all">Estado</SelectItem>
                         <SelectItem value="pendiente">Pendiente</SelectItem>
                         <SelectItem value="confirmado">Confirmado</SelectItem>
                         <SelectItem value="rechazado">Rechazado</SelectItem>
@@ -1243,64 +1072,59 @@ export default function AdminRegistrationsPage() {
                     </Select>
 
                     <Select value={healthFilter} onValueChange={setHealthFilter}>
-                      <SelectTrigger className="w-full md:w-40 bg-white">
-                        <div className="flex items-center gap-2">
-                          <Heart className="h-4 w-4" />
-                          <SelectValue placeholder="Condiciones" />
-                        </div>
+                      <SelectTrigger className="bg-white text-xs h-8">
+                        <Stethoscope className="h-4 w-4 mr-1" />
+                        <SelectValue placeholder="Cond. médicas" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todas</SelectItem>
-                        <SelectItem value="with_conditions">Con condiciones</SelectItem>
-                        <SelectItem value="without_conditions">Sin condiciones</SelectItem>
+                        <SelectItem value="all">Salud</SelectItem>
+                        <SelectItem value="with_conditions">Con cod. medicas</SelectItem>
+                        <SelectItem value="without_conditions">Sin cod. medicas</SelectItem>
                       </SelectContent>
                     </Select>
 
                     <Select value={celiacFilter} onValueChange={setCeliacFilter}>
-                      <SelectTrigger className="w-full md:w-32 bg-white">
-                        <div className="flex items-center gap-2">
-                          <AlertCircle className="h-4 w-4" />
-                          <SelectValue placeholder="Celíacos" />
-                        </div>
+                      <SelectTrigger className="bg-white text-xs h-8">
+                        <WheatOff className="h-4 w-4 mr-1" />
+                        <SelectValue placeholder="Celíacos" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todos</SelectItem>
-                        <SelectItem value="si">Celíacos</SelectItem>
-                        <SelectItem value="no">No celíacos</SelectItem>
+                        <SelectItem value="all">Celiacos</SelectItem>
+                        <SelectItem value="si">Celiacos</SelectItem>
+                        <SelectItem value="no">No celiacos</SelectItem>
                       </SelectContent>
                     </Select>
-
+                    
                     <Select value={noteFilter} onValueChange={setNoteFilter}>
-                      <SelectTrigger className="w-full md:w-32 bg-white">
-                        <div className="flex items-center gap-2">
-                          <StickyNote className="h-4 w-4" />
-                          <SelectValue placeholder="Notas" />
-                        </div>
+                      <SelectTrigger className="bg-white text-xs h-8">
+                      <NotebookPen className="h-4 w-4 mr-1" />
+                        <SelectValue placeholder="Notas" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">Todas</SelectItem>
-                        <SelectItem value="with_notes">Con notas</SelectItem>
-                        <SelectItem value="without_notes">Sin notas</SelectItem>
+                        <SelectItem value="all">Notas</SelectItem>
+                        <SelectItem value="with_notes">Con Notas</SelectItem>
+                        <SelectItem value="without_notes">Sin Notas</SelectItem>
                       </SelectContent>
                     </Select>
 
-                    {/* Botón para limpiar filtros */}
-                    {(searchTerm ||
-                      statusFilter !== "all" ||
-                      yearFilter !== "all" ||
-                      healthFilter !== "all" ||
-                      celiacFilter !== "all" ||
-                      noteFilter !== "all") && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={clearAllFilters}
-                        className="flex items-center gap-1 text-xs"
-                      >
-                        <FilterX className="h-3 w-3" />
-                        Limpiar
-                      </Button>
-                    )}
+                    <div className="col-span-2 md:col-span-2 lg:col-span-2">
+                      {(searchTerm ||
+                        statusFilter !== "all" ||
+                        yearFilter !== "all" ||
+                        healthFilter !== "all" ||
+                        celiacFilter !== "all" ||
+                        noteFilter !== "all") && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={clearAllFilters}
+                          className="w-full flex items-center gap-1 text-xs h-8 bg-transparent"
+                        >
+                          <FilterX className="h-3 w-3" />
+                          Limpiar filtros
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1311,115 +1135,43 @@ export default function AdminRegistrationsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-gray-50/80 hover:bg-gray-50">
-                        <TableHead className="font-semibold w-14 text-center">
+                        <TableHead className="font-semibold w-12 text-center text-xs">
                           <div className="flex items-center justify-center">#</div>
                         </TableHead>
-                        <TableHead
-                          className="font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
-                          onClick={() => handleSort("nombre")}
-                        >
-                          <div className="flex items-center">
-                            Nombre
-                            {sortField === "nombre" && (
-                              <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
-                          onClick={() => handleSort("apellido")}
-                        >
-                          <div className="flex items-center">
-                            Apellido
-                            {sortField === "apellido" && (
-                              <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
-                          onClick={() => handleSort("dni")}
-                        >
-                          <div className="flex items-center">
-                            DNI
-                            {sortField === "dni" && <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold hidden md:table-cell cursor-pointer hover:bg-gray-100 transition-colors"
-                          onClick={() => handleSort("email")}
-                        >
-                          <div className="flex items-center">
-                            Email
-                            {sortField === "email" && (
-                              <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold hidden md:table-cell cursor-pointer hover:bg-gray-100 transition-colors"
-                          onClick={() => handleSort("telefono")}
-                        >
-                          <div className="flex items-center">
-                            Teléfono
-                            {sortField === "telefono" && (
-                              <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold hidden lg:table-cell cursor-pointer hover:bg-gray-100 transition-colors"
-                          onClick={() => handleSort("localidad")}
-                        >
-                          <div className="flex items-center">
-                            Localidad
-                            {sortField === "localidad" && (
-                              <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead className="font-semibold hidden lg:table-cell">
-                          <div className="flex items-center">Celíaco</div>
-                        </TableHead>
-                        <TableHead
-                          className="font-semibold cursor-pointer hover:bg-gray-100 transition-colors"
-                          onClick={() => handleSort("estado")}
-                        >
-                          <div className="flex items-center">
-                            Estado
-                            {sortField === "estado" && (
-                              <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-                            )}
-                          </div>
-                        </TableHead>
-                        <TableHead className="text-right font-semibold">Acciones</TableHead>
+                        <TableHead className="font-semibold text-xs">Nombre</TableHead>
+                        <TableHead className="font-semibold text-xs hidden md:table-cell">Apellido</TableHead>
+                        <TableHead className="font-semibold text-xs hidden md:table-cell">DNI</TableHead>
+                        <TableHead className="font-semibold text-xs hidden md:table-cell">Email</TableHead>
+                        <TableHead className="font-semibold text-xs hidden md:table-cell">Teléfono</TableHead>
+                        <TableHead className="font-semibold text-xs hidden md:table-cell">Localidad</TableHead>
+                        <TableHead className="font-semibold text-xs">Estado</TableHead>
+                        <TableHead className="text-right font-semibold text-xs">Acciones</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {currentItems.map((registration, index) => {
-                        const healthInfo = parseHealthConditions(registration.condicionSalud)
                         return (
                           <TableRow key={registration.id} className="hover:bg-gray-50/80 transition-colors border-b">
-                            <TableCell className="font-medium text-center text-gray-500">
-                              {indexOfFirstItem + index + 1}
+                            <TableCell className="font-medium text-center text-gray-500 text-xs">
+                              {registration.numeroInscripcion || indexOfFirstItem + index + 1}
                             </TableCell>
-                            <TableCell className="font-medium">{registration.nombre || "-"}</TableCell>
-                            <TableCell>{registration.apellido || "-"}</TableCell>
-                            <TableCell>{registration.dni || "-"}</TableCell>
-                            <TableCell className="max-w-xs truncate hidden md:table-cell">
-                              {registration.email || "-"}
+                            <TableCell className="font-medium text-xs">
+                              <div className="md:hidden">
+                                <div className="font-medium">{registration.nombre || "-"}</div>
+                                <div className="text-xs text-gray-500">{registration.apellido || "-"}</div>
+                              </div>
+                              <div className="hidden md:block">{registration.nombre || "-"}</div>
                             </TableCell>
-                            <TableCell className="hidden md:table-cell">{registration.telefono || "-"}</TableCell>
-                            <TableCell className="hidden lg:table-cell">{registration.localidad || "-"}</TableCell>
-                            <TableCell className="hidden lg:table-cell">
-                              <Badge
-                                variant={healthInfo.esCeliaco === "si" ? "destructive" : "secondary"}
-                                className={
-                                  healthInfo.esCeliaco === "si" ? "bg-amber-100 text-amber-800 hover:bg-amber-200" : ""
-                                }
-                              >
-                                {healthInfo.esCeliaco === "si" ? "SÍ" : "NO"}
-                              </Badge>
+                            <TableCell className="text-xs hidden md:table-cell">
+                              {registration.apellido || "-"}
+                            </TableCell>
+                            <TableCell className="text-xs hidden md:table-cell">{registration.dni || "-"}</TableCell>
+                            <TableCell className="text-xs hidden md:table-cell">{registration.email || "-"}</TableCell>
+                            <TableCell className="text-xs hidden md:table-cell">
+                              {registration.telefono || "-"}
+                            </TableCell>
+                            <TableCell className="text-xs hidden md:table-cell">
+                              {registration.localidad || "-"}
                             </TableCell>
                             <TableCell>{getStatusBadge(registration.estado)}</TableCell>
                             <TableCell className="text-right">
@@ -1427,10 +1179,10 @@ export default function AdminRegistrationsPage() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => openDetailsModal(registration)}
-                                className="hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                className="hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-xs h-7 px-2"
                               >
-                                <Eye className="h-4 w-4 mr-1" />
-                                <span className="hidden sm:inline">Ver</span>
+                                <Eye className="h-3 w-3 mr-1" />
+                                Ver
                               </Button>
                             </TableCell>
                           </TableRow>
@@ -1440,9 +1192,9 @@ export default function AdminRegistrationsPage() {
                   </Table>
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-12 px-4">
-                  <Users className="h-12 w-12 text-gray-300 mb-4" />
-                  <p className="text-muted-foreground text-center mb-2">
+                <div className="flex flex-col items-center justify-center py-8 px-4">
+                  <Users className="h-8 w-8 text-gray-300 mb-3" />
+                  <p className="text-muted-foreground text-center mb-2 text-sm">
                     {searchTerm ||
                     statusFilter !== "all" ||
                     yearFilter !== "all" ||
@@ -1458,7 +1210,12 @@ export default function AdminRegistrationsPage() {
                     healthFilter !== "all" ||
                     celiacFilter !== "all" ||
                     noteFilter !== "all") && (
-                    <Button variant="outline" size="sm" onClick={clearAllFilters} className="mt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="mt-2 text-xs bg-transparent"
+                    >
                       Limpiar filtros
                     </Button>
                   )}
@@ -1466,32 +1223,31 @@ export default function AdminRegistrationsPage() {
               )}
             </CardContent>
             {filteredRegistrations.length > itemsPerPage && (
-              <CardFooter className="border-t bg-gray-50/50 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div className="text-sm text-muted-foreground order-2 sm:order-1">
+              <CardFooter className="border-t bg-gray-50/50 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div className="text-xs text-muted-foreground order-2 sm:order-1">
                   Página {currentPage} de {totalPages}
                 </div>
-                <div className="flex items-center gap-2 order-1 sm:order-2">
+                <div className="flex items-center gap-1 order-1 sm:order-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => paginate(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="h-8 w-8 p-0"
+                    className="h-7 w-7 p-0"
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft className="h-3 w-3" />
                   </Button>
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                      // Show pages around current page
+                    {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
                       let pageNum
-                      if (totalPages <= 5) {
+                      if (totalPages <= 3) {
                         pageNum = i + 1
-                      } else if (currentPage <= 3) {
+                      } else if (currentPage <= 2) {
                         pageNum = i + 1
-                      } else if (currentPage >= totalPages - 2) {
-                        pageNum = totalPages - 4 + i
+                      } else if (currentPage >= totalPages - 1) {
+                        pageNum = totalPages - 2 + i
                       } else {
-                        pageNum = currentPage - 2 + i
+                        pageNum = currentPage - 1 + i
                       }
 
                       return (
@@ -1500,7 +1256,7 @@ export default function AdminRegistrationsPage() {
                           variant={currentPage === pageNum ? "default" : "outline"}
                           size="sm"
                           onClick={() => paginate(pageNum)}
-                          className={`h-8 w-8 p-0 ${
+                          className={`h-7 w-7 p-0 text-xs ${
                             currentPage === pageNum
                               ? "bg-indigo-600 hover:bg-indigo-700 text-white"
                               : "hover:bg-indigo-50 hover:text-indigo-600"
@@ -1516,9 +1272,9 @@ export default function AdminRegistrationsPage() {
                     size="sm"
                     onClick={() => paginate(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="h-8 w-8 p-0"
+                    className="h-7 w-7 p-0"
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-3 w-3" />
                   </Button>
                 </div>
                 <div className="order-3 sm:order-3 w-full sm:w-auto">
@@ -1529,15 +1285,14 @@ export default function AdminRegistrationsPage() {
                       setCurrentPage(1)
                     }}
                   >
-                    <SelectTrigger className="w-full sm:w-[130px] h-8">
-                      <SelectValue placeholder="Filas por página" />
+                    <SelectTrigger className="w-full sm:w-[100px] h-7 text-xs">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="10">10 por página</SelectItem>
-                      <SelectItem value="15">15 por página</SelectItem>
-                      <SelectItem value="25">25 por página</SelectItem>
-                      <SelectItem value="50">50 por página</SelectItem>
-                      <SelectItem value="100">100 por página</SelectItem>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="15">15</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1546,40 +1301,41 @@ export default function AdminRegistrationsPage() {
           </Card>
         </motion.div>
 
-        {/* Espacio adicional al final de la página */}
-        <div className="h-24 md:h-32"></div>
-
         {/* Scroll to top button */}
-        <div className="fixed bottom-8 right-8 z-50">
+        <div className="fixed bottom-4 right-4 z-50">
           <Button
             onClick={scrollToTop}
             variant="default"
             size="icon"
-            className="rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white h-12 w-12"
+            className="rounded-full shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white h-10 w-10"
           >
-            <ArrowUp className="h-5 w-5" />
+            <ArrowUp className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Details Modal */}
+        {/* Details Modal - Mobile Optimized with ALL DATA */}
         <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-xl flex items-center gap-2">
-                <Users className="h-5 w-5 text-indigo-600" />
-                Detalles de Inscripción
+              <DialogTitle className="text-base md:text-lg flex items-center gap-2">
+                <Users className="h-4 w-4 text-indigo-600" />
+                Detalles Completos de Inscripción
               </DialogTitle>
-              <DialogDescription>Información completa del participante</DialogDescription>
+              <DialogDescription className="text-sm">Información completa del participante</DialogDescription>
             </DialogHeader>
 
             {selectedRegistration && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-2 bg-gray-50/50">
-                      <CardTitle className="text-sm font-medium text-gray-700">Información Personal</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4 space-y-3">
+              <div className="space-y-4">
+                {/* Información Personal */}
+                <Card className="border border-indigo-200 shadow-sm">
+                  <CardHeader className="pb-2 bg-indigo-50/50 px-3 py-2">
+                    <CardTitle className="text-sm font-medium text-indigo-800 flex items-center gap-2">
+                      <User className="h-3 w-3" />
+                      Información Personal
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-3 px-3 pb-3">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
                         <Label className="text-xs font-medium text-gray-500">Nombre completo</Label>
                         <p className="text-sm font-medium">
@@ -1591,370 +1347,389 @@ export default function AdminRegistrationsPage() {
                         <p className="text-sm">{selectedRegistration.dni || "-"}</p>
                       </div>
                       <div>
-                        <Label className="text-xs font-medium text-gray-500">Fecha de Nacimiento</Label>
+                        <Label className="text-xs font-medium text-gray-500 flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          Fecha de Nacimiento
+                        </Label>
                         <p className="text-sm">{selectedRegistration.fechaNacimiento || "-"}</p>
                       </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
                       <div>
                         <Label className="text-xs font-medium text-gray-500">Género</Label>
-                        <p className="text-sm">{selectedRegistration.genero || "-"}</p>
+                        <p className="text-sm capitalize">{selectedRegistration.genero || "-"}</p>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div>
+                        <Label className="text-xs font-medium text-gray-500 flex items-center gap-1">
+                          <Droplet className="h-3 w-3" />
+                          Grupo Sanguíneo
+                        </Label>
+                        <p className="text-sm uppercase">{selectedRegistration.grupoSanguineo || "-"}</p>
+                      </div>
+                      <div>
+                        <Label className="text-xs font-medium text-gray-500">Número de Inscripción</Label>
+                        <p className="text-sm font-bold text-indigo-600">
+                          #{selectedRegistration.numeroInscripcion || "-"}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-2 bg-gray-50/50">
-                      <CardTitle className="text-sm font-medium text-gray-700">Contacto</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4 space-y-3">
+                {/* Información de Contacto */}
+                <Card className="border border-indigo-200 shadow-sm">
+                  <CardHeader className="pb-2 bg-indigo-50/50 px-3 py-2">
+                    <CardTitle className="text-sm font-medium text-indigo-800 flex items-center gap-2">
+                      <Mail className="h-3 w-3" />
+                      Información de Contacto
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-3 px-3 pb-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
                         <Label className="text-xs font-medium text-gray-500">Email</Label>
                         <p className="text-sm break-words">{selectedRegistration.email || "-"}</p>
                       </div>
                       <div>
-                        <Label className="text-xs font-medium text-gray-500">Teléfono</Label>
-                        <p className="text-sm">{selectedRegistration.telefono || "-"}</p>
-                      </div>
-                      <div>
-                        <Label className="text-xs font-medium text-gray-500">Teléfono de Emergencia</Label>
-                        <p className="text-sm">{selectedRegistration.telefonoEmergencia || "-"}</p>
-                      </div>
-                      <div>
-                        <Label className="text-xs font-medium text-gray-500">Localidad</Label>
+                        <Label className="text-xs font-medium text-gray-500 flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          Localidad
+                        </Label>
                         <p className="text-sm">{selectedRegistration.localidad || "-"}</p>
                       </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-2 bg-gray-50/50">
-                      <CardTitle className="text-sm font-medium text-gray-700">Información Médica</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4 space-y-3">
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                       <div>
-                        <Label className="text-xs font-medium text-gray-500">Grupo Sanguíneo</Label>
-                        <p className="text-sm">{selectedRegistration.grupoSanguineo || "-"}</p>
-                      </div>
-                      <div>
-                        <Label className="text-xs font-medium text-gray-500">¿Es Celíaco?</Label>
-                        <div className="mt-1">
-                          <Badge
-                            variant={
-                              parseHealthConditions(selectedRegistration.condicionSalud).esCeliaco === "si"
-                                ? "destructive"
-                                : "secondary"
-                            }
-                            className={
-                              parseHealthConditions(selectedRegistration.condicionSalud).esCeliaco === "si"
-                                ? "bg-amber-100 text-amber-800 hover:bg-amber-200"
-                                : ""
-                            }
-                          >
-                            {parseHealthConditions(selectedRegistration.condicionSalud).esCeliaco === "si"
-                              ? "SÍ"
-                              : "NO"}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-xs font-medium text-gray-500">Condiciones de Salud</Label>
-                        <p className="text-sm break-words">
-                          {parseHealthConditions(selectedRegistration.condicionSalud).condicionesSalud || "-"}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-2 bg-gray-50/50">
-                      <CardTitle className="text-sm font-medium text-gray-700">Detalles del Evento</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4 space-y-3">
-                      <div>
-                        <Label className="text-xs font-medium text-gray-500">Fecha de Inscripción</Label>
+                        <Label className="text-xs font-medium text-gray-500 flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          Teléfono
+                        </Label>
                         <p className="text-sm">
-                          {selectedRegistration.fechaInscripcion?.toLocaleDateString("es-ES") || "-"}
+                          {selectedRegistration.telefono || "-"}
+                          {selectedRegistration.paisTelefono && selectedRegistration.paisTelefono !== "Argentina" && (
+                            <span className="text-xs text-gray-400 ml-1">({selectedRegistration.paisTelefono})</span>
+                          )}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-xs font-medium text-gray-500">Talle de Remera</Label>
-                        <p className="text-sm uppercase font-medium">{selectedRegistration.talleRemera || "-"}</p>
+                        <Label className="text-xs font-medium text-gray-500 flex items-center gap-1">
+                          <Phone className="h-3 w-3" />
+                          Teléfono de Emergencia
+                        </Label>
+                        <p className="text-sm">
+                          {selectedRegistration.telefonoEmergencia || "-"}
+                          {selectedRegistration.paisTelefonoEmergencia &&
+                            selectedRegistration.paisTelefonoEmergencia !== "Argentina" && (
+                              <span className="text-xs text-gray-400 ml-1">
+                                ({selectedRegistration.paisTelefonoEmergencia})
+                              </span>
+                            )}
+                        </p>
                       </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Información del Evento */}
+                <Card className="border border-indigo-200 shadow-sm">
+                  <CardHeader className="pb-2 bg-indigo-50/50 px-3 py-2">
+                    <CardTitle className="text-sm font-medium text-indigo-800 flex items-center gap-2">
+                      <Users className="h-3 w-3" />
+                      Información del Evento
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-3 px-3 pb-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
-                        <Label className="text-xs font-medium text-gray-500">Grupo de Ciclistas</Label>
+                        <Label className="text-xs font-medium text-gray-500 flex items-center gap-1">
+                          <Bike className="h-3 w-3" />
+                          Grupo de Ciclistas
+                        </Label>
                         <p className="text-sm">{selectedRegistration.grupoCiclistas || "-"}</p>
                       </div>
+                      <div>
+                        <Label className="text-xs font-medium text-gray-500 flex items-center gap-1">
+                          <Shirt className="h-3 w-3" />
+                          Talle de Remera
+                        </Label>
+                        <p className="text-sm uppercase">{selectedRegistration.talleRemera || "-"}</p>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                       <div>
                         <Label className="text-xs font-medium text-gray-500">Estado Actual</Label>
                         <div className="mt-1">{getStatusBadge(selectedRegistration.estado)}</div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                      <div>
+                        <Label className="text-xs font-medium text-gray-500 flex items-center gap-1">
+                          <CalendarDays className="h-3 w-3" />
+                          Fecha de Inscripción
+                        </Label>
+                        <p className="text-sm">
+                          {selectedRegistration.fechaInscripcion?.toLocaleDateString("es-ES") || "-"}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-2 bg-gray-50/50">
-                      <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
+                {/* Información de Salud */}
+                <Card className="border border-indigo-200 shadow-sm">
+                  <CardHeader className="pb-2 bg-indigo-50/50 px-3 py-2">
+                    <CardTitle className="text-sm font-medium text-indigo-800 flex items-center gap-2">
+                      <Heart className="h-3 w-3" />
+                      Información de Salud
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-3 px-3 pb-3">
+                    {(() => {
+                      const healthInfo = parseHealthConditions(selectedRegistration.condicionSalud)
+                      return (
+                        <div className="space-y-3">
+                          <div>
+                            <Label className="text-xs font-medium text-gray-500">¿Es celíaco?</Label>
+                            <p
+                              className={`text-sm font-medium ${
+                                healthInfo.esCeliaco === "si" ? "text-amber-600" : "text-green-600"
+                              }`}
+                            >
+                              {healthInfo.esCeliaco === "si" ? "Sí" : "No"}
+                            </p>
+                          </div>
+                          <div>
+                            <Label className="text-xs font-medium text-gray-500">
+                              Condiciones de salud y medicamentos
+                            </Label>
+                            <p className="text-sm bg-gray-50 p-2 rounded border min-h-[40px]">
+                              {healthInfo.condicionesSalud || "Sin condiciones especiales reportadas"}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    })()}
+                  </CardContent>
+                </Card>
+
+                {/* Comprobante de Pago y Gestión */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card className="border border-indigo-200 shadow-sm">
+                    <CardHeader className="pb-2 bg-indigo-50/50 px-3 py-2">
+                      <CardTitle className="text-sm font-medium text-indigo-800 flex items-center gap-2">
+                        <FileText className="h-3 w-3" />
                         Comprobante de Pago
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-4">
+                    <CardContent className="pt-3 px-3 pb-3">
                       {loadingComprobante ? (
-                        <div className="flex items-center justify-center h-40 border rounded-md bg-gray-50">
-                          <Loader2 className="h-6 w-6 text-indigo-600 animate-spin" />
-                          <p className="ml-2 text-sm text-gray-500">Cargando comprobante...</p>
+                        <div className="flex items-center justify-center h-24 border rounded-md bg-gray-50">
+                          <Loader2 className="h-4 w-4 text-indigo-600 animate-spin" />
+                          <p className="ml-2 text-xs text-gray-500">Cargando...</p>
                         </div>
                       ) : comprobanteUrl ? (
                         <div className="border rounded-md p-2 bg-gray-50">
-                          {selectedRegistration.comprobantePagoUrl?.endsWith(".pdf") ||
-                          selectedRegistration.nombreArchivo?.endsWith(".pdf") ? (
-                            <div className="flex flex-col gap-2">
-                              <div className="flex items-center justify-center h-40 border rounded-md bg-white">
-                                <iframe
-                                  src={comprobanteUrl}
-                                  className="w-full h-full border-none"
-                                  title="Comprobante de pago"
-                                />
-                              </div>
-                              <Button
-                                variant="outline"
-                                onClick={() => {
-                                  setIsDetailsModalOpen(false)
-                                  setIsImageModalOpen(true)
-                                }}
-                                className="w-full"
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                Ver PDF completo
+                          <div
+                            className="cursor-pointer border rounded-md p-2 bg-white"
+                            onClick={() => {
+                              setIsDetailsModalOpen(false)
+                              setIsImageModalOpen(true)
+                            }}
+                          >
+                            <img
+                              src={comprobanteUrl || "/placeholder.svg"}
+                              alt="Comprobante de pago"
+                              className="max-h-24 mx-auto object-contain"
+                            />
+                            <div className="text-center mt-2">
+                              <Button variant="outline" size="sm" className="text-xs bg-transparent">
+                                <ZoomIn className="h-3 w-3 mr-1" />
+                                Ver completo
                               </Button>
                             </div>
-                          ) : (
-                            <div
-                              className="cursor-pointer border rounded-md p-2 bg-white"
-                              onClick={() => {
-                                setIsDetailsModalOpen(false)
-                                setIsImageModalOpen(true)
-                              }}
-                            >
-                              <img
-                                src={comprobanteUrl || "/placeholder.svg"}
-                                alt="Comprobante de pago"
-                                className="max-h-60 mx-auto object-contain"
-                              />
-                              <div className="text-center mt-2">
-                                <Button variant="outline" size="sm" className="text-xs">
-                                  <ZoomIn className="h-3 w-3 mr-1" />
-                                  Ampliar imagen
-                                </Button>
-                              </div>
-                            </div>
-                          )}
+                          </div>
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center h-40 border rounded-md bg-gray-50">
-                          <FileText className="h-8 w-8 text-gray-300 mb-2" />
-                          <p className="text-gray-500 text-sm">No hay comprobante disponible</p>
+                        <div className="flex flex-col items-center justify-center h-24 border rounded-md bg-gray-50">
+                          <FileText className="h-6 w-6 text-gray-300 mb-1" />
+                          <p className="text-gray-500 text-xs">No disponible</p>
                         </div>
                       )}
                     </CardContent>
                   </Card>
 
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-2 bg-gray-50/50">
-                      <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                        <StickyNote className="h-4 w-4" />
-                        Nota (opcional)
+                  <Card className="border border-indigo-200 shadow-sm">
+                    <CardHeader className="pb-2 bg-indigo-50/50 px-3 py-2">
+                      <CardTitle className="text-sm font-medium text-indigo-800 flex items-center gap-2">
+                        <StickyNote className="h-3 w-3" />
+                        Gestión de Estado
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="pt-4">
-                      <Textarea
-                        id="note"
-                        placeholder="Agregar una nota sobre esta inscripción..."
-                        value={statusNote}
-                        onChange={(e) => setStatusNote(e.target.value)}
-                        rows={8}
-                        className="resize-none"
-                      />
-                    </CardContent>
-                  </Card>
+                    <CardContent className="pt-3 px-3 pb-3 space-y-3">
+                      <div>
+                        <Label htmlFor="status" className="text-xs font-medium text-gray-700">
+                          Cambiar estado
+                        </Label>
+                        <Select value={newStatus} onValueChange={setNewStatus}>
+                          <SelectTrigger className="mt-1 text-xs h-8">
+                            <SelectValue placeholder="Seleccionar estado" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pendiente">Pendiente</SelectItem>
+                            <SelectItem value="confirmado">Confirmado</SelectItem>
+                            <SelectItem value="rechazado">Rechazado</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                  <Card className="border border-gray-200 shadow-sm">
-                    <CardHeader className="pb-2 bg-gray-50/50">
-                      <CardTitle className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4" />
-                        Estado de la Inscripción
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-4">
-                      <div className="space-y-4">
-                        <div>
-                          <Label htmlFor="status" className="text-sm">
-                            Seleccionar estado
-                          </Label>
-                          <Select value={newStatus} onValueChange={setNewStatus}>
-                            <SelectTrigger className="mt-1">
-                              <SelectValue placeholder="Seleccionar estado" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pendiente">
-                                <div className="flex items-center">
-                                  <Clock className="h-4 w-4 mr-2 text-amber-500" />
-                                  Pendiente
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="confirmado">
-                                <div className="flex items-center">
-                                  <CheckCircle className="h-4 w-4 mr-2 text-emerald-500" />
-                                  Confirmado
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="rechazado">
-                                <div className="flex items-center">
-                                  <XCircle className="h-4 w-4 mr-2 text-rose-500" />
-                                  Rechazado
-                                </div>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="pt-2">
-                          <p className="text-xs text-gray-500 mb-2">
-                            {newStatus === "confirmado" && selectedRegistration.estado !== "confirmado"
-                              ? "Al confirmar, se enviará un email automático al participante."
-                              : newStatus === "rechazado"
-                                ? "Al rechazar, el participante no podrá asistir al evento."
-                                : "El estado pendiente requiere revisión posterior."}
-                          </p>
-
-                          <Button
-                            onClick={updateRegistrationStatus}
-                            disabled={updatingStatus || sendingEmail}
-                            className="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800"
-                          >
-                            {updatingStatus || sendingEmail ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                {updatingStatus ? "Guardando..." : "Enviando email..."}
-                              </>
-                            ) : (
-                              <>
-                                <Save className="mr-2 h-4 w-4" />
-                                Guardar cambios
-                              </>
-                            )}
-                          </Button>
-                        </div>
+                      <div>
+                        <Label htmlFor="note" className="text-xs font-medium text-gray-700">
+                          Nota administrativa
+                        </Label>
+                        <Textarea
+                          id="note"
+                          value={statusNote}
+                          onChange={(e) => setStatusNote(e.target.value)}
+                          placeholder="Agregar nota sobre el estado o comentarios..."
+                          className="mt-1 text-xs min-h-[60px]"
+                        />
                       </div>
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Información Adicional */}
+                {(selectedRegistration.aceptaTerminos ||
+                  selectedRegistration.emailEnviado ||
+                  selectedRegistration.fechaActualizacion) && (
+                  <Card className="border border-indigo-200 shadow-sm">
+                    <CardHeader className="pb-2 bg-indigo-50/50 px-3 py-2">
+                      <CardTitle className="text-sm font-medium text-indigo-800 flex items-center gap-2">
+                        <ClipboardCheck className="h-3 w-3" />
+                        Información Adicional
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-3 px-3 pb-3">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                        <div>
+                          <Label className="text-xs font-medium text-gray-500">Términos Aceptados</Label>
+                          <p
+                            className={`text-sm ${selectedRegistration.aceptaTerminos ? "text-green-600" : "text-red-600"}`}
+                          >
+                            {selectedRegistration.aceptaTerminos ? "Sí" : "No"}
+                          </p>
+                        </div>
+                        {selectedRegistration.emailEnviado && (
+                          <div>
+                            <Label className="text-xs font-medium text-gray-500">Email de Confirmación</Label>
+                            <p className="text-sm text-green-600">Enviado</p>
+                          </div>
+                        )}
+                        {selectedRegistration.fechaActualizacion && (
+                          <div>
+                            <Label className="text-xs font-medium text-gray-500">Última Actualización</Label>
+                            <p className="text-sm">
+                              {selectedRegistration.fechaActualizacion?.toLocaleDateString?.("es-ES") || "-"}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             )}
 
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={closeDetailsModal}>
-                <X className="mr-2 h-4 w-4" />
-                Cerrar
+            <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-3">
+              <Button
+                variant="outline"
+                onClick={closeDetailsModal}
+                className="text-xs h-8 bg-transparent order-2 sm:order-1"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Cancelar
+              </Button>
+              <Button
+                onClick={updateRegistrationStatus}
+                disabled={updatingStatus || sendingEmail}
+                className="text-xs h-8 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white order-1 sm:order-2"
+              >
+                {updatingStatus || sendingEmail ? (
+                  <>
+                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                    {sendingEmail ? "Enviando email..." : "Guardando..."}
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-3 w-3 mr-1" />
+                    Guardar cambios
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Image Modal */}
-        <Dialog
-          open={isImageModalOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              setZoomedImage(false)
-              setZoomPosition({ x: 0, y: 0 })
-            }
-            setIsImageModalOpen(open)
-          }}
-        >
-          <DialogContent className="max-w-[90vw] max-h-[90vh] p-0 overflow-hidden">
-            <DialogHeader className="p-4 bg-gray-50 border-b">
-              <DialogTitle className="text-xl flex items-center gap-2">
-                <FileText className="h-5 w-5 text-indigo-600" />
+        {/* Image Modal - Mobile Optimized */}
+        <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+          <DialogContent className="max-w-[95vw] max-h-[95vh] p-2">
+            <DialogHeader className="pb-2">
+              <DialogTitle className="text-base flex items-center gap-2">
+                <FileText className="h-4 w-4 text-indigo-600" />
                 Comprobante de Pago
               </DialogTitle>
             </DialogHeader>
-            <div className="flex justify-center items-center h-full overflow-hidden bg-gray-100 p-4">
-              {selectedRegistration?.comprobantePagoUrl?.endsWith(".pdf") ||
-              selectedRegistration?.nombreArchivo?.endsWith(".pdf") ? (
-                <iframe
-                  src={comprobanteUrl}
-                  className="w-full h-[80vh] border-none bg-white rounded-md shadow-sm"
-                  title="Comprobante de pago ampliado"
-                />
-              ) : (
+            <div className="relative overflow-hidden rounded-md bg-gray-100 flex items-center justify-center min-h-[300px]">
+              {comprobanteUrl ? (
                 <div
-                  className="relative w-full h-full flex justify-center items-center"
+                  className="relative cursor-move"
                   onMouseDown={handleMouseDown}
                   onMouseMove={handleMouseMove}
                   onMouseUp={handleMouseUp}
                   onMouseLeave={handleMouseUp}
+                  style={{
+                    transform: zoomedImage
+                      ? `translate(${zoomPosition.x}px, ${zoomPosition.y}px) scale(2)`
+                      : "scale(1)",
+                    transition: isDragging ? "none" : "transform 0.3s ease",
+                  }}
                 >
-                  <div
-                    className="w-full h-full flex justify-center items-center overflow-hidden bg-white rounded-md shadow-sm p-4"
-                    onClick={() => !isDragging && setZoomedImage(!zoomedImage)}
-                  >
-                    <img
-                      src={comprobanteUrl || "/placeholder.svg"}
-                      alt="Comprobante de pago ampliado"
-                      className={`${zoomedImage ? "cursor-move" : "cursor-zoom-in"} transition-transform duration-300`}
-                      style={{
-                        transform: zoomedImage
-                          ? `scale(1.5) translate(${zoomPosition.x}px, ${zoomPosition.y}px)`
-                          : "scale(1)",
-                        maxWidth: zoomedImage ? "none" : "100%",
-                        maxHeight: zoomedImage ? "none" : "90vh",
-                        objectFit: "contain",
-                      }}
-                    />
-                  </div>
-                  {zoomedImage && (
-                    <div className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-1 rounded-md text-sm">
-                      {isDragging ? "Suelta para dejar de mover" : "Arrastra para mover la imagen"}
-                    </div>
-                  )}
-                  <div className="absolute bottom-4 left-4 flex gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setZoomedImage(!zoomedImage)}
-                      className="bg-white bg-opacity-80 hover:bg-opacity-100"
-                    >
-                      {zoomedImage ? <ZoomOut className="h-4 w-4" /> : <ZoomIn className="h-4 w-4" />}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        setZoomPosition({ x: 0, y: 0 })
-                      }}
-                      className="bg-white bg-opacity-80 hover:bg-opacity-100"
-                      disabled={!zoomedImage}
-                    >
-                      <RotateCw className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <img
+                    src={comprobanteUrl || "/placeholder.svg"}
+                    alt="Comprobante de pago"
+                    className="max-w-full max-h-[70vh] object-contain"
+                    draggable={false}
+                  />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center text-gray-500">
+                  <FileText className="h-12 w-12 mb-2" />
+                  <p>No se pudo cargar la imagen</p>
                 </div>
               )}
             </div>
-            <DialogFooter className="p-4 bg-gray-50 border-t">
+            <DialogFooter className="flex flex-row justify-between pt-2">
               <Button
                 variant="outline"
                 onClick={() => {
-                  setZoomedImage(false)
+                  setZoomedImage(!zoomedImage)
                   setZoomPosition({ x: 0, y: 0 })
-                  closeImageModal()
-                  setIsDetailsModalOpen(true)
                 }}
+                className="text-xs h-8 bg-transparent"
               >
-                <X className="mr-2 h-4 w-4" />
-                Cerrar y volver
+                {zoomedImage ? (
+                  <>
+                    <ZoomOut className="h-3 w-3 mr-1" />
+                    Alejar
+                  </>
+                ) : (
+                  <>
+                    <ZoomIn className="h-3 w-3 mr-1" />
+                    Acercar
+                  </>
+                )}
+              </Button>
+              <Button variant="outline" onClick={closeImageModal} className="text-xs h-8 bg-transparent">
+                <X className="h-3 w-3 mr-1" />
+                Cerrar
               </Button>
             </DialogFooter>
           </DialogContent>
