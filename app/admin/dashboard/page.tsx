@@ -717,7 +717,7 @@ export default function AdminDashboardPage() {
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos (sin rechazados)</SelectItem>
+                <SelectItem value="all">Todos </SelectItem>
                 <SelectItem value="confirmado">Solo confirmados</SelectItem>
                 <SelectItem value="pendiente">Solo pendientes</SelectItem>
               </SelectContent>
@@ -1378,7 +1378,7 @@ export default function AdminDashboardPage() {
             {/* Todos los inscriptos (sin rechazados) */}
             <div className="border rounded-lg p-3 md:p-4 bg-purple-50">
               <h3 className="font-bold text-sm md:text-lg text-purple-900 mb-3">
-                Todos los inscriptos (sin rechazados)
+                Todos los inscriptos
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
                 {Object.entries(stats.jerseySizeByStatus.all)
