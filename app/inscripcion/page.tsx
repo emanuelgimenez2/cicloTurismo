@@ -779,7 +779,7 @@ export default function RegistrationForm() {
         email: formData.email || "",
         telefono: formData.telefono || "",
         paisTelefono: formData.paisTelefono || "Argentina",
-        telefonoEmergencia: "", // Asegúrate de que este campo se maneje correctamente
+        telefonoEmergencia: formData.telefonoEmergencia || "",
         paisTelefonoEmergencia: formData.paisTelefonoEmergencia || "Argentina",
         grupoSanguineo: formData.grupoSanguineo || "",
         genero: formData.genero || "",
