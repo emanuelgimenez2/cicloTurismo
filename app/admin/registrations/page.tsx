@@ -291,6 +291,17 @@ export default function AdminRegistrationsPage() {
     }
   }
 
+  const isPDF = (url) => {
+    if (!url) return false
+    // Check if it's a base64 PDF
+    if (url.startsWith("data:application/pdf")) return true
+    // Check if it's a URL ending in .pdf
+    if (url.toLowerCase().includes(".pdf")) return true
+    // Check if base64 string contains PDF header
+    if (url.includes("JVBERi0")) return true // PDF magic number in base64
+    return false
+  }
+
   const handleMouseDown = (e) => {
     if (zoomedImage) {
       setIsDragging(true)
@@ -354,7 +365,7 @@ export default function AdminRegistrationsPage() {
         telefono: participant.telefono || "",
         localidad: participant.localidad || "",
         genero: participant.genero || "",
-        talleRemera: participant.talleRemera || "",
+        talleRemera: (participant.talleRemera || "").toUpperCase(), // Convertir a mayúsculas
         fechaInscripcion: participant.fechaInscripcion?.toLocaleDateString("es-ES") || "",
       }
 
@@ -1094,10 +1105,10 @@ export default function AdminRegistrationsPage() {
                         <SelectItem value="no">No celiacos</SelectItem>
                       </SelectContent>
                     </Select>
-                    
+
                     <Select value={noteFilter} onValueChange={setNoteFilter}>
                       <SelectTrigger className="bg-white text-xs h-8">
-                      <NotebookPen className="h-4 w-4 mr-1" />
+                        <NotebookPen className="h-4 w-4 mr-1" />
                         <SelectValue placeholder="Notas" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1289,10 +1300,10 @@ export default function AdminRegistrationsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="15">15</SelectItem>
-                      <SelectItem value="25">25</SelectItem>
                       <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                      <SelectItem value="150">150</SelectItem>
+                      <SelectItem value="200">200</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1534,11 +1545,18 @@ export default function AdminRegistrationsPage() {
                               setIsImageModalOpen(true)
                             }}
                           >
-                            <img
-                              src={comprobanteUrl || "/placeholder.svg"}
-                              alt="Comprobante de pago"
-                              className="max-h-24 mx-auto object-contain"
-                            />
+                            {isPDF(comprobanteUrl) ? (
+                              <div className="flex flex-col items-center justify-center h-24">
+                                <FileText className="h-8 w-8 text-red-500 mb-2" />
+                                <p className="text-xs text-gray-600 text-center">Documento PDF</p>
+                              </div>
+                            ) : (
+                              <img
+                                src={comprobanteUrl || "/placeholder.svg"}
+                                alt="Comprobante de pago"
+                                className="max-h-24 mx-auto object-contain"
+                              />
+                            )}
                             <div className="text-center mt-2">
                               <Button variant="outline" size="sm" className="text-xs bg-transparent">
                                 <ZoomIn className="h-3 w-3 mr-1" />
@@ -1679,26 +1697,34 @@ export default function AdminRegistrationsPage() {
             </DialogHeader>
             <div className="relative overflow-hidden rounded-md bg-gray-100 flex items-center justify-center min-h-[300px]">
               {comprobanteUrl ? (
-                <div
-                  className="relative cursor-move"
-                  onMouseDown={handleMouseDown}
-                  onMouseMove={handleMouseMove}
-                  onMouseUp={handleMouseUp}
-                  onMouseLeave={handleMouseUp}
-                  style={{
-                    transform: zoomedImage
-                      ? `translate(${zoomPosition.x}px, ${zoomPosition.y}px) scale(2)`
-                      : "scale(1)",
-                    transition: isDragging ? "none" : "transform 0.3s ease",
-                  }}
-                >
-                  <img
-                    src={comprobanteUrl || "/placeholder.svg"}
-                    alt="Comprobante de pago"
-                    className="max-w-full max-h-[70vh] object-contain"
-                    draggable={false}
-                  />
-                </div>
+                <>
+                  {isPDF(comprobanteUrl) ? (
+                    <div className="w-full h-full min-h-[500px]">
+                      <iframe src={comprobanteUrl} className="w-full h-full border-0" title="Comprobante PDF" />
+                    </div>
+                  ) : (
+                    <div
+                      className="relative cursor-move"
+                      onMouseDown={handleMouseDown}
+                      onMouseMove={handleMouseMove}
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
+                      style={{
+                        transform: zoomedImage
+                          ? `translate(${zoomPosition.x}px, ${zoomPosition.y}px) scale(2)`
+                          : "scale(1)",
+                        transition: isDragging ? "none" : "transform 0.3s ease",
+                      }}
+                    >
+                      <img
+                        src={comprobanteUrl || "/placeholder.svg"}
+                        alt="Comprobante de pago"
+                        className="max-w-full max-h-[70vh] object-contain"
+                        draggable={false}
+                      />
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center text-gray-500">
                   <FileText className="h-12 w-12 mb-2" />

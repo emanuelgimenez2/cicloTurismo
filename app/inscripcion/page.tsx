@@ -684,10 +684,30 @@ export default function RegistrationForm() {
   // Ahora solo recibe participantData y no un comprobanteUrl
   const sendAdminNotificationEmail = async (participantData) => {
     try {
+      // Convert base64 to data URL if image exists
+      let comprobanteDataUrl = ""
+      if (participantData.imagenBase64) {
+        // Determine the MIME type based on the base64 prefix or file name
+        let mimeType = "image/jpeg" // default
+        if (participantData.imagenBase64.startsWith("data:")) {
+          // Already has data URL prefix
+          comprobanteDataUrl = participantData.imagenBase64
+        } else {
+          // Add data URL prefix based on file extension
+          const fileName = participantData.nombreArchivo || ""
+          if (fileName.toLowerCase().includes(".png")) {
+            mimeType = "image/png"
+          } else if (fileName.toLowerCase().includes(".pdf")) {
+            mimeType = "application/pdf"
+          }
+          comprobanteDataUrl = `data:${mimeType};base64,${participantData.imagenBase64}`
+        }
+      }
+
       const templateParams = {
         nombre: participantData.nombre,
         apellido: participantData.apellido,
-        comprobanteUrl: participantData.comprobantePago || "", // URL del comprobante de pago
+        comprobanteUrl: participantData.nombreArchivo || "comprobante",
         emailIara: "iara37699@gmail.com", // Email fijo del administrador
       }
 
@@ -799,8 +819,9 @@ export default function RegistrationForm() {
         // Agregar número de inscripción
         numeroInscripcion: numeroInscripcion,
       }
-      // Crear el nombre del documento: "nombre apellido numeroInscripcion"
-      const documentName = `${formData.nombre} ${formData.apellido} ${numeroInscripcion.toString().padStart(3, "0")}`
+      // Crear el nombre del documento: "numeroInscripcion nombre apellido"
+      const documentName = `${numeroInscripcion.toString().padStart(3, "0")} ${formData.nombre} ${formData.apellido}`;
+
       // Usar setDoc en lugar de addDoc para especificar el nombre del documento
       const docRef = doc(db, "participantes2025", documentName)
       await setDoc(docRef, registrationData)
@@ -1087,7 +1108,7 @@ export default function RegistrationForm() {
                         />
                       </div>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
                       <div className="max-h-[200px] overflow-y-auto p-1">
                         <div className="grid grid-cols-1 gap-1">
                           <Button
