@@ -1248,11 +1248,11 @@ export default function RegistrationForm() {
                   <AlertTitle className="text-blue-800">Dato de pago 1 - Argentina</AlertTitle>
                   <AlertDescription className="text-blue-700">
                     <ul className="list-disc pl-5 mt-2 space-y-1">
-                      <li>Banco: UALA</li>
-                      <li>Titular: Brunilda Cristina Schubert</li>
-                      <li>CUIT: 27-24600582-1</li>
-                      <li>CBU: 0000007900272460058219</li>
-                      <li>Alias: CICLO.TERMAL.UALA</li>
+                      <li>Banco: Naranja X</li>
+                      <li>Titular: Nancy Gisela Orbes</li>
+                      <li>CUIT: 27-26233106-2</li>
+                      <li>CBU: 4530000800016415745759</li>
+                      <li>Alias: ciclotermal2025</li>
                       <li>
                         <strong>Importe: $35.000 (ARS)</strong>
                       </li>
@@ -1266,10 +1266,10 @@ export default function RegistrationForm() {
                   <AlertDescription className="text-green-700">
                     <ul className="list-disc pl-5 mt-2 space-y-1">
                       <li>Banco: Prex</li>
-                      <li>Titular: Brunilda Cristina Schubert</li>
-                      <li>CUIT: 27-24600582-1</li>
-                      <li>CVV: 0000013000032296357520</li>
-                      <li>Alias: CICLOTURISMOTERMAL</li>
+                      <li>Titular: Nancy Gisela Orbes</li>
+                      <li>CUIT: 27-26233106-2</li>
+                      <li>CBU: 0000013000032290638313</li>
+                      <li>Alias: CicloTermal.PREX</li>
                       <li>
                         <strong>Importe: $1.300 (UYU)</strong>
                       </li>
