@@ -137,7 +137,7 @@ export default function AdminRegistrationsPage() {
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [refreshing, setRefreshing] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(15)
+  const [itemsPerPage, setItemsPerPage] = useState(50)
   const [showFilters, setShowFilters] = useState(false)
   const topRef = useRef(null)
 
