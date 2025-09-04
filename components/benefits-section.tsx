@@ -72,8 +72,8 @@ const defaultEventData: EventItem[] = [
   { id: "6", label: "Precio", value: "$35.000", iconName: "DollarSign", order: 5 },
   { id: "7", label: "Acreditación", value: "7:30 hs", iconName: "Clock", order: 6 },
   { id: "8", label: "Hora de Salida", value: "8:30 hs", iconName: "Clock", order: 7 },
-  { id: "9", label: "Lugar de encuentro", value: "Dirección de Deportes", iconName: "Navigation", order: 8 },
-  { id: "10", label: "Lugar de llegada", value: "Dirección de Deportes", iconName: "Navigation", order: 9 },
+  { id: "9", label: "Lugar de encuentro", value: "Frente a la Terminal de Ómnibus de Federación", iconName: "Navigation", order: 8 },
+  { id: "10", label: "Lugar de llegada", value: "Frente a la Terminal de Ómnibus de Federación", iconName: "Navigation", order: 9 },
 ]
 
 const defaultBenefits: BenefitItem[] = [
