@@ -1431,7 +1431,18 @@ export default function RegistrationForm() {
                 </h4>
                 <ul className="text-green-700 text-sm space-y-1">
                   <li>• Fecha del evento: 12 de Octubre de 2025</li>
-                  <li>• Lugar de acreditación: Dirección de deportes</li>
+                  <li>
+                  • Lugar de acreditación:{" "}
+                  <a
+                    href="https://maps.app.goo.gl/sKgRGozptoXJrpY17"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    Frente al predio de la Terminal de Ómnibus de Federación
+                  </a>
+                  .
+                </li>
                   <li>• Horario de acreditación: 7:30 AM</li>
                   <li>• Horario de salida: 8:30 AM</li>
                 </ul>
