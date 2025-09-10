@@ -107,6 +107,7 @@ export default function AdminRegistrationsPage() {
   const [healthFilter, setHealthFilter] = useState("all")
   const [celiacFilter, setCeliacFilter] = useState("all")
   const [noteFilter, setNoteFilter] = useState("all")
+  const [transferFilter, setTransferFilter] = useState("all")
   const [loading, setLoading] = useState(true)
   const [availableYears, setAvailableYears] = useState([])
   const [selectedRegistration, setSelectedRegistration] = useState(null)
@@ -131,7 +132,6 @@ export default function AdminRegistrationsPage() {
   const [newComprobanteFile, setNewComprobanteFile] = useState(null)
   const { toast } = useToast()
 
-  const [transferFilter, setTransferFilter] = useState("all")
   const [editFormData, setEditFormData] = useState({
     nombre: "",
     apellido: "",
@@ -216,7 +216,8 @@ export default function AdminRegistrationsPage() {
           reg.dni?.includes(term) ||
           reg.email?.toLowerCase().includes(term) ||
           reg.telefono?.includes(term) ||
-          reg.localidad?.toLowerCase().includes(term),
+          reg.localidad?.toLowerCase().includes(term) ||
+          reg.grupoCiclistas?.toLowerCase().includes(term),
       )
     }
 
@@ -258,6 +259,15 @@ export default function AdminRegistrationsPage() {
       })
     }
 
+    if (transferFilter !== "all") {
+      filtered = filtered.filter((reg) => {
+        if (transferFilter === "sin_especificar") {
+          return !reg.transferidoA || reg.transferidoA === "sin_especificar"
+        }
+        return reg.transferidoA === transferFilter
+      })
+    }
+
     // Ordenar: primero pendientes, luego por número de inscripción descendente (más reciente primero)
     // Esta lógica ya se aplica en fetchRegistrations para la carga inicial,
     // pero se mantiene aquí para re-ordenar si los filtros cambian y afectan el orden.
@@ -277,7 +287,7 @@ export default function AdminRegistrationsPage() {
 
     setFilteredRegistrations(filtered)
     setCurrentPage(1)
-  }, [searchTerm, statusFilter, yearFilter, healthFilter, celiacFilter, noteFilter, registrations])
+  }, [searchTerm, statusFilter, yearFilter, healthFilter, celiacFilter, noteFilter, transferFilter, registrations])
 
   const loadComprobante = async (registration) => {
     setLoadingComprobante(true)
@@ -1153,7 +1163,7 @@ export default function AdminRegistrationsPage() {
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar por nombre, apellido, DNI..."
+                    placeholder="Buscar por nombre, apellido, DNI, teléfono, grupo ciclismo..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-7 bg-white text-xs h-8"
@@ -1237,6 +1247,7 @@ export default function AdminRegistrationsPage() {
                         <SelectItem value="all">Transfirió a</SelectItem>
                         <SelectItem value="Gise">Gise</SelectItem>
                         <SelectItem value="Bruni">Bruni</SelectItem>
+                        <SelectItem value="sin_especificar">No especifica</SelectItem>
                       </SelectContent>
                     </Select>
 
@@ -1730,7 +1741,7 @@ export default function AdminRegistrationsPage() {
                   <CardContent className="pt-3 px-3 pb-3">
                     {(() => {
                       // En modo edición, parseamos desde editFormData, sino desde selectedRegistration
-                      const healthInfo = isEditMode 
+                      const healthInfo = isEditMode
                         ? parseHealthConditions(editFormData.condicionSalud)
                         : parseHealthConditions(selectedRegistration.condicionSalud)
                       return (
@@ -1743,11 +1754,11 @@ export default function AdminRegistrationsPage() {
                                 onChange={(e) => {
                                   const updatedHealthInfo = {
                                     ...healthInfo,
-                                    esCeliaco: e.target.value
+                                    esCeliaco: e.target.value,
                                   }
-                                  setEditFormData((prev) => ({ 
-                                    ...prev, 
-                                    condicionSalud: JSON.stringify(updatedHealthInfo)
+                                  setEditFormData((prev) => ({
+                                    ...prev,
+                                    condicionSalud: JSON.stringify(updatedHealthInfo),
                                   }))
                                 }}
                                 className="text-sm mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -1775,11 +1786,11 @@ export default function AdminRegistrationsPage() {
                                 onChange={(e) => {
                                   const updatedHealthInfo = {
                                     ...healthInfo,
-                                    condicionesSalud: e.target.value
+                                    condicionesSalud: e.target.value,
                                   }
-                                  setEditFormData((prev) => ({ 
-                                    ...prev, 
-                                    condicionSalud: JSON.stringify(updatedHealthInfo)
+                                  setEditFormData((prev) => ({
+                                    ...prev,
+                                    condicionSalud: JSON.stringify(updatedHealthInfo),
                                   }))
                                 }}
                                 className="text-sm mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 min-h-[60px] resize-vertical"

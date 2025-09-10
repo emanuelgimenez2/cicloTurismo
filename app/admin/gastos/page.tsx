@@ -241,13 +241,13 @@ export default function ExpensesPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-        <div className="max-w-7xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 sm:p-6">
+        <div className="max-w-5xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-64 mb-4"></div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="h-6 bg-gray-200 rounded w-48 mb-3"></div>
+            <div className="grid grid-cols-2 gap-3 mb-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                <div key={i} className="h-20 bg-gray-200 rounded"></div>
               ))}
             </div>
           </div>
@@ -257,74 +257,78 @@ export default function ExpensesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 sm:p-6">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <motion.div
-          className="flex flex-col md:flex-row md:items-center justify-between mb-8"
+          className="flex flex-col gap-3 mb-6"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <div>
-            <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
               Gestión de Gastos
             </h1>
-            <p className="text-muted-foreground mt-2">Control financiero del evento {new Date().getFullYear()}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">Control financiero {new Date().getFullYear()}</p>
           </div>
-          <div className="flex items-center gap-4 mt-4 md:mt-0">
-            <Link href="/admin/dashboard">
-              <Button variant="outline" className="flex items-center gap-2 bg-transparent">
-                <Home className="h-4 w-4" />
-                Volver al Dashboard
+          <div className="flex items-center gap-2">
+            <Link href="/admin/dashboard" className="flex-1">
+              <Button variant="outline" className="w-full sm:w-auto flex items-center justify-center gap-2 text-xs sm:text-sm bg-transparent">
+                <Home className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Volver al Dashboard</span>
+                <span className="sm:hidden">Dashboard</span>
               </Button>
             </Link>
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
               <DialogTrigger asChild>
-                <Button className="flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
-                  <Plus className="h-4 w-4" />
-                  Agregar Gasto
+                <Button className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-xs sm:text-sm">
+                  <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Agregar Gasto</span>
+                  <span className="sm:hidden">Agregar</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="w-[95vw] max-w-md mx-auto">
                 <DialogHeader>
-                  <DialogTitle>Agregar Nuevo Gasto</DialogTitle>
-                  <DialogDescription>Registra un nuevo gasto para el evento</DialogDescription>
+                  <DialogTitle className="text-lg">Agregar Nuevo Gasto</DialogTitle>
+                  <DialogDescription className="text-sm">Registra un nuevo gasto para el evento</DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-3">
                   <div>
-                    <Label htmlFor="concepto">Concepto *</Label>
+                    <Label htmlFor="concepto" className="text-sm">Concepto *</Label>
                     <Input
                       id="concepto"
                       value={formData.concepto}
                       onChange={(e) => setFormData({ ...formData, concepto: e.target.value })}
                       placeholder="Ej: Compra de premios"
+                      className="text-sm"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="monto">Monto *</Label>
+                    <Label htmlFor="monto" className="text-sm">Monto *</Label>
                     <Input
                       id="monto"
                       type="number"
                       value={formData.monto}
                       onChange={(e) => setFormData({ ...formData, monto: e.target.value })}
                       placeholder="0"
+                      className="text-sm"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="categoria">Categoría *</Label>
+                    <Label htmlFor="categoria" className="text-sm">Categoría *</Label>
                     <Select
                       value={formData.categoria}
                       onValueChange={(value) => setFormData({ ...formData, categoria: value })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="text-sm">
                         <SelectValue placeholder="Seleccionar categoría" />
                       </SelectTrigger>
                       <SelectContent>
                         {EXPENSE_CATEGORIES.map((category) => (
-                          <SelectItem key={category} value={category}>
+                          <SelectItem key={category} value={category} className="text-sm">
                             {category}
                           </SelectItem>
                         ))}
@@ -332,32 +336,33 @@ export default function ExpensesPage() {
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="pagadoPor">Pagado por</Label>
+                    <Label htmlFor="pagadoPor" className="text-sm">Pagado por</Label>
                     <Select
                       value={formData.pagadoPor}
                       onValueChange={(value) => setFormData({ ...formData, pagadoPor: value })}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="text-sm">
                         <SelectValue placeholder="¿Quién pagó?" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Gise">Gise</SelectItem>
-                        <SelectItem value="Bruni">Bruni</SelectItem>
-                        <SelectItem value="Ambos">Ambos</SelectItem>
+                        <SelectItem value="Gise" className="text-sm">Gise</SelectItem>
+                        <SelectItem value="Bruni" className="text-sm">Bruni</SelectItem>
+                        <SelectItem value="Ambos" className="text-sm">Ambos</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="descripcion">Descripción</Label>
+                    <Label htmlFor="descripcion" className="text-sm">Descripción</Label>
                     <Textarea
                       id="descripcion"
                       value={formData.descripcion}
                       onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                       placeholder="Detalles adicionales (opcional)"
-                      rows={3}
+                      rows={2}
+                      className="text-sm"
                     />
                   </div>
-                  <div className="flex justify-end gap-2 pt-4">
+                  <div className="flex gap-2 pt-3">
                     <Button
                       type="button"
                       variant="outline"
@@ -365,12 +370,13 @@ export default function ExpensesPage() {
                         setIsAddModalOpen(false)
                         resetForm()
                       }}
+                      className="flex-1 text-sm"
                     >
-                      <X className="h-4 w-4 mr-2" />
+                      <X className="h-3 w-3 mr-1" />
                       Cancelar
                     </Button>
-                    <Button type="submit">
-                      <Save className="h-4 w-4 mr-2" />
+                    <Button type="submit" className="flex-1 text-sm">
+                      <Save className="h-3 w-3 mr-1" />
                       Guardar
                     </Button>
                   </div>
@@ -381,21 +387,21 @@ export default function ExpensesPage() {
         </motion.div>
 
         {/* Financial Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4 mb-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             <Card className="border-green-200 bg-gradient-to-br from-green-50 to-green-100">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-green-800">Total Ingresos</CardTitle>
-                <TrendingUp className="h-4 w-4 text-green-600" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 py-2">
+                <CardTitle className="text-xs sm:text-sm font-medium text-green-800">Ingresos</CardTitle>
+                <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-green-900">${totalIncome.toLocaleString()}</div>
-                <div className="text-xs text-green-700 mt-2">
-                  Gise: ${giseIncome.toLocaleString()} | Bruni: ${bruniIncome.toLocaleString()}
+              <CardContent className="px-3 py-2">
+                <div className="text-lg sm:text-2xl font-bold text-green-900">${(totalIncome).toFixed(0)}</div>
+                <div className="text-[10px] sm:text-xs text-green-700 mt-1">
+                  G: ${(giseIncome / 1000).toFixed(0)}k | B: ${(bruniIncome).toFixed(0)}
                 </div>
               </CardContent>
             </Card>
@@ -407,13 +413,13 @@ export default function ExpensesPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
           >
             <Card className="border-red-200 bg-gradient-to-br from-red-50 to-red-100">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-red-800">Total Gastos</CardTitle>
-                <TrendingDown className="h-4 w-4 text-red-600" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 py-2">
+                <CardTitle className="text-xs sm:text-sm font-medium text-red-800">Gastos</CardTitle>
+                <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-900">${totalExpenses.toLocaleString()}</div>
-                <div className="text-xs text-red-700 mt-2">{expenses.length} gastos registrados</div>
+              <CardContent className="px-3 py-2">
+                <div className="text-lg sm:text-2xl font-bold text-red-900">${(totalExpenses).toFixed(0)}</div>
+                <div className="text-[10px] sm:text-xs text-red-700 mt-1">{expenses.length} gastos</div>
               </CardContent>
             </Card>
           </motion.div>
@@ -426,22 +432,22 @@ export default function ExpensesPage() {
             <Card
               className={`border-${remainingMoney >= 0 ? "blue" : "orange"}-200 bg-gradient-to-br from-${remainingMoney >= 0 ? "blue" : "orange"}-50 to-${remainingMoney >= 0 ? "blue" : "orange"}-100`}
             >
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className={`text-sm font-medium text-${remainingMoney >= 0 ? "blue" : "orange"}-800`}>
-                  {remainingMoney >= 0 ? "Dinero Disponible" : "Déficit"}
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 py-2">
+                <CardTitle className={`text-xs sm:text-sm font-medium text-${remainingMoney >= 0 ? "blue" : "orange"}-800`}>
+                  {remainingMoney >= 0 ? "Disponible" : "Déficit"}
                 </CardTitle>
                 {remainingMoney >= 0 ? (
-                  <CheckCircle className="h-4 w-4 text-blue-600" />
+                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
                 ) : (
-                  <AlertCircle className="h-4 w-4 text-orange-600" />
+                  <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 text-orange-600" />
                 )}
               </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold text-${remainingMoney >= 0 ? "blue" : "orange"}-900`}>
+              <CardContent className="px-3 py-2">
+                <div className={`text-lg sm:text-2xl font-bold text-${remainingMoney >= 0 ? "blue" : "orange"}-900`}>
                   ${Math.abs(remainingMoney).toLocaleString()}
                 </div>
-                <div className={`text-xs text-${remainingMoney >= 0 ? "blue" : "orange"}-700 mt-2`}>
-                  {remainingMoney >= 0 ? "Sobra dinero" : "Falta dinero"}
+                <div className={`text-[10px] sm:text-xs text-${remainingMoney >= 0 ? "blue" : "orange"}-700 mt-1`}>
+                  {remainingMoney >= 0 ? "Sobra" : "Falta"}
                 </div>
               </CardContent>
             </Card>
@@ -453,16 +459,16 @@ export default function ExpensesPage() {
             transition={{ duration: 0.5, delay: 0.4 }}
           >
             <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-purple-800">% Gastado</CardTitle>
-                <Calculator className="h-4 w-4 text-purple-600" />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 px-3 py-2">
+                <CardTitle className="text-xs sm:text-sm font-medium text-purple-800">% Gastado</CardTitle>
+                <Calculator className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-purple-900">{expensePercentage}%</div>
-                <div className="mt-2">
+              <CardContent className="px-3 py-2">
+                <div className="text-lg sm:text-2xl font-bold text-purple-900">{expensePercentage}%</div>
+                <div className="mt-1">
                   <Progress
                     value={expensePercentage}
-                    className="h-2"
+                    className="h-1 sm:h-2"
                     indicatorClassName="bg-gradient-to-r from-purple-500 to-purple-600"
                   />
                 </div>
@@ -478,67 +484,67 @@ export default function ExpensesPage() {
           transition={{ duration: 0.5, delay: 0.5 }}
         >
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Receipt className="h-5 w-5" />
+            <CardHeader className="px-3 py-3">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Receipt className="h-4 w-4 sm:h-5 sm:w-5" />
                 Lista de Gastos
               </CardTitle>
-              <CardDescription>Todos los gastos registrados para el evento</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">Todos los gastos del evento</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 py-3">
               {expenses.length === 0 ? (
-                <div className="text-center py-12">
-                  <CreditCard className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-4">No hay gastos registrados aún</p>
+                <div className="text-center py-8">
+                  <CreditCard className="h-8 w-8 sm:h-12 sm:w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 mb-3 text-sm">No hay gastos registrados</p>
                   <Button
                     onClick={() => setIsAddModalOpen(true)}
-                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
+                    className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-sm"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-3 w-3 mr-2" />
                     Agregar Primer Gasto
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {expenses.map((expense) => (
                     <div
                       key={expense.id}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                      className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors gap-3"
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold">{expense.concepto}</h3>
-                          <Badge className={getCategoryColor(expense.categoria)}>{expense.categoria}</Badge>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h3 className="font-semibold text-sm sm:text-base truncate">{expense.concepto}</h3>
+                          <Badge className={`${getCategoryColor(expense.categoria)} text-xs px-2 py-0`}>{expense.categoria}</Badge>
+                        </div>
+                        <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-600 flex-wrap">
+                          <span className="flex items-center gap-1 font-medium">
+                            <Banknote className="h-3 w-3" />${expense.monto.toLocaleString()}
+                          </span>
+                          <span>{expense.fecha.toLocaleDateString()}</span>
                           {expense.pagadoPor && (
-                            <Badge variant="outline" className="text-xs">
-                              Pagado por: {expense.pagadoPor}
+                            <Badge variant="outline" className="text-[10px] px-1 py-0">
+                              {expense.pagadoPor}
                             </Badge>
                           )}
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <span className="flex items-center gap-1">
-                            <Banknote className="h-4 w-4" />${expense.monto.toLocaleString()}
-                          </span>
-                          <span>{expense.fecha.toLocaleDateString()}</span>
-                        </div>
-                        {expense.descripcion && <p className="text-sm text-gray-500 mt-1">{expense.descripcion}</p>}
+                        {expense.descripcion && <p className="text-xs text-gray-500 mt-1 line-clamp-2">{expense.descripcion}</p>}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 sm:gap-2 self-end sm:self-center">
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEdit(expense)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-1 sm:p-2"
                         >
-                          <Edit className="h-4 w-4" />
+                          <Edit className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(expense.id)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1 sm:p-2"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
                         </Button>
                       </div>
                     </div>
@@ -551,45 +557,47 @@ export default function ExpensesPage() {
 
         {/* Edit Modal */}
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="w-[95vw] max-w-md mx-auto">
             <DialogHeader>
-              <DialogTitle>Editar Gasto</DialogTitle>
-              <DialogDescription>Modifica los detalles del gasto seleccionado</DialogDescription>
+              <DialogTitle className="text-lg">Editar Gasto</DialogTitle>
+              <DialogDescription className="text-sm">Modifica los detalles del gasto</DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
               <div>
-                <Label htmlFor="edit-concepto">Concepto *</Label>
+                <Label htmlFor="edit-concepto" className="text-sm">Concepto *</Label>
                 <Input
                   id="edit-concepto"
                   value={formData.concepto}
                   onChange={(e) => setFormData({ ...formData, concepto: e.target.value })}
                   placeholder="Ej: Compra de premios"
+                  className="text-sm"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="edit-monto">Monto *</Label>
+                <Label htmlFor="edit-monto" className="text-sm">Monto *</Label>
                 <Input
                   id="edit-monto"
                   type="number"
                   value={formData.monto}
                   onChange={(e) => setFormData({ ...formData, monto: e.target.value })}
                   placeholder="0"
+                  className="text-sm"
                   required
                 />
               </div>
               <div>
-                <Label htmlFor="edit-categoria">Categoría *</Label>
+                <Label htmlFor="edit-categoria" className="text-sm">Categoría *</Label>
                 <Select
                   value={formData.categoria}
                   onValueChange={(value) => setFormData({ ...formData, categoria: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="text-sm">
                     <SelectValue placeholder="Seleccionar categoría" />
                   </SelectTrigger>
                   <SelectContent>
                     {EXPENSE_CATEGORIES.map((category) => (
-                      <SelectItem key={category} value={category}>
+                      <SelectItem key={category} value={category} className="text-sm">
                         {category}
                       </SelectItem>
                     ))}
@@ -597,32 +605,33 @@ export default function ExpensesPage() {
                 </Select>
               </div>
               <div>
-                <Label htmlFor="edit-pagadoPor">Pagado por</Label>
+                <Label htmlFor="edit-pagadoPor" className="text-sm">Pagado por</Label>
                 <Select
                   value={formData.pagadoPor}
                   onValueChange={(value) => setFormData({ ...formData, pagadoPor: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="text-sm">
                     <SelectValue placeholder="¿Quién pagó?" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Gise">Gise</SelectItem>
-                    <SelectItem value="Bruni">Bruni</SelectItem>
-                    <SelectItem value="Ambos">Ambos</SelectItem>
+                    <SelectItem value="Gise" className="text-sm">Gise</SelectItem>
+                    <SelectItem value="Bruni" className="text-sm">Bruni</SelectItem>
+                    <SelectItem value="Ambos" className="text-sm">Ambos</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label htmlFor="edit-descripcion">Descripción</Label>
+                <Label htmlFor="edit-descripcion" className="text-sm">Descripción</Label>
                 <Textarea
                   id="edit-descripcion"
                   value={formData.descripcion}
                   onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
                   placeholder="Detalles adicionales (opcional)"
-                  rows={3}
+                  rows={2}
+                  className="text-sm"
                 />
               </div>
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex gap-2 pt-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -630,13 +639,14 @@ export default function ExpensesPage() {
                     setIsEditModalOpen(false)
                     resetForm()
                   }}
+                  className="flex-1 text-sm"
                 >
-                  <X className="h-4 w-4 mr-2" />
+                  <X className="h-3 w-3 mr-1" />
                   Cancelar
                 </Button>
-                <Button type="submit">
-                  <Save className="h-4 w-4 mr-2" />
-                  Guardar Cambios
+                <Button type="submit" className="flex-1 text-sm">
+                  <Save className="h-3 w-3 mr-1" />
+                  Guardar
                 </Button>
               </div>
             </form>
