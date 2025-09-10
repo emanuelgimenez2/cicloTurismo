@@ -1100,82 +1100,287 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Financial Summary Section */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Recaudado</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                $
-                {registrations
-                  .reduce((total, reg) => {
-                    const precio = reg.precio || "0"
-                    const amount = precio.replace(/[$.,]/g, "")
-                    return total + (Number.parseInt(amount) || 0)
-                  }, 0)
-                  .toLocaleString()}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid gap-2 md:gap-4 grid-cols-2 md:grid-cols-4 mb-4 md:mb-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+          >
+            <Card className="overflow-hidden border border-green-100 shadow-sm hover:shadow-md transition-all duration-300 h-full">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-green-600"></div>
+              <CardHeader className="pb-1 pt-2 md:pt-3 px-2 md:px-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xs md:text-sm font-medium text-green-900">Total Recaudado</CardTitle>
+                    <CardDescription className="text-xs hidden md:block">Suma total de pagos</CardDescription>
+                  </div>
+                  <div className="p-1 md:p-2 rounded-full bg-green-50">
+                    <DollarSign className="h-3 md:h-5 w-3 md:w-5 text-green-600" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="px-2 md:px-3 pb-2 md:pb-3">
+                <div className="flex items-baseline gap-1">
+                  <div className="text-xl md:text-3xl font-bold text-green-900">
+                    $
+                    {registrations
+                      .reduce((total, reg) => {
+                        const precio = reg.precio || "0"
+                        const amount = precio.replace(/[$.,]/g, "")
+                        return total + (Number.parseInt(amount) || 0)
+                      }, 0)
+                      .toLocaleString()}
+                  </div>
+                </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Plata de Gise</CardTitle>
-              <User className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                $
-                {registrations
-                  .filter((reg) => reg.transferidoA === "Gise")
-                  .reduce((total, reg) => {
-                    const precio = reg.precio || "0"
-                    const amount = precio.replace(/[$.,]/g, "")
-                    return total + (Number.parseInt(amount) || 0)
-                  }, 0)
-                  .toLocaleString()}
-              </div>
-            </CardContent>
-          </Card>
+                <div className="mt-1 md:mt-2 space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="flex items-center gap-1">
+                      <User className="h-2 md:h-3 w-2 md:w-3 text-blue-600" />
+                      <span className="hidden sm:inline">Gise:</span>
+                      <span className="sm:hidden">G:</span> 
+                      $
+                      {registrations
+                        .filter((reg) => reg.transferidoA === "Gise")
+                        .reduce((total, reg) => {
+                          const precio = reg.precio || "0"
+                          const amount = precio.replace(/[$.,]/g, "")
+                          return total + (Number.parseInt(amount) || 0)
+                        }, 0)
+                        .toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="flex items-center gap-1">
+                      <User className="h-2 md:h-3 w-2 md:w-3 text-purple-600" />
+                      <span className="hidden sm:inline">Bruni:</span>
+                      <span className="sm:hidden">B:</span> 
+                      $
+                      {registrations
+                        .filter((reg) => reg.transferidoA === "Bruni")
+                        .reduce((total, reg) => {
+                          const precio = reg.precio || "0"
+                          const amount = precio.replace(/[$.,]/g, "")
+                          return total + (Number.parseInt(amount) || 0)
+                        }, 0)
+                        .toLocaleString()}
+                    </span>
+                  </div>
+                </div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Plata de Bruni</CardTitle>
-              <User className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                $
-                {registrations
-                  .filter((reg) => reg.transferidoA === "Bruni")
-                  .reduce((total, reg) => {
-                    const precio = reg.precio || "0"
-                    const amount = precio.replace(/[$.,]/g, "")
-                    return total + (Number.parseInt(amount) || 0)
-                  }, 0)
-                  .toLocaleString()}
-              </div>
-            </CardContent>
-          </Card>
+                <div className="mt-2 md:mt-3">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span>Efectividad</span>
+                    <span className="font-medium">100%</span>
+                  </div>
+                  <Progress
+                    value={100}
+                    className="h-1 md:h-2"
+                    indicatorClassName="bg-gradient-to-r from-green-500 to-green-600"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Gastos</CardTitle>
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">$0</div>
-              <p className="text-xs text-muted-foreground">
-                <Link href="/admin/gastos" className="text-blue-600 hover:underline">
-                  Ver gastos →
-                </Link>
-              </p>
-            </CardContent>
-          </Card>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.9 }}
+          >
+            <Card className="overflow-hidden border border-blue-100 shadow-sm hover:shadow-md transition-all duration-300 h-full">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-blue-600"></div>
+              <CardHeader className="pb-1 pt-2 md:pt-3 px-2 md:px-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xs md:text-sm font-medium text-blue-900">Plata de Gise</CardTitle>
+                    <CardDescription className="text-xs hidden md:block">Transferencias a Gise</CardDescription>
+                  </div>
+                  <div className="p-1 md:p-2 rounded-full bg-blue-50">
+                    <User className="h-3 md:h-5 w-3 md:w-5 text-blue-600" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="px-2 md:px-3 pb-2 md:pb-3">
+                <div className="flex items-baseline gap-1">
+                  <div className="text-xl md:text-3xl font-bold text-blue-900">
+                    $
+                    {registrations
+                      .filter((reg) => reg.transferidoA === "Gise")
+                      .reduce((total, reg) => {
+                        const precio = reg.precio || "0"
+                        const amount = precio.replace(/[$.,]/g, "")
+                        return total + (Number.parseInt(amount) || 0)
+                      }, 0)
+                      .toLocaleString()}
+                  </div>
+                </div>
+
+                <div className="mt-1 flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-2">
+                  <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200 text-xs px-1 py-0">
+                    {registrations.filter((reg) => reg.transferidoA === "Gise").length} pagos
+                  </Badge>
+                </div>
+
+                <div className="mt-2 md:mt-3">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span>Del total</span>
+                    <span className="font-medium">
+                      {Math.round((registrations.filter((reg) => reg.transferidoA === "Gise").reduce((total, reg) => {
+                        const precio = reg.precio || "0"
+                        const amount = precio.replace(/[$.,]/g, "")
+                        return total + (Number.parseInt(amount) || 0)
+                      }, 0) / registrations.reduce((total, reg) => {
+                        const precio = reg.precio || "0"
+                        const amount = precio.replace(/[$.,]/g, "")
+                        return total + (Number.parseInt(amount) || 0)
+                      }, 0)) * 100)}%
+                    </span>
+                  </div>
+                  <Progress
+                    value={Math.round((registrations.filter((reg) => reg.transferidoA === "Gise").reduce((total, reg) => {
+                      const precio = reg.precio || "0"
+                      const amount = precio.replace(/[$.,]/g, "")
+                      return total + (Number.parseInt(amount) || 0)
+                    }, 0) / registrations.reduce((total, reg) => {
+                      const precio = reg.precio || "0"
+                      const amount = precio.replace(/[$.,]/g, "")
+                      return total + (Number.parseInt(amount) || 0)
+                    }, 0)) * 100)}
+                    className="h-1 md:h-2"
+                    indicatorClassName="bg-gradient-to-r from-blue-500 to-blue-600"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 1.0 }}
+          >
+            <Card className="overflow-hidden border border-purple-100 shadow-sm hover:shadow-md transition-all duration-300 h-full">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-purple-600"></div>
+              <CardHeader className="pb-1 pt-2 md:pt-3 px-2 md:px-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xs md:text-sm font-medium text-purple-900">Plata de Bruni</CardTitle>
+                    <CardDescription className="text-xs hidden md:block">Transferencias a Bruni</CardDescription>
+                  </div>
+                  <div className="p-1 md:p-2 rounded-full bg-purple-50">
+                    <User className="h-3 md:h-5 w-3 md:w-5 text-purple-600" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="px-2 md:px-3 pb-2 md:pb-3">
+                <div className="flex items-baseline gap-1">
+                  <div className="text-xl md:text-3xl font-bold text-purple-900">
+                    $
+                    {registrations
+                      .filter((reg) => reg.transferidoA === "Bruni")
+                      .reduce((total, reg) => {
+                        const precio = reg.precio || "0"
+                        const amount = precio.replace(/[$.,]/g, "")
+                        return total + (Number.parseInt(amount) || 0)
+                      }, 0)
+                      .toLocaleString()}
+                  </div>
+                </div>
+
+                <div className="mt-1 flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-2">
+                  <Badge variant="outline" className="bg-purple-50 text-purple-800 border-purple-200 text-xs px-1 py-0">
+                    {registrations.filter((reg) => reg.transferidoA === "Bruni").length} pagos
+                  </Badge>
+                </div>
+
+                <div className="mt-2 md:mt-3">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span>Del total</span>
+                    <span className="font-medium">
+                      {Math.round((registrations.filter((reg) => reg.transferidoA === "Bruni").reduce((total, reg) => {
+                        const precio = reg.precio || "0"
+                        const amount = precio.replace(/[$.,]/g, "")
+                        return total + (Number.parseInt(amount) || 0)
+                      }, 0) / registrations.reduce((total, reg) => {
+                        const precio = reg.precio || "0"
+                        const amount = precio.replace(/[$.,]/g, "")
+                        return total + (Number.parseInt(amount) || 0)
+                      }, 0)) * 100)}%
+                    </span>
+                  </div>
+                  <Progress
+                    value={Math.round((registrations.filter((reg) => reg.transferidoA === "Bruni").reduce((total, reg) => {
+                      const precio = reg.precio || "0"
+                      const amount = precio.replace(/[$.,]/g, "")
+                      return total + (Number.parseInt(amount) || 0)
+                    }, 0) / registrations.reduce((total, reg) => {
+                      const precio = reg.precio || "0"
+                      const amount = precio.replace(/[$.,]/g, "")
+                      return total + (Number.parseInt(amount) || 0)
+                    }, 0)) * 100)}
+                    className="h-1 md:h-2"
+                    indicatorClassName="bg-gradient-to-r from-purple-500 to-purple-600"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 1.1 }}
+          >
+            <Card className="overflow-hidden border border-red-100 shadow-sm hover:shadow-md transition-all duration-300 h-full">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 to-red-600"></div>
+              <CardHeader className="pb-1 pt-2 md:pt-3 px-2 md:px-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <CardTitle className="text-xs md:text-sm font-medium text-red-900">Gastos</CardTitle>
+                    <CardDescription className="text-xs hidden md:block">Gastos del evento</CardDescription>
+                  </div>
+                  <div className="p-1 md:p-2 rounded-full bg-red-50">
+                    <CreditCard className="h-3 md:h-5 w-3 md:w-5 text-red-600" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="px-2 md:px-3 pb-2 md:pb-3">
+                <div className="flex items-baseline gap-1">
+                  <div className="text-xl md:text-3xl font-bold text-red-900">$0</div>
+                </div>
+
+                <div className="mt-1 flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-2">
+                  <Badge variant="outline" className="bg-red-50 text-red-800 border-red-200 text-xs px-1 py-0">
+                    0 gastos
+                  </Badge>
+                  <Link href="/admin/gastos">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-5 md:h-6 px-1 md:px-2 text-red-700 hover:text-red-800 hover:bg-red-50"
+                    >
+                      <Eye className="h-2 md:h-3 w-2 md:w-3 mr-1" />
+                      Ver
+                    </Button>
+                  </Link>
+                </div>
+
+                <div className="mt-2 md:mt-3">
+                  <div className="flex justify-between text-xs mb-1">
+                    <span>Utilizado</span>
+                    <span className="font-medium">0%</span>
+                  </div>
+                  <Progress
+                    value={0}
+                    className="h-1 md:h-2"
+                    indicatorClassName="bg-gradient-to-r from-red-500 to-red-600"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
-
         {/* Main Charts - Más compactos para móvil */}
         <div className="grid gap-3 md:gap-6 grid-cols-1 lg:grid-cols-2 mb-4 md:mb-6">
           {/* Jersey Size Chart */}
