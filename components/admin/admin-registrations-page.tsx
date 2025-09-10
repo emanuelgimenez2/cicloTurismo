@@ -1178,7 +1178,7 @@ export default function AdminRegistrationsPage() {
 
                 {/* Filters - Hidden on mobile unless toggled */}
                 <div className={`${showFilters ? "block" : "hidden"} md:block`}>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
                       <SelectTrigger className="bg-white text-xs h-8">
                         <ClipboardList className="h-4 w-4 mr-1" />

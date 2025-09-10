@@ -23,8 +23,8 @@ import {
   Home,
   HeartPulse,
   Shirt,
-  MoonIcon as Venus,
-  SpaceIcon as Mars,
+  Menu as Venus,
+  Mails as Mars,
   PieChartIcon,
   Clock,
   CalendarDays,
@@ -32,13 +32,16 @@ import {
   Eye,
   WheatOff,
   UserCheck,
-  ClockIcon as UserClock,
+  UserCheck as UserClock,
   UsersIcon,
   ChevronDown,
   X,
   ArrowUp,
   Calendar,
   Activity,
+  DollarSign,
+  User,
+  CreditCard,
 } from "lucide-react"
 import { useFirebaseContext } from "@/lib/firebase/firebase-provider"
 import { Button } from "@/components/ui/button"
@@ -1096,6 +1099,83 @@ export default function AdminDashboardPage() {
           </motion.div>
         </div>
 
+        {/* Financial Summary Section */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Recaudado</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                $
+                {registrations
+                  .reduce((total, reg) => {
+                    const precio = reg.precio || "0"
+                    const amount = precio.replace(/[$.,]/g, "")
+                    return total + (Number.parseInt(amount) || 0)
+                  }, 0)
+                  .toLocaleString()}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Plata de Gise</CardTitle>
+              <User className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                $
+                {registrations
+                  .filter((reg) => reg.transferidoA === "Gise")
+                  .reduce((total, reg) => {
+                    const precio = reg.precio || "0"
+                    const amount = precio.replace(/[$.,]/g, "")
+                    return total + (Number.parseInt(amount) || 0)
+                  }, 0)
+                  .toLocaleString()}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Plata de Bruni</CardTitle>
+              <User className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                $
+                {registrations
+                  .filter((reg) => reg.transferidoA === "Bruni")
+                  .reduce((total, reg) => {
+                    const precio = reg.precio || "0"
+                    const amount = precio.replace(/[$.,]/g, "")
+                    return total + (Number.parseInt(amount) || 0)
+                  }, 0)
+                  .toLocaleString()}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Gastos</CardTitle>
+              <CreditCard className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">$0</div>
+              <p className="text-xs text-muted-foreground">
+                <Link href="/admin/gastos" className="text-blue-600 hover:underline">
+                  Ver gastos →
+                </Link>
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Main Charts - Más compactos para móvil */}
         <div className="grid gap-3 md:gap-6 grid-cols-1 lg:grid-cols-2 mb-4 md:mb-6">
           {/* Jersey Size Chart */}
@@ -1377,9 +1457,7 @@ export default function AdminDashboardPage() {
           <div className="space-y-4">
             {/* Todos los inscriptos (sin rechazados) */}
             <div className="border rounded-lg p-3 md:p-4 bg-purple-50">
-              <h3 className="font-bold text-sm md:text-lg text-purple-900 mb-3">
-                Todos los inscriptos
-              </h3>
+              <h3 className="font-bold text-sm md:text-lg text-purple-900 mb-3">Todos los inscriptos</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
                 {Object.entries(stats.jerseySizeByStatus.all)
                   .sort(([a], [b]) => {
