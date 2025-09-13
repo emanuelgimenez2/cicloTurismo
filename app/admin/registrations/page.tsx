@@ -45,6 +45,7 @@ import {
   NotebookPen,
   Edit,
   ArrowRightLeft,
+  DollarSign,
 } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -100,7 +101,6 @@ const parseHealthConditions = (condicionSalud) => {
 
 export default function AdminRegistrationsPage() {
   const [registrations, setRegistrations] = useState([])
-  const [filteredRegistrations, setFilteredRegistrations] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [yearFilter, setYearFilter] = useState("all")
@@ -131,6 +131,9 @@ export default function AdminRegistrationsPage() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [newComprobanteFile, setNewComprobanteFile] = useState(null)
   const { toast } = useToast()
+
+  const [priceFilter, setPriceFilter] = useState("all")
+  const [filteredRegistrations, setFilteredRegistrations] = useState([])
 
   const [editFormData, setEditFormData] = useState({
     nombre: "",
@@ -845,15 +848,70 @@ export default function AdminRegistrationsPage() {
     setCeliacFilter("all")
     setNoteFilter("all")
     setTransferFilter("all")
+    setPriceFilter("all")
   }
 
   const stats = getStatistics()
 
+  const filteredRegistrationsData = registrations.filter((registration) => {
+    const matchesSearch =
+      registration.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      registration.apellido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      registration.dni?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      registration.telefono?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      registration.grupoCiclistas?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      "".toLowerCase().includes(searchTerm.toLowerCase())
+
+    const matchesStatus = statusFilter === "all" || registration.estado === statusFilter
+    const matchesYear =
+      yearFilter === "all" || registration.fechaInscripcion?.getFullYear() === Number.parseInt(yearFilter)
+    const healthInfo = parseHealthConditions(registration.condicionSalud)
+    const matchesHealth =
+      healthFilter === "all" ||
+      (healthFilter === "with_conditions" &&
+        healthInfo.condicionesSalud &&
+        healthInfo.condicionesSalud.trim() !== "") ||
+      (healthFilter === "without_conditions" &&
+        (!healthInfo.condicionesSalud || healthInfo.condicionesSalud.trim() === ""))
+
+    const matchesCeliac = celiacFilter === "all" || healthInfo.esCeliaco === celiacFilter
+    const matchesNote =
+      noteFilter === "all" ||
+      (noteFilter === "with_notes" && registration.nota && registration.nota.trim() !== "") ||
+      (noteFilter === "without_notes" && (!registration.nota || registration.nota.trim() === ""))
+
+    const matchesTransfer =
+      transferFilter === "all" ||
+      (transferFilter === "sin_especificar" &&
+        (!registration.transferidoA || registration.transferidoA === "sin_especificar")) ||
+      registration.transferidoA === transferFilter
+
+    const matchesPrice =
+      priceFilter === "all" ||
+      (priceFilter === "25000" && registration.precio === "$25.000") ||
+      (priceFilter === "33000" && registration.precio === "$33.000") ||
+      (priceFilter === "35000" && registration.precio === "$35.000") ||
+      (priceFilter === "otro" &&
+        registration.precio &&
+        !["$25.000", "$33.000", "$35.000"].includes(registration.precio))
+
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesYear &&
+      matchesHealth &&
+      matchesCeliac &&
+      matchesNote &&
+      matchesTransfer &&
+      matchesPrice
+    )
+  })
+
   // Pagination
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentItems = filteredRegistrations.slice(indexOfFirstItem, indexOfLastItem)
-  const totalPages = Math.ceil(filteredRegistrations.length / itemsPerPage)
+  const currentItems = filteredRegistrationsData.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredRegistrationsData.length / itemsPerPage)
 
   const paginate = (pageNumber) => {
     if (pageNumber > 0 && pageNumber <= totalPages) {
@@ -1151,9 +1209,9 @@ export default function AdminRegistrationsPage() {
                     Lista de Inscripciones
                   </CardTitle>
                   <CardDescription className="mt-1 text-xs">
-                    Mostrando {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredRegistrations.length)} de{" "}
-                    {filteredRegistrations.length} inscripciones
-                    {filteredRegistrations.length !== registrations.length
+                    Mostrando {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredRegistrationsData.length)} de{" "}
+                    {filteredRegistrationsData.length} inscripciones
+                    {filteredRegistrationsData.length !== registrations.length
                       ? ` (filtrado de ${registrations.length} total)`
                       : ""}
                   </CardDescription>
@@ -1251,6 +1309,20 @@ export default function AdminRegistrationsPage() {
                       </SelectContent>
                     </Select>
 
+                    <Select value={priceFilter} onValueChange={setPriceFilter}>
+                      <SelectTrigger className="bg-white text-xs h-8">
+                        <DollarSign className="h-4 w-4 mr-1" />
+                        <SelectValue placeholder="Precio" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Precio</SelectItem>
+                        <SelectItem value="25000">$25.000</SelectItem>
+                        <SelectItem value="33000">$33.000</SelectItem>
+                        <SelectItem value="35000">$35.000</SelectItem>
+                        <SelectItem value="otro">Otro</SelectItem>
+                      </SelectContent>
+                    </Select>
+
                     <div className="col-span-2 md:col-span-2 lg:col-span-2">
                       {(searchTerm ||
                         statusFilter !== "all" ||
@@ -1258,7 +1330,8 @@ export default function AdminRegistrationsPage() {
                         healthFilter !== "all" ||
                         celiacFilter !== "all" ||
                         noteFilter !== "all" ||
-                        transferFilter !== "all") && (
+                        transferFilter !== "all" ||
+                        priceFilter !== "all") && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -1275,7 +1348,7 @@ export default function AdminRegistrationsPage() {
               </div>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
-              {filteredRegistrations.length > 0 ? (
+              {filteredRegistrationsData.length > 0 ? (
                 <div className="rounded-md">
                   <Table>
                     <TableHeader>
@@ -1367,7 +1440,7 @@ export default function AdminRegistrationsPage() {
                 </div>
               )}
             </CardContent>
-            {filteredRegistrations.length > itemsPerPage && (
+            {filteredRegistrationsData.length > itemsPerPage && (
               <CardFooter className="border-t bg-gray-50/50 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
                 <div className="text-xs text-muted-foreground order-2 sm:order-1">
                   Página {currentPage} de {totalPages}
@@ -1923,6 +1996,7 @@ export default function AdminRegistrationsPage() {
                               <SelectContent>
                                 <SelectItem value="$25.000">$25.000</SelectItem>
                                 <SelectItem value="$35.000">$35.000</SelectItem>
+                                <SelectItem value="$35.000">$33.000</SelectItem>
                                 <SelectItem value="manual">Agregar manual</SelectItem>
                               </SelectContent>
                             </Select>

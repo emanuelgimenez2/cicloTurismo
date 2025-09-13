@@ -228,6 +228,31 @@ export default function AdminDashboardPage() {
   // Agregar estado para grupos expandidos
   const [expandedGroups, setExpandedGroups] = useState<Set<number>>(new Set())
 
+  const [expenses, setExpenses] = useState([])
+  const [loadingExpenses, setLoadingExpenses] = useState(true)
+
+  const [showFinancialDetails, setShowFinancialDetails] = useState(false)
+
+  useEffect(() => {
+    const loadExpenses = async () => {
+      try {
+        const expensesRef = collection(db, "gastos2025")
+        const expensesSnapshot = await getDocs(expensesRef)
+        const expensesData = expensesSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))
+        setExpenses(expensesData)
+      } catch (error) {
+        console.error("Error loading expenses:", error)
+      } finally {
+        setLoadingExpenses(false)
+      }
+    }
+
+    loadExpenses()
+  }, [])
+
   const toggleGroup = (index: number) => {
     const newExpanded = new Set(expandedGroups)
     if (newExpanded.has(index)) {
@@ -1138,8 +1163,7 @@ export default function AdminDashboardPage() {
                     <span className="flex items-center gap-1">
                       <User className="h-2 md:h-3 w-2 md:w-3 text-blue-600" />
                       <span className="hidden sm:inline">Gise:</span>
-                      <span className="sm:hidden">G:</span> 
-                      $
+                      <span className="sm:hidden">G:</span>$
                       {registrations
                         .filter((reg) => reg.transferidoA === "Gise")
                         .reduce((total, reg) => {
@@ -1154,8 +1178,7 @@ export default function AdminDashboardPage() {
                     <span className="flex items-center gap-1">
                       <User className="h-2 md:h-3 w-2 md:w-3 text-purple-600" />
                       <span className="hidden sm:inline">Bruni:</span>
-                      <span className="sm:hidden">B:</span> 
-                      $
+                      <span className="sm:hidden">B:</span>$
                       {registrations
                         .filter((reg) => reg.transferidoA === "Bruni")
                         .reduce((total, reg) => {
@@ -1169,15 +1192,15 @@ export default function AdminDashboardPage() {
                 </div>
 
                 <div className="mt-2 md:mt-3">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span>Efectividad</span>
-                    <span className="font-medium">100%</span>
-                  </div>
-                  <Progress
-                    value={100}
-                    className="h-1 md:h-2"
-                    indicatorClassName="bg-gradient-to-r from-green-500 to-green-600"
-                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowFinancialDetails(true)}
+                    className="w-full text-xs"
+                  >
+                    <Eye className="h-3 w-3 mr-1" />
+                    Ver Detalles
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -1226,27 +1249,40 @@ export default function AdminDashboardPage() {
                   <div className="flex justify-between text-xs mb-1">
                     <span>Del total</span>
                     <span className="font-medium">
-                      {Math.round((registrations.filter((reg) => reg.transferidoA === "Gise").reduce((total, reg) => {
-                        const precio = reg.precio || "0"
-                        const amount = precio.replace(/[$.,]/g, "")
-                        return total + (Number.parseInt(amount) || 0)
-                      }, 0) / registrations.reduce((total, reg) => {
-                        const precio = reg.precio || "0"
-                        const amount = precio.replace(/[$.,]/g, "")
-                        return total + (Number.parseInt(amount) || 0)
-                      }, 0)) * 100)}%
+                      {Math.round(
+                        (registrations
+                          .filter((reg) => reg.transferidoA === "Gise")
+                          .reduce((total, reg) => {
+                            const precio = reg.precio || "0"
+                            const amount = precio.replace(/[$.,]/g, "")
+                            return total + (Number.parseInt(amount) || 0)
+                          }, 0) /
+                          registrations.reduce((total, reg) => {
+                            const precio = reg.precio || "0"
+                            const amount = precio.replace(/[$.,]/g, "")
+                            return total + (Number.parseInt(amount) || 0)
+                          }, 0)) *
+                          100,
+                      )}
+                      %
                     </span>
                   </div>
                   <Progress
-                    value={Math.round((registrations.filter((reg) => reg.transferidoA === "Gise").reduce((total, reg) => {
-                      const precio = reg.precio || "0"
-                      const amount = precio.replace(/[$.,]/g, "")
-                      return total + (Number.parseInt(amount) || 0)
-                    }, 0) / registrations.reduce((total, reg) => {
-                      const precio = reg.precio || "0"
-                      const amount = precio.replace(/[$.,]/g, "")
-                      return total + (Number.parseInt(amount) || 0)
-                    }, 0)) * 100)}
+                    value={Math.round(
+                      (registrations
+                        .filter((reg) => reg.transferidoA === "Gise")
+                        .reduce((total, reg) => {
+                          const precio = reg.precio || "0"
+                          const amount = precio.replace(/[$.,]/g, "")
+                          return total + (Number.parseInt(amount) || 0)
+                        }, 0) /
+                        registrations.reduce((total, reg) => {
+                          const precio = reg.precio || "0"
+                          const amount = precio.replace(/[$.,]/g, "")
+                          return total + (Number.parseInt(amount) || 0)
+                        }, 0)) *
+                        100,
+                    )}
                     className="h-1 md:h-2"
                     indicatorClassName="bg-gradient-to-r from-blue-500 to-blue-600"
                   />
@@ -1298,27 +1334,40 @@ export default function AdminDashboardPage() {
                   <div className="flex justify-between text-xs mb-1">
                     <span>Del total</span>
                     <span className="font-medium">
-                      {Math.round((registrations.filter((reg) => reg.transferidoA === "Bruni").reduce((total, reg) => {
-                        const precio = reg.precio || "0"
-                        const amount = precio.replace(/[$.,]/g, "")
-                        return total + (Number.parseInt(amount) || 0)
-                      }, 0) / registrations.reduce((total, reg) => {
-                        const precio = reg.precio || "0"
-                        const amount = precio.replace(/[$.,]/g, "")
-                        return total + (Number.parseInt(amount) || 0)
-                      }, 0)) * 100)}%
+                      {Math.round(
+                        (registrations
+                          .filter((reg) => reg.transferidoA === "Bruni")
+                          .reduce((total, reg) => {
+                            const precio = reg.precio || "0"
+                            const amount = precio.replace(/[$.,]/g, "")
+                            return total + (Number.parseInt(amount) || 0)
+                          }, 0) /
+                          registrations.reduce((total, reg) => {
+                            const precio = reg.precio || "0"
+                            const amount = precio.replace(/[$.,]/g, "")
+                            return total + (Number.parseInt(amount) || 0)
+                          }, 0)) *
+                          100,
+                      )}
+                      %
                     </span>
                   </div>
                   <Progress
-                    value={Math.round((registrations.filter((reg) => reg.transferidoA === "Bruni").reduce((total, reg) => {
-                      const precio = reg.precio || "0"
-                      const amount = precio.replace(/[$.,]/g, "")
-                      return total + (Number.parseInt(amount) || 0)
-                    }, 0) / registrations.reduce((total, reg) => {
-                      const precio = reg.precio || "0"
-                      const amount = precio.replace(/[$.,]/g, "")
-                      return total + (Number.parseInt(amount) || 0)
-                    }, 0)) * 100)}
+                    value={Math.round(
+                      (registrations
+                        .filter((reg) => reg.transferidoA === "Bruni")
+                        .reduce((total, reg) => {
+                          const precio = reg.precio || "0"
+                          const amount = precio.replace(/[$.,]/g, "")
+                          return total + (Number.parseInt(amount) || 0)
+                        }, 0) /
+                        registrations.reduce((total, reg) => {
+                          const precio = reg.precio || "0"
+                          const amount = precio.replace(/[$.,]/g, "")
+                          return total + (Number.parseInt(amount) || 0)
+                        }, 0)) *
+                        100,
+                    )}
                     className="h-1 md:h-2"
                     indicatorClassName="bg-gradient-to-r from-purple-500 to-purple-600"
                   />
@@ -1347,12 +1396,14 @@ export default function AdminDashboardPage() {
               </CardHeader>
               <CardContent className="px-2 md:px-3 pb-2 md:pb-3">
                 <div className="flex items-baseline gap-1">
-                  <div className="text-xl md:text-3xl font-bold text-red-900">$0</div>
+                  <div className="text-xl md:text-3xl font-bold text-red-900">
+                    ${expenses.reduce((total, expense) => total + (expense.monto || 0), 0).toLocaleString()}
+                  </div>
                 </div>
 
                 <div className="mt-1 flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-2">
                   <Badge variant="outline" className="bg-red-50 text-red-800 border-red-200 text-xs px-1 py-0">
-                    0 gastos
+                    {expenses.length} gastos
                   </Badge>
                   <Link href="/admin/gastos">
                     <Button
@@ -1369,10 +1420,36 @@ export default function AdminDashboardPage() {
                 <div className="mt-2 md:mt-3">
                   <div className="flex justify-between text-xs mb-1">
                     <span>Utilizado</span>
-                    <span className="font-medium">0%</span>
+                    <span className="font-medium">
+                      {registrations.length > 0
+                        ? Math.round(
+                            (expenses.reduce((total, expense) => total + (expense.monto || 0), 0) /
+                              registrations.reduce((total, reg) => {
+                                const precio = reg.precio || "0"
+                                const amount = precio.replace(/[$.,]/g, "")
+                                return total + (Number.parseInt(amount) || 0)
+                              }, 0)) *
+                              100,
+                          )
+                        : 0}
+                      %
+                    </span>
                   </div>
                   <Progress
-                    value={0}
+                    value={
+                      registrations.length > 0
+                        ? Math.min(
+                            100,
+                            (expenses.reduce((total, expense) => total + (expense.monto || 0), 0) /
+                              registrations.reduce((total, reg) => {
+                                const precio = reg.precio || "0"
+                                const amount = precio.replace(/[$.,]/g, "")
+                                return total + (Number.parseInt(amount) || 0)
+                              }, 0)) *
+                              100,
+                          )
+                        : 0
+                    }
                     className="h-1 md:h-2"
                     indicatorClassName="bg-gradient-to-r from-red-500 to-red-600"
                   />
@@ -1914,6 +1991,249 @@ export default function AdminDashboardPage() {
           </CardFooter>
         </Card>
       </motion.div>
+
+      {showFinancialDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Detalles Financieros Completos</h2>
+                <Button variant="ghost" size="sm" onClick={() => setShowFinancialDetails(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="grid gap-6">
+                {/* Total General */}
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-green-900 mb-2">Total Recaudado</h3>
+                  <p className="text-3xl font-bold text-green-900">
+                    $
+                    {registrations
+                      .reduce((total, reg) => {
+                        const precio = reg.precio || "0"
+                        const amount = precio.replace(/[$.,]/g, "")
+                        return total + (Number.parseInt(amount) || 0)
+                      }, 0)
+                      .toLocaleString()}
+                  </p>
+                </div>
+
+                {/* Transferencias Confirmadas */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Gise */}
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-blue-900 mb-4">Transferencias a Gise</h3>
+                    <div className="space-y-3">
+                      {[
+                        { precio: "$25.000", amount: 25000 },
+                        { precio: "$33.000", amount: 33000 },
+                        { precio: "$35.000", amount: 35000 },
+                      ].map(({ precio, amount }) => {
+                        const count = registrations.filter(
+                          (reg) => reg.transferidoA === "Gise" && reg.precio === precio,
+                        ).length
+                        const total = count * amount
+                        return (
+                          <div key={precio} className="flex justify-between items-center">
+                            <span>
+                              {count} × {precio}
+                            </span>
+                            <span className="font-semibold">${total.toLocaleString()}</span>
+                          </div>
+                        )
+                      })}
+                      {(() => {
+                        const otherCount = registrations.filter(
+                          (reg) =>
+                            reg.transferidoA === "Gise" && !["$25.000", "$33.000", "$35.000"].includes(reg.precio),
+                        ).length
+                        const otherTotal = registrations
+                          .filter(
+                            (reg) =>
+                              reg.transferidoA === "Gise" && !["$25.000", "$33.000", "$35.000"].includes(reg.precio),
+                          )
+                          .reduce((total, reg) => {
+                            const precio = reg.precio || "0"
+                            const amount = precio.replace(/[$.,]/g, "")
+                            return total + (Number.parseInt(amount) || 0)
+                          }, 0)
+                        return otherCount > 0 ? (
+                          <div className="flex justify-between items-center">
+                            <span>{otherCount} × Otro</span>
+                            <span className="font-semibold">${otherTotal.toLocaleString()}</span>
+                          </div>
+                        ) : null
+                      })()}
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex justify-between items-center font-bold text-blue-900">
+                          <span>Total Gise:</span>
+                          <span>
+                            $
+                            {registrations
+                              .filter((reg) => reg.transferidoA === "Gise")
+                              .reduce((total, reg) => {
+                                const precio = reg.precio || "0"
+                                const amount = precio.replace(/[$.,]/g, "")
+                                return total + (Number.parseInt(amount) || 0)
+                              }, 0)
+                              .toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bruni */}
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold text-purple-900 mb-4">Transferencias a Bruni</h3>
+                    <div className="space-y-3">
+                      {[
+                        { precio: "$25.000", amount: 25000 },
+                        { precio: "$33.000", amount: 33000 },
+                        { precio: "$35.000", amount: 35000 },
+                      ].map(({ precio, amount }) => {
+                        const count = registrations.filter(
+                          (reg) => reg.transferidoA === "Bruni" && reg.precio === precio,
+                        ).length
+                        const total = count * amount
+                        return (
+                          <div key={precio} className="flex justify-between items-center">
+                            <span>
+                              {count} × {precio}
+                            </span>
+                            <span className="font-semibold">${total.toLocaleString()}</span>
+                          </div>
+                        )
+                      })}
+                      {(() => {
+                        const otherCount = registrations.filter(
+                          (reg) =>
+                            reg.transferidoA === "Bruni" && !["$25.000", "$33.000", "$35.000"].includes(reg.precio),
+                        ).length
+                        const otherTotal = registrations
+                          .filter(
+                            (reg) =>
+                              reg.transferidoA === "Bruni" && !["$25.000", "$33.000", "$35.000"].includes(reg.precio),
+                          )
+                          .reduce((total, reg) => {
+                            const precio = reg.precio || "0"
+                            const amount = precio.replace(/[$.,]/g, "")
+                            return total + (Number.parseInt(amount) || 0)
+                          }, 0)
+                        return otherCount > 0 ? (
+                          <div className="flex justify-between items-center">
+                            <span>{otherCount} × Otro</span>
+                            <span className="font-semibold">${otherTotal.toLocaleString()}</span>
+                          </div>
+                        ) : null
+                      })()}
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex justify-between items-center font-bold text-purple-900">
+                          <span>Total Bruni:</span>
+                          <span>
+                            $
+                            {registrations
+                              .filter((reg) => reg.transferidoA === "Bruni")
+                              .reduce((total, reg) => {
+                                const precio = reg.precio || "0"
+                                const amount = precio.replace(/[$.,]/g, "")
+                                return total + (Number.parseInt(amount) || 0)
+                              }, 0)
+                              .toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Pendientes */}
+                <div className="bg-orange-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold text-orange-900 mb-4">Pendientes (Sin Transferir)</h3>
+                  <div className="space-y-3">
+                    {[
+                      { precio: "$25.000", amount: 25000 },
+                      { precio: "$33.000", amount: 33000 },
+                      { precio: "$35.000", amount: 35000 },
+                    ].map(({ precio, amount }) => {
+                      const count = registrations.filter(
+                        (reg) => (!reg.transferidoA || reg.transferidoA === "sin_especificar") && reg.precio === precio,
+                      ).length
+                      const total = count * amount
+                      return count > 0 ? (
+                        <div key={precio} className="flex justify-between items-center">
+                          <span>
+                            {count} × {precio}
+                          </span>
+                          <span className="font-semibold">${total.toLocaleString()}</span>
+                        </div>
+                      ) : null
+                    })}
+                    {(() => {
+                      const otherCount = registrations.filter(
+                        (reg) =>
+                          (!reg.transferidoA || reg.transferidoA === "sin_especificar") &&
+                          !["$25.000", "$33.000", "$35.000"].includes(reg.precio),
+                      ).length
+                      const otherTotal = registrations
+                        .filter(
+                          (reg) =>
+                            (!reg.transferidoA || reg.transferidoA === "sin_especificar") &&
+                            !["$25.000", "$33.000", "$35.000"].includes(reg.precio),
+                        )
+                        .reduce((total, reg) => {
+                          const precio = reg.precio || "0"
+                          const amount = precio.replace(/[$.,]/g, "")
+                          return total + (Number.parseInt(amount) || 0)
+                        }, 0)
+                      return otherCount > 0 ? (
+                        <div className="flex justify-between items-center">
+                          <span>{otherCount} × Otro</span>
+                          <span className="font-semibold">${otherTotal.toLocaleString()}</span>
+                        </div>
+                      ) : null
+                    })()}
+                    <div className="border-t pt-2 mt-2">
+                      <div className="flex justify-between items-center font-bold text-orange-900">
+                        <span>Total Pendientes:</span>
+                        <span>
+                          $
+                          {registrations
+                            .filter((reg) => !reg.transferidoA || reg.transferidoA === "sin_especificar")
+                            .reduce((total, reg) => {
+                              const precio = reg.precio || "0"
+                              const amount = precio.replace(/[$.,]/g, "")
+                              return total + (Number.parseInt(amount) || 0)
+                            }, 0)
+                            .toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Total Final */}
+                <div className="bg-gray-100 p-4 rounded-lg">
+                  <div className="flex justify-between items-center text-xl font-bold text-gray-900">
+                    <span>Total Confirmados + Pendientes:</span>
+                    <span>
+                      $
+                      {registrations
+                        .reduce((total, reg) => {
+                          const precio = reg.precio || "0"
+                          const amount = precio.replace(/[$.,]/g, "")
+                          return total + (Number.parseInt(amount) || 0)
+                        }, 0)
+                        .toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
