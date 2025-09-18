@@ -23,6 +23,8 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { Users } from "lucide-react"
+
 import {
   AlertCircle,
   UploadCloud,
@@ -37,11 +39,11 @@ import {
   Mail,
   MapPin,
   Heart,
-  Users,
   Shirt,
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
+  CreditCard,
 } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import emailjs from "@emailjs/browser" // Importa EmailJS
@@ -210,11 +212,6 @@ const TallesRemeraMejorado = () => {
             </thead>
             <tbody>
               <tr>
-                <td className="p-2 border text-center">XS</td>
-                <td className="p-2 border text-center">48</td>
-                <td className="p-2 border text-center">60</td>
-              </tr>
-              <tr>
                 <td className="p-2 border text-center">S</td>
                 <td className="p-2 border text-center">50</td>
                 <td className="p-2 border text-center">61</td>
@@ -228,6 +225,16 @@ const TallesRemeraMejorado = () => {
                 <td className="p-2 border text-center">L</td>
                 <td className="p-2 border text-center">54</td>
                 <td className="p-2 border text-center">65</td>
+              </tr>
+              <tr>
+                <td className="p-2 border text-center">XL</td>
+                <td className="p-2 border text-center">56</td>
+                <td className="p-2 border text-center">67</td>
+              </tr>
+              <tr>
+                <td className="p-2 border text-center">XXL</td>
+                <td className="p-2 border text-center">58</td>
+                <td className="p-2 border text-center">69</td>
               </tr>
             </tbody>
           </table>
@@ -320,7 +327,18 @@ const FormSteps = ({ currentStep, totalSteps }) => {
     </div>
   )
 }
-export default function RegistrationForm() {
+
+const STOCK_REMERAS = {
+  s: 22,
+  m: 66,
+  l: 50,
+  xl: 31,
+  xxl: 31,
+}
+
+const LIMITE_TOTAL_REMERAS = 200
+
+export default function InscripcionPage() {
   const { toast, toasts } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -331,6 +349,11 @@ export default function RegistrationForm() {
   const topRef = useRef(null)
   const [birthDate, setBirthDate] = useState(undefined)
   const [grupoCiclistasOpen, setGrupoCiclistasOpen] = useState(false)
+
+  const [stockRemeras, setStockRemeras] = useState(STOCK_REMERAS)
+  const [totalInscripcionesValidas, setTotalInscripcionesValidas] = useState(0)
+  const [stockAgotado, setStockAgotado] = useState(false)
+
   const totalSteps = 3
   const [formData, setFormData] = useState({
     nombre: "",
@@ -349,10 +372,54 @@ export default function RegistrationForm() {
     talleRemera: "",
     condicionesSalud: "",
     esCeliaco: "",
+    recorrido: "",
+    transferidoA: "",
     aceptaCondiciones: false,
     comprobantePago: null,
     comprobantePagoUrl: "", // Esta URL ya no se usará para Firebase Storage
   })
+
+  const calcularStockUsado = async () => {
+    try {
+      const participantesRef = collection(db, "participantes2025")
+      const snapshot = await getDocs(participantesRef)
+
+      const stockUsado = { s: 0, m: 0, l: 0, xl: 0, xxl: 0 }
+      let totalValidas = 0
+
+      snapshot.docs.forEach((doc) => {
+        const data = doc.data()
+        const estado = data.estado || "pendiente"
+
+        // Solo contar confirmados y pendientes (no rechazados)
+        if (estado === "confirmado" || estado === "pendiente") {
+          totalValidas++
+
+          const talle = data.talleRemera?.toLowerCase()
+          if (talle && stockUsado.hasOwnProperty(talle)) {
+            stockUsado[talle]++
+          }
+        }
+      })
+
+      // Calcular stock disponible
+      const stockDisponible = {}
+      Object.keys(STOCK_REMERAS).forEach((talle) => {
+        stockDisponible[talle] = STOCK_REMERAS[talle] - stockUsado[talle]
+      })
+
+      setStockRemeras(stockDisponible)
+      setTotalInscripcionesValidas(totalValidas)
+      setStockAgotado(totalValidas >= LIMITE_TOTAL_REMERAS)
+    } catch (error) {
+      console.error("Error calculando stock:", error)
+    }
+  }
+
+  useEffect(() => {
+    calcularStockUsado()
+  }, [])
+
   // Actualizar formData cuando cambia la fecha de nacimiento
   useEffect(() => {
     if (birthDate) {
@@ -396,6 +463,8 @@ export default function RegistrationForm() {
       talleRemera: "",
       condicionesSalud: "",
       esCeliaco: "",
+      recorrido: "",
+      transferidoA: "",
       aceptaCondiciones: false,
       comprobantePago: null,
       comprobantePagoUrl: "",
@@ -588,18 +657,22 @@ export default function RegistrationForm() {
       if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
       if (!formData.genero) errors.genero = "El género es obligatorio"
       if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
-      if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
+      if (!formData.talleRemera && !stockAgotado) errors.talleRemera = "El talle de remera es obligatorio"
+      if (!formData.recorrido) errors.recorrido = "El recorrido es obligatorio"
     } else if (step === 2) {
-      if (!formData.esCeliaco) errors.esCeliaco = "Debe indicar si es celíaco o no"
+      if (formData.esCeliaco === undefined || formData.esCeliaco === null)
+        errors.esCeliaco = "Debe indicar si es celíaco o no"
     } else if (step === 3) {
       if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
-      if (!formData.comprobantePago) errors.comprobantePago = "Debe adjuntar un comprobante de pago"
+      if (!formData.transferidoA) errors.transferidoA = "Debe indicar a nombre de quien transfirió"
     }
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) {
+      const firstErrorKey = Object.keys(errors)[0]
+      const firstError = errors[firstErrorKey]
       toast({
-        title: "Hay errores en el formulario",
-        description: "Por favor revise los campos marcados en rojo",
+        title: "Error en el formulario",
+        description: `${firstErrorKey.charAt(0).toUpperCase() + firstErrorKey.slice(1)}: ${firstError}`,
         variant: "destructive",
       })
       return false
@@ -628,7 +701,7 @@ export default function RegistrationForm() {
     if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
     if (!formData.esCeliaco) errors.esCeliaco = "Debe indicar si es celíaco o no"
     if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
-    if (!formData.comprobantePago) errors.comprobantePago = "Debe adjuntar un comprobante de pago"
+    //if (!formData.comprobantePago) errors.comprobantePago = "Debe adjuntar un comprobante de pago"
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) {
       toast({
@@ -649,6 +722,7 @@ export default function RegistrationForm() {
   const prevStep = () => {
     setCurrentStep(currentStep - 1)
     window.scrollTo({ top: 0, behavior: "smooth" })
+    topRef.current?.scrollIntoView({ behavior: "smooth" })
   }
   // Función para obtener el siguiente número de inscripción
   const getNextRegistrationNumber = async () => {
@@ -735,7 +809,6 @@ export default function RegistrationForm() {
     if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
     if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
     if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
-    if (!formData.comprobantePago) errors.comprobantePago = "Debe adjuntar un comprobante de pago"
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) {
       // Mostrar el primer error específico
@@ -790,6 +863,8 @@ export default function RegistrationForm() {
         genero: formData.genero || "",
         grupoCiclistas: formData.grupoCiclistas || "",
         talleRemera: formData.talleRemera || "",
+        // Agregando campo recorrido
+        recorrido: formData.recorrido || "",
         // Condiciones de salud (ahora como texto completo)
         condicionSalud: JSON.stringify(condicionSalud),
         // Datos del comprobante de pago (ahora solo Base64)
@@ -805,7 +880,7 @@ export default function RegistrationForm() {
         numeroInscripcion: numeroInscripcion,
       }
       // Crear el nombre del documento: "numeroInscripcion nombre apellido"
-      const documentName = `${numeroInscripcion.toString().padStart(3, "0")} ${formData.nombre} ${formData.apellido}`;
+      const documentName = `${numeroInscripcion.toString().padStart(3, "0")} ${formData.nombre} ${formData.apellido}`
 
       // Usar setDoc en lugar de addDoc para especificar el nombre del documento
       const docRef = doc(db, "participantes2025", documentName)
@@ -828,6 +903,15 @@ export default function RegistrationForm() {
       setIsSubmitting(false)
     }
   }
+
+  const getTallesDisponibles = () => {
+    return Object.entries(stockRemeras).filter(([talle, stock]) => stock > 0)
+  }
+
+  const getRemerasDisponibles = () => {
+    return Object.values(stockRemeras).reduce((total, stock) => total + stock, 0)
+  }
+
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
@@ -1066,88 +1150,149 @@ export default function RegistrationForm() {
                   </RadioGroup>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="grupoCiclistas" className="flex justify-between">
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3.5 w-3.5 text-indigo-500" />
-                      <span>Grupo de ciclistas *</span>
-                    </span>
-                    {fieldErrors.grupoCiclistas && (
-                      <span className="text-red-500 text-xs">{fieldErrors.grupoCiclistas}</span>
-                    )}
-                  </Label>
-                  <Popover open={grupoCiclistasOpen} onOpenChange={setGrupoCiclistasOpen}>
-                    <PopoverTrigger asChild>
-                      <div className="relative">
-                        <Input
-                          id="grupoCiclistas"
-                          name="grupoCiclistas"
-                          value={formData.grupoCiclistas}
-                          onChange={(e) => {
-                            setFormData({
-                              ...formData,
-                              grupoCiclistas: e.target.value,
-                            })
-                          }}
-                          placeholder="Escriba o seleccione su grupo de ciclistas"
-                          className="w-full"
-                        />
-                      </div>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
-                      <div className="max-h-[200px] overflow-y-auto p-1">
-                        <div className="grid grid-cols-1 gap-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="justify-start font-normal text-left h-auto py-1.5"
-                            onClick={() => {
-                              handleSelectChange("grupoCiclistas", "No pertenezco a ninguno")
-                              setGrupoCiclistasOpen(false)
+                    <Label htmlFor="grupoCiclistas" className="flex justify-between">
+                        <span className="flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5 text-indigo-500" />
+                        <span>Grupo de ciclistas *</span>
+                        </span>
+                        {fieldErrors.grupoCiclistas && (
+                        <span className="text-red-500 text-xs">{fieldErrors.grupoCiclistas}</span>
+                        )}
+                    </Label>
+
+                    <Popover open={grupoCiclistasOpen} onOpenChange={setGrupoCiclistasOpen}>
+                        <PopoverTrigger asChild>
+                        <div className="relative">
+                            <Input
+                            id="grupoCiclistas"
+                            name="grupoCiclistas"
+                            value={formData.grupoCiclistas}
+                            onChange={(e) => {
+                                setFormData({
+                                ...formData,
+                                grupoCiclistas: e.target.value,
+                                })
                             }}
-                          >
-                            No pertenezco a ninguno
-                          </Button>
-                          {gruposCiclistas.map((grupo) => (
-                            <Button
-                              key={grupo}
-                              variant="ghost"
-                              size="sm"
-                              className="justify-start font-normal text-left h-auto py-1.5"
-                              onClick={() => {
-                                handleSelectChange("grupoCiclistas", grupo)
-                                setGrupoCiclistasOpen(false)
-                              }}
-                            >
-                              {grupo}
-                            </Button>
-                          ))}
+                            placeholder="Escriba o seleccione su grupo de ciclistas"
+                            className="w-full"
+                            />
                         </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                  <p className="text-xs text-gray-500">Escriba el nombre de su grupo o seleccione uno de la lista.</p>
-                </div>
+                        </PopoverTrigger>
+
+                        <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+                        <div className="max-h-[200px] overflow-y-auto p-1">
+                            <div className="grid grid-cols-1 gap-1">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="justify-start font-normal text-left h-auto py-1.5"
+                                onClick={() => {
+                                handleSelectChange("grupoCiclistas", "No pertenezco a ninguno")
+                                setGrupoCiclistasOpen(false)
+                                }}
+                            >
+                                No pertenezco a ninguno
+                            </Button>
+
+                            {gruposCiclistas.map((grupo) => (
+                                <Button
+                                key={grupo}
+                                variant="ghost"
+                                size="sm"
+                                className="justify-start font-normal text-left h-auto py-1.5"
+                                onClick={() => {
+                                    handleSelectChange("grupoCiclistas", grupo)
+                                    setGrupoCiclistasOpen(false)
+                                }}
+                                >
+                                {grupo}
+                                </Button>
+                            ))}
+                            </div>
+                        </div>
+                        </PopoverContent>
+                    </Popover>
+
+                    <p className="text-xs text-gray-500">
+                        Escriba el nombre de su grupo o seleccione uno de la lista.
+                    </p>
+                    </div>
                 <div className="space-y-2">
                   <Label htmlFor="talleRemera" className="flex justify-between">
                     <span className="flex items-center gap-1">
                       <Shirt className="h-3.5 w-3.5 text-purple-500" />
-                      <span>Talle de remera *</span>
+                      <span>Talle de remera {!stockAgotado && "*"}</span>
                     </span>
                     {fieldErrors.talleRemera && <span className="text-red-500 text-xs">{fieldErrors.talleRemera}</span>}
                   </Label>
-                  <Select
-                    name="talleRemera"
-                    value={formData.talleRemera}
-                    onValueChange={(value) => handleSelectChange("talleRemera", value)}
+
+                  {stockAgotado ? (
+                    <div className="space-y-2">
+                      <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                        <p className="text-red-700 font-semibold text-sm">NO HAY MAS REMERAS DISPONIBLES</p>
+                        <p className="text-red-600 text-xs mt-1">ADVERTENCIA: SU INSCRIPCION ES SIN REMERA</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                        <p className="text-blue-700 text-xs font-medium">
+                          Quedan {getRemerasDisponibles()} remeras disponibles
+                        </p>
+                      </div>
+                      <Select
+                        name="talleRemera"
+                        value={formData.talleRemera}
+                        onValueChange={(value) => handleSelectChange("talleRemera", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Seleccionar talle" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getTallesDisponibles().map(([talle, stock]) => (
+                            <SelectItem key={talle} value={talle}>
+                              {talle.toUpperCase()} ({stock} disponibles)
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <TallesRemeraMejorado />
+                    </>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="recorrido" className="flex justify-between">
+                    <span className="flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5 text-green-500" />
+                      <span>Recorrido *</span>
+                    </span>
+                    {fieldErrors.recorrido && <span className="text-red-500 text-xs">{fieldErrors.recorrido}</span>}
+                  </Label>
+                  <RadioGroup
+                    value={formData.recorrido}
+                    onValueChange={(value) => handleSelectChange("recorrido", value)}
+                    className="flex flex-col space-y-1 mt-2"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccionar talle" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="m">M</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <TallesRemeraMejorado />
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="30km" id="recorrido-30km" />
+                      <Label htmlFor="recorrido-30km" className="font-normal">
+                        30 KM
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="50km" id="recorrido-50km" />
+                      <Label htmlFor="recorrido-50km" className="font-normal">
+                        50 KM
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="aun_no_decido" id="recorrido-aun-no-decido" />
+                      <Label htmlFor="recorrido-aun-no-decido" className="font-normal">
+                        Aún no decido
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
               </div>
             </div>
