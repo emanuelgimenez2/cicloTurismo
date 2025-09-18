@@ -50,7 +50,6 @@ import {
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useToast } from "@/components/ui/use-toast"
-import { AdminRegistrationsExcel } from "@/components/admin/admin-registrations-excel"
 
 // Importa EmailJS
 import emailjs from "@emailjs/browser"
@@ -1048,16 +1047,6 @@ export default function AdminRegistrationsPage() {
               <FileText className="h-3 w-3" />
               <span className="hidden sm:inline">PDF</span>
             </Button>
-            <AdminRegistrationsExcel
-              registrations={registrations}
-              dashboardStats={{
-                total: stats.total,
-                confirmados: stats.confirmados,
-                pendientes: stats.pendientes,
-                rechazados: stats.rechazados,
-              }}
-              expenses={[]} // Aquí puedes pasar los gastos si los tienes disponibles
-            />
           </div>
         </motion.div>
 

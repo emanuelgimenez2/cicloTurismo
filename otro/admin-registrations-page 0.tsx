@@ -45,12 +45,10 @@ import {
   NotebookPen,
   Edit,
   ArrowRightLeft,
-  DollarSign,
 } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { useToast } from "@/components/ui/use-toast"
-import { AdminRegistrationsExcel } from "@/components/admin/admin-registrations-excel"
 
 // Importa EmailJS
 import emailjs from "@emailjs/browser"
@@ -102,13 +100,13 @@ const parseHealthConditions = (condicionSalud) => {
 
 export default function AdminRegistrationsPage() {
   const [registrations, setRegistrations] = useState([])
+  const [filteredRegistrations, setFilteredRegistrations] = useState([])
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [yearFilter, setYearFilter] = useState("all")
   const [healthFilter, setHealthFilter] = useState("all")
   const [celiacFilter, setCeliacFilter] = useState("all")
   const [noteFilter, setNoteFilter] = useState("all")
-  const [transferFilter, setTransferFilter] = useState("all")
   const [loading, setLoading] = useState(true)
   const [availableYears, setAvailableYears] = useState([])
   const [selectedRegistration, setSelectedRegistration] = useState(null)
@@ -133,9 +131,7 @@ export default function AdminRegistrationsPage() {
   const [newComprobanteFile, setNewComprobanteFile] = useState(null)
   const { toast } = useToast()
 
-  const [priceFilter, setPriceFilter] = useState("all")
-  const [filteredRegistrations, setFilteredRegistrations] = useState([])
-
+  const [transferFilter, setTransferFilter] = useState("all")
   const [editFormData, setEditFormData] = useState({
     nombre: "",
     apellido: "",
@@ -220,8 +216,7 @@ export default function AdminRegistrationsPage() {
           reg.dni?.includes(term) ||
           reg.email?.toLowerCase().includes(term) ||
           reg.telefono?.includes(term) ||
-          reg.localidad?.toLowerCase().includes(term) ||
-          reg.grupoCiclistas?.toLowerCase().includes(term),
+          reg.localidad?.toLowerCase().includes(term),
       )
     }
 
@@ -263,15 +258,6 @@ export default function AdminRegistrationsPage() {
       })
     }
 
-    if (transferFilter !== "all") {
-      filtered = filtered.filter((reg) => {
-        if (transferFilter === "sin_especificar") {
-          return !reg.transferidoA || reg.transferidoA === "sin_especificar"
-        }
-        return reg.transferidoA === transferFilter
-      })
-    }
-
     // Ordenar: primero pendientes, luego por número de inscripción descendente (más reciente primero)
     // Esta lógica ya se aplica en fetchRegistrations para la carga inicial,
     // pero se mantiene aquí para re-ordenar si los filtros cambian y afectan el orden.
@@ -291,7 +277,7 @@ export default function AdminRegistrationsPage() {
 
     setFilteredRegistrations(filtered)
     setCurrentPage(1)
-  }, [searchTerm, statusFilter, yearFilter, healthFilter, celiacFilter, noteFilter, transferFilter, registrations])
+  }, [searchTerm, statusFilter, yearFilter, healthFilter, celiacFilter, noteFilter, registrations])
 
   const loadComprobante = async (registration) => {
     setLoadingComprobante(true)
@@ -849,70 +835,15 @@ export default function AdminRegistrationsPage() {
     setCeliacFilter("all")
     setNoteFilter("all")
     setTransferFilter("all")
-    setPriceFilter("all")
   }
 
   const stats = getStatistics()
 
-  const filteredRegistrationsData = registrations.filter((registration) => {
-    const matchesSearch =
-      registration.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      registration.apellido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      registration.dni?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      registration.telefono?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      registration.grupoCiclistas?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      "".toLowerCase().includes(searchTerm.toLowerCase())
-
-    const matchesStatus = statusFilter === "all" || registration.estado === statusFilter
-    const matchesYear =
-      yearFilter === "all" || registration.fechaInscripcion?.getFullYear() === Number.parseInt(yearFilter)
-    const healthInfo = parseHealthConditions(registration.condicionSalud)
-    const matchesHealth =
-      healthFilter === "all" ||
-      (healthFilter === "with_conditions" &&
-        healthInfo.condicionesSalud &&
-        healthInfo.condicionesSalud.trim() !== "") ||
-      (healthFilter === "without_conditions" &&
-        (!healthInfo.condicionesSalud || healthInfo.condicionesSalud.trim() === ""))
-
-    const matchesCeliac = celiacFilter === "all" || healthInfo.esCeliaco === celiacFilter
-    const matchesNote =
-      noteFilter === "all" ||
-      (noteFilter === "with_notes" && registration.nota && registration.nota.trim() !== "") ||
-      (noteFilter === "without_notes" && (!registration.nota || registration.nota.trim() === ""))
-
-    const matchesTransfer =
-      transferFilter === "all" ||
-      (transferFilter === "sin_especificar" &&
-        (!registration.transferidoA || registration.transferidoA === "sin_especificar")) ||
-      registration.transferidoA === transferFilter
-
-    const matchesPrice =
-      priceFilter === "all" ||
-      (priceFilter === "25000" && registration.precio === "$25.000") ||
-      (priceFilter === "33000" && registration.precio === "$33.000") ||
-      (priceFilter === "35000" && registration.precio === "$35.000") ||
-      (priceFilter === "otro" &&
-        registration.precio &&
-        !["$25.000", "$33.000", "$35.000"].includes(registration.precio))
-
-    return (
-      matchesSearch &&
-      matchesStatus &&
-      matchesYear &&
-      matchesHealth &&
-      matchesCeliac &&
-      matchesNote &&
-      matchesTransfer &&
-      matchesPrice
-    )
-  })
-
   // Pagination
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentItems = filteredRegistrationsData.slice(indexOfFirstItem, indexOfLastItem)
-  const totalPages = Math.ceil(filteredRegistrationsData.length / itemsPerPage)
+  const currentItems = filteredRegistrations.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredRegistrations.length / itemsPerPage)
 
   const paginate = (pageNumber) => {
     if (pageNumber > 0 && pageNumber <= totalPages) {
@@ -1048,16 +979,6 @@ export default function AdminRegistrationsPage() {
               <FileText className="h-3 w-3" />
               <span className="hidden sm:inline">PDF</span>
             </Button>
-            <AdminRegistrationsExcel
-              registrations={registrations}
-              dashboardStats={{
-                total: stats.total,
-                confirmados: stats.confirmados,
-                pendientes: stats.pendientes,
-                rechazados: stats.rechazados,
-              }}
-              expenses={[]} // Aquí puedes pasar los gastos si los tienes disponibles
-            />
           </div>
         </motion.div>
 
@@ -1220,9 +1141,9 @@ export default function AdminRegistrationsPage() {
                     Lista de Inscripciones
                   </CardTitle>
                   <CardDescription className="mt-1 text-xs">
-                    Mostrando {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredRegistrationsData.length)} de{" "}
-                    {filteredRegistrationsData.length} inscripciones
-                    {filteredRegistrationsData.length !== registrations.length
+                    Mostrando {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredRegistrations.length)} de{" "}
+                    {filteredRegistrations.length} inscripciones
+                    {filteredRegistrations.length !== registrations.length
                       ? ` (filtrado de ${registrations.length} total)`
                       : ""}
                   </CardDescription>
@@ -1232,7 +1153,7 @@ export default function AdminRegistrationsPage() {
                 <div className="relative">
                   <Search className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
                   <Input
-                    placeholder="Buscar por nombre, apellido, DNI, teléfono, grupo ciclismo..."
+                    placeholder="Buscar por nombre, apellido, DNI..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-7 bg-white text-xs h-8"
@@ -1257,7 +1178,7 @@ export default function AdminRegistrationsPage() {
 
                 {/* Filters - Hidden on mobile unless toggled */}
                 <div className={`${showFilters ? "block" : "hidden"} md:block`}>
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
                       <SelectTrigger className="bg-white text-xs h-8">
                         <ClipboardList className="h-4 w-4 mr-1" />
@@ -1316,21 +1237,6 @@ export default function AdminRegistrationsPage() {
                         <SelectItem value="all">Transfirió a</SelectItem>
                         <SelectItem value="Gise">Gise</SelectItem>
                         <SelectItem value="Bruni">Bruni</SelectItem>
-                        <SelectItem value="sin_especificar">No especifica</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={priceFilter} onValueChange={setPriceFilter}>
-                      <SelectTrigger className="bg-white text-xs h-8">
-                        <DollarSign className="h-4 w-4 mr-1" />
-                        <SelectValue placeholder="Precio" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Precio</SelectItem>
-                        <SelectItem value="25000">$25.000</SelectItem>
-                        <SelectItem value="33000">$33.000</SelectItem>
-                        <SelectItem value="35000">$35.000</SelectItem>
-                        <SelectItem value="otro">Otro</SelectItem>
                       </SelectContent>
                     </Select>
 
@@ -1341,8 +1247,7 @@ export default function AdminRegistrationsPage() {
                         healthFilter !== "all" ||
                         celiacFilter !== "all" ||
                         noteFilter !== "all" ||
-                        transferFilter !== "all" ||
-                        priceFilter !== "all") && (
+                        transferFilter !== "all") && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -1359,7 +1264,7 @@ export default function AdminRegistrationsPage() {
               </div>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto">
-              {filteredRegistrationsData.length > 0 ? (
+              {filteredRegistrations.length > 0 ? (
                 <div className="rounded-md">
                   <Table>
                     <TableHeader>
@@ -1451,7 +1356,7 @@ export default function AdminRegistrationsPage() {
                 </div>
               )}
             </CardContent>
-            {filteredRegistrationsData.length > itemsPerPage && (
+            {filteredRegistrations.length > itemsPerPage && (
               <CardFooter className="border-t bg-gray-50/50 py-3 flex flex-col sm:flex-row justify-between items-center gap-3">
                 <div className="text-xs text-muted-foreground order-2 sm:order-1">
                   Página {currentPage} de {totalPages}
@@ -1825,7 +1730,7 @@ export default function AdminRegistrationsPage() {
                   <CardContent className="pt-3 px-3 pb-3">
                     {(() => {
                       // En modo edición, parseamos desde editFormData, sino desde selectedRegistration
-                      const healthInfo = isEditMode
+                      const healthInfo = isEditMode 
                         ? parseHealthConditions(editFormData.condicionSalud)
                         : parseHealthConditions(selectedRegistration.condicionSalud)
                       return (
@@ -1838,11 +1743,11 @@ export default function AdminRegistrationsPage() {
                                 onChange={(e) => {
                                   const updatedHealthInfo = {
                                     ...healthInfo,
-                                    esCeliaco: e.target.value,
+                                    esCeliaco: e.target.value
                                   }
-                                  setEditFormData((prev) => ({
-                                    ...prev,
-                                    condicionSalud: JSON.stringify(updatedHealthInfo),
+                                  setEditFormData((prev) => ({ 
+                                    ...prev, 
+                                    condicionSalud: JSON.stringify(updatedHealthInfo)
                                   }))
                                 }}
                                 className="text-sm mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -1870,11 +1775,11 @@ export default function AdminRegistrationsPage() {
                                 onChange={(e) => {
                                   const updatedHealthInfo = {
                                     ...healthInfo,
-                                    condicionesSalud: e.target.value,
+                                    condicionesSalud: e.target.value
                                   }
-                                  setEditFormData((prev) => ({
-                                    ...prev,
-                                    condicionSalud: JSON.stringify(updatedHealthInfo),
+                                  setEditFormData((prev) => ({ 
+                                    ...prev, 
+                                    condicionSalud: JSON.stringify(updatedHealthInfo)
                                   }))
                                 }}
                                 className="text-sm mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 min-h-[60px] resize-vertical"
@@ -2007,7 +1912,6 @@ export default function AdminRegistrationsPage() {
                               <SelectContent>
                                 <SelectItem value="$25.000">$25.000</SelectItem>
                                 <SelectItem value="$35.000">$35.000</SelectItem>
-                                <SelectItem value="$35.000">$33.000</SelectItem>
                                 <SelectItem value="manual">Agregar manual</SelectItem>
                               </SelectContent>
                             </Select>

@@ -98,6 +98,8 @@ const parseHealthConditions = (condicionSalud) => {
   }
 }
 
+import AdminRegistrationsExcel from "./admin-registrations-excel"
+
 export default function AdminRegistrationsPage() {
   const [registrations, setRegistrations] = useState([])
   const [filteredRegistrations, setFilteredRegistrations] = useState([])
@@ -979,6 +981,37 @@ export default function AdminRegistrationsPage() {
               <FileText className="h-3 w-3" />
               <span className="hidden sm:inline">PDF</span>
             </Button>
+            <AdminRegistrationsExcel
+              registrations={registrations}
+              dashboardStats={{
+                totalRegistrations: registrations.length,
+                validRegistrations: registrations.filter((r) => r.estado === "confirmado" || r.estado === "pendiente")
+                  .length,
+                confirmedRegistrations: registrations.filter((r) => r.estado === "confirmado").length,
+                pendingRegistrations: registrations.filter((r) => r.estado === "pendiente" || !r.estado).length,
+                maleCount: registrations.filter((r) => r.genero?.toLowerCase() === "masculino").length,
+                femaleCount: registrations.filter((r) => r.genero?.toLowerCase() === "femenino").length,
+                otherCount: registrations.filter(
+                  (r) => r.genero && !["masculino", "femenino"].includes(r.genero.toLowerCase()),
+                ).length,
+                withHealthConditions: registrations.filter((r) => {
+                  const health = parseHealthConditions(r.condicionSalud)
+                  return health.condicionesSalud && health.condicionesSalud.trim() !== ""
+                }).length,
+                celiacCount: registrations.filter((r) => {
+                  const health = parseHealthConditions(r.condicionSalud)
+                  return health.esCeliaco === "si"
+                }).length,
+                jerseySize: registrations.reduce((acc, r) => {
+                  const size = r.talleRemera?.toLowerCase() || "no especificado"
+                  acc[size] = (acc[size] || 0) + 1
+                  return acc
+                }, {}),
+                registrationsByDay: [],
+                groupsCount: new Set(registrations.map((r) => r.grupoCiclistas).filter(Boolean)).size,
+              }}
+              expenses={[]}
+            />
           </div>
         </motion.div>
 
@@ -1531,7 +1564,7 @@ export default function AdminRegistrationsPage() {
                         {isEditMode ? (
                           <Select
                             value={editFormData.genero}
-                            onValueChange={(value) => setEditFormData((prev) => ({ ...prev, genero: value }))}
+                            onChange={(e) => setEditFormData((prev) => ({ ...prev, genero: e.target.value }))}
                           >
                             <SelectTrigger className="text-sm mt-1">
                               <SelectValue placeholder="Seleccionar género" />
@@ -1670,7 +1703,7 @@ export default function AdminRegistrationsPage() {
                         {isEditMode ? (
                           <Select
                             value={editFormData.talleRemera}
-                            onValueChange={(value) => setEditFormData((prev) => ({ ...prev, talleRemera: value }))}
+                            onChange={(value) => setEditFormData((prev) => ({ ...prev, talleRemera: value }))}
                           >
                             <SelectTrigger className="text-sm mt-1">
                               <SelectValue placeholder="Seleccionar talle" />
@@ -1730,7 +1763,7 @@ export default function AdminRegistrationsPage() {
                   <CardContent className="pt-3 px-3 pb-3">
                     {(() => {
                       // En modo edición, parseamos desde editFormData, sino desde selectedRegistration
-                      const healthInfo = isEditMode 
+                      const healthInfo = isEditMode
                         ? parseHealthConditions(editFormData.condicionSalud)
                         : parseHealthConditions(selectedRegistration.condicionSalud)
                       return (
@@ -1743,11 +1776,11 @@ export default function AdminRegistrationsPage() {
                                 onChange={(e) => {
                                   const updatedHealthInfo = {
                                     ...healthInfo,
-                                    esCeliaco: e.target.value
+                                    esCeliaco: e.target.value,
                                   }
-                                  setEditFormData((prev) => ({ 
-                                    ...prev, 
-                                    condicionSalud: JSON.stringify(updatedHealthInfo)
+                                  setEditFormData((prev) => ({
+                                    ...prev,
+                                    condicionSalud: JSON.stringify(updatedHealthInfo),
                                   }))
                                 }}
                                 className="text-sm mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -1775,11 +1808,11 @@ export default function AdminRegistrationsPage() {
                                 onChange={(e) => {
                                   const updatedHealthInfo = {
                                     ...healthInfo,
-                                    condicionesSalud: e.target.value
+                                    condicionesSalud: e.target.value,
                                   }
-                                  setEditFormData((prev) => ({ 
-                                    ...prev, 
-                                    condicionSalud: JSON.stringify(updatedHealthInfo)
+                                  setEditFormData((prev) => ({
+                                    ...prev,
+                                    condicionSalud: JSON.stringify(updatedHealthInfo),
                                   }))
                                 }}
                                 className="text-sm mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 min-h-[60px] resize-vertical"
@@ -1873,7 +1906,7 @@ export default function AdminRegistrationsPage() {
                         {isEditMode ? (
                           <Select
                             value={editFormData.transferidoA}
-                            onValueChange={(value) => setEditFormData((prev) => ({ ...prev, transferidoA: value }))}
+                            onChange={(value) => setEditFormData((prev) => ({ ...prev, transferidoA: value }))}
                           >
                             <SelectTrigger className="text-sm mt-1">
                               <SelectValue placeholder="Seleccionar destinatario" />
@@ -1898,7 +1931,7 @@ export default function AdminRegistrationsPage() {
                                   ? editFormData.precio
                                   : "manual"
                               }
-                              onValueChange={(value) => {
+                              onChange={(value) => {
                                 if (value === "manual") {
                                   setEditFormData((prev) => ({ ...prev, precio: "" }))
                                 } else {
