@@ -229,21 +229,6 @@ const TallesRemeraMejorado = () => {
                 <td className="p-2 border text-center">54</td>
                 <td className="p-2 border text-center">65</td>
               </tr>
-              <tr>
-                <td className="p-2 border text-center">XL</td>
-                <td className="p-2 border text-center">56</td>
-                <td className="p-2 border text-center">67</td>
-              </tr>
-              <tr>
-                <td className="p-2 border text-center">XXL</td>
-                <td className="p-2 border text-center">58</td>
-                <td className="p-2 border text-center">69</td>
-              </tr>
-              <tr>
-                <td className="p-2 border text-center">XXXL</td>
-                <td className="p-2 border text-center">60</td>
-                <td className="p-2 border text-center">71</td>
-              </tr>
             </tbody>
           </table>
           <div className="mt-2 text-xs text-gray-500">
@@ -1159,13 +1144,7 @@ export default function RegistrationForm() {
                       <SelectValue placeholder="Seleccionar talle" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="xs">XS</SelectItem>
-                      <SelectItem value="s">S</SelectItem>
                       <SelectItem value="m">M</SelectItem>
-                      <SelectItem value="l">L</SelectItem>
-                      <SelectItem value="xl">XL</SelectItem>
-                      <SelectItem value="xxl">XXL</SelectItem>
-                      <SelectItem value="xxxl">XXXL</SelectItem>
                     </SelectContent>
                   </Select>
                   <TallesRemeraMejorado />
