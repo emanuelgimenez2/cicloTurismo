@@ -330,10 +330,7 @@ const FormSteps = ({ currentStep, totalSteps }) => {
 
 const STOCK_REMERAS = {
   s: 22,
-  m: 66,
-  l: 50,
-  xl: 31,
-  xxl: 31,
+  m: 64,
 }
 
 const LIMITE_TOTAL_REMERAS = 200
