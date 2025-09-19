@@ -182,92 +182,6 @@ const ToastContainer = ({ toasts }) => (
     ))}
   </div>
 )
-// Componente de guía de talles mejorado
-const TallesRemeraMejorado = () => {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="mt-2 text-xs flex items-center gap-1 text-blue-600 bg-transparent"
-        >
-          <Info className="h-3 w-3" />
-          Ver guía de talles
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-80 p-0">
-        <div className="p-4 border-b">
-          <h3 className="font-medium text-sm">Guía de talles de remeras</h3>
-          <p className="text-xs text-gray-500 mt-1">Medidas aproximadas en centímetros</p>
-        </div>
-        <div className="p-3">
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="bg-gray-50">
-                <th className="p-2 border">Talle</th>
-                <th className="p-2 border">Ancho (cm)</th>
-                <th className="p-2 border">Largo (cm)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td className="p-2 border text-center">S</td>
-                <td className="p-2 border text-center">50</td>
-                <td className="p-2 border text-center">61</td>
-              </tr>
-              <tr>
-                <td className="p-2 border text-center">M</td>
-                <td className="p-2 border text-center">52</td>
-                <td className="p-2 border text-center">63</td>
-              </tr>
-              <tr>
-                <td className="p-2 border text-center">L</td>
-                <td className="p-2 border text-center">54</td>
-                <td className="p-2 border text-center">65</td>
-              </tr>
-              <tr>
-                <td className="p-2 border text-center">XL</td>
-                <td className="p-2 border text-center">56</td>
-                <td className="p-2 border text-center">67</td>
-              </tr>
-              <tr>
-                <td className="p-2 border text-center">XXL</td>
-                <td className="p-2 border text-center">58</td>
-                <td className="p-2 border text-center">69</td>
-              </tr>
-            </tbody>
-          </table>
-          <div className="mt-2 text-xs text-gray-500">
-            <p>Las medidas pueden tener una variación de ±2cm.</p>
-            <p className="mt-1">
-              El ancho se mide de axila a axila y el largo desde el hombro hasta el borde inferior.
-            </p>
-            <div className="mt-2 flex justify-center">
-              <div className="border rounded p-2 bg-gray-50">
-                <div className="w-32 h-40 relative mx-auto">
-                  {/* Representación esquemática de una remera */}
-                  <div className="w-full h-full bg-blue-100 rounded-lg relative">
-                    {/* Cuello */}
-                    <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-8 h-3 bg-white rounded-b-lg"></div>
-                    {/* Línea de ancho */}
-                    <div className="absolute top-10 w-full border-t border-blue-400 border-dashed flex justify-center">
-                      <span className="bg-white px-1 text-xs text-blue-600 -mt-2">Ancho</span>
-                    </div>
-                    {/* Línea de largo */}
-                    <div className="absolute top-2 left-1/2 h-36 border-l border-blue-400 border-dashed flex items-center">
-                      <span className="bg-white px-1 text-xs text-blue-600 -ml-8">Largo</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </PopoverContent>
-    </Popover>
-  )
-}
 // Modificación 2: Añadir array de grupos de ciclistas y lógica para agregar nuevos grupos
 // Añadir este array después de la definición del componente TallesRemeraMejorado
 const gruposCiclistas = [
@@ -328,12 +242,8 @@ const FormSteps = ({ currentStep, totalSteps }) => {
   )
 }
 
-const STOCK_REMERAS = {
-  s: 22,
-  m: 64,
-}
 
-const LIMITE_TOTAL_REMERAS = 200
+
 
 export default function InscripcionPage() {
   const { toast, toasts } = useToast()
@@ -804,7 +714,7 @@ export default function InscripcionPage() {
     if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
     if (!formData.genero) errors.genero = "El género es obligatorio"
     if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
-    if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
+    //if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
     if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) {
