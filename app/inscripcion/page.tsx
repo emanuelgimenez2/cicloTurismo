@@ -37,9 +37,12 @@ import {
   Mail,
   MapPin,
   Heart,
+  Shirt,
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
+  CreditCard,
+  Clock,
 } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import emailjs from "@emailjs/browser"
@@ -49,12 +52,18 @@ if (typeof window !== "undefined") {
   emailjs.init("azc3nwXCG2ojZsRsB")
 }
 
+// Constantes para el stock
+const STOCK_REMERAS = { s: 50, m: 100, l: 150, xl: 100, xxl: 50 }
+const LIMITE_TOTAL_REMERAS = 450
+
 function DatePicker({ date, setDate, className, placeholder = "Seleccionar fecha", disabled = false }) {
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [year, setYear] = useState(date ? date.getFullYear() : new Date().getFullYear())
   const [month, setMonth] = useState(date ? date.getMonth() : new Date().getMonth())
+  
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 100 }, (_, i) => currentYear - i)
+  
   const months = [
     "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
@@ -148,9 +157,7 @@ const Toast = ({ toast, onClose }) => {
   const bgColor =
     toast.variant === "destructive" ? "bg-red-500" : toast.variant === "success" ? "bg-green-500" : "bg-blue-500"
   return (
-    <div
-      className={`${bgColor} text-white p-3 rounded-lg shadow-lg mb-2 transition-all animate-in slide-in-from-right-5`}
-    >
+    <div className={`${bgColor} text-white p-3 rounded-lg shadow-lg mb-2 transition-all animate-in slide-in-from-right-5`}>
       <div className="font-medium">{toast.title}</div>
       {toast.description && <div className="text-sm">{toast.description}</div>}
     </div>
@@ -172,7 +179,7 @@ const gruposCiclistas = [
 ]
 
 const paises = [
-  "Argentina", "Uruguay", "Bolivia", "Brasil", "Chile", "Colombia", "Ecuador",
+  "Argentina", "Uruguay", "Bolivia", "Brasil", "Chile", "Colombia", "Ecuador", 
   "Paraguay", "Perú", "Venezuela", "México", "Estados Unidos", "Canadá", "España", "Otro",
 ]
 
@@ -180,17 +187,10 @@ const FormSteps = ({ currentStep, totalSteps }) => {
   return (
     <div className="mb-6">
       <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-medium">
-          Paso {currentStep} de {totalSteps}
-        </span>
+        <span className="text-sm font-medium">Paso {currentStep} de {totalSteps}</span>
         <span className="text-sm text-muted-foreground">
-          {currentStep === 1
-            ? "Información personal"
-            : currentStep === 2
-              ? "Condiciones de salud"
-              : currentStep === 3
-                ? "Pago y términos"
-                : "Revisión"}
+          {currentStep === 1 ? "Información personal" : 
+           currentStep === 2 ? "Condiciones de salud" : "Pago y términos"}
         </span>
       </div>
       <Progress value={(currentStep / totalSteps) * 100} className="h-2" />
@@ -198,19 +198,23 @@ const FormSteps = ({ currentStep, totalSteps }) => {
   )
 }
 
+
 export default function InscripcionPage() {
   const { toast, toasts } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [showSuccessDialog, setShowSuccessDialog] = useState(false)
-  const [showMore, setShowMore] = useState(false)
   const [fieldErrors, setFieldErrors] = useState({})
   const [currentStep, setCurrentStep] = useState(1)
   const topRef = useRef(null)
   const [birthDate, setBirthDate] = useState(undefined)
   const [grupoCiclistasOpen, setGrupoCiclistasOpen] = useState(false)
+  const [stockRemeras, setStockRemeras] = useState(STOCK_REMERAS)
+  const [totalInscripcionesValidas, setTotalInscripcionesValidas] = useState(0)
+  const [stockAgotado, setStockAgotado] = useState(false)
 
   const totalSteps = 3
+
   const [formData, setFormData] = useState({
     nombre: "",
     apellido: "",
@@ -225,14 +229,18 @@ export default function InscripcionPage() {
     grupoSanguineo: "",
     genero: "",
     grupoCiclistas: "",
+    talleRemera: "",
     condicionesSalud: "",
     esCeliaco: "",
     recorrido: "",
     transferidoA: "",
+    nombreTransferencia: "",
+    horarioTransferencia: "",
     aceptaCondiciones: false,
     comprobantePago: null,
     comprobantePagoUrl: "",
   })
+
 
   useEffect(() => {
     if (birthDate) {
@@ -272,10 +280,13 @@ export default function InscripcionPage() {
       grupoSanguineo: "",
       genero: "",
       grupoCiclistas: "",
+      talleRemera: "",
       condicionesSalud: "",
       esCeliaco: "",
       recorrido: "",
       transferidoA: "",
+      nombreTransferencia: "",
+      horarioTransferencia: "",
       aceptaCondiciones: false,
       comprobantePago: null,
       comprobantePagoUrl: "",
@@ -321,6 +332,8 @@ export default function InscripcionPage() {
         return validateEmail(value) ? "" : "Formato de email inválido"
       case "telefono":
         return validatePhone(value) ? "" : "Formato de teléfono inválido"
+      case "nombreTransferencia":
+        return validateName(value) ? "" : "El nombre solo debe contener letras"
       default:
         return ""
     }
@@ -333,7 +346,7 @@ export default function InscripcionPage() {
       ...formData,
       [name]: newValue,
     })
-    if (["nombre", "apellido", "dni", "email", "telefono"].includes(name)) {
+    if (["nombre", "apellido", "dni", "email", "telefono", "nombreTransferencia"].includes(name)) {
       const error = validateField(name, newValue)
       setFieldErrors({
         ...fieldErrors,
@@ -356,97 +369,72 @@ export default function InscripcionPage() {
     })
   }
 
+  // Función mejorada para manejar archivos
   const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      if (file.size > 30 * 1024 * 1024) {
+      // Validación rápida de tamaño (límite más estricto)
+      const maxSize = 5 * 1024 * 1024 // 5MB límite más realista
+      if (file.size > maxSize) {
         toast({
           title: "Archivo demasiado grande",
-          description: "El archivo excede el límite de 30MB. Por favor, seleccione un archivo más pequeño.",
+          description: "El archivo debe ser menor a 5MB. Por favor, comprima la imagen o seleccione otro archivo.",
           variant: "destructive",
         })
         e.target.value = ""
         return
       }
+
+      // Validación de tipo de archivo
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf']
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Tipo de archivo no válido",
+          description: "Solo se permiten archivos JPG, PNG o PDF.",
+          variant: "destructive",
+        })
+        e.target.value = ""
+        return
+      }
+
+      // Si pasa las validaciones, establecer el archivo
       setFormData({
         ...formData,
         comprobantePago: file,
       })
+      
+      toast({
+        title: "Archivo cargado",
+        description: "El comprobante se ha cargado correctamente.",
+        variant: "success",
+      })
     }
   }
 
+  // Función mejorada para convertir a Base64
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
-      if (!file.type.startsWith("image/") || !file.type.match(/jpeg|jpg|png/i)) {
-        const reader = new FileReader()
-        reader.readAsDataURL(file)
-        reader.onload = () => resolve(reader.result)
-        reader.onerror = (error) => {
-          reject(error)
-          toast({
-            title: "Error al procesar el archivo",
-            description: "No se pudo procesar el archivo. Intente con otro formato.",
-            variant: "destructive",
-          })
-        }
+      // Verificar tamaño nuevamente antes de procesar
+      if (file.size > 5 * 1024 * 1024) {
+        reject(new Error("Archivo demasiado grande para procesar"))
         return
       }
 
       const reader = new FileReader()
-      reader.readAsArrayBuffer(file)
-      reader.onload = (event) => {
-        const img = new Image()
-        const canvas = document.createElement("canvas")
-        const ctx = canvas.getContext("2d")
-        const arrayBuffer = event.target.result
-        const blob = new Blob([arrayBuffer], { type: file.type })
-        const blobUrl = URL.createObjectURL(blob)
-
-        img.onload = () => {
-          URL.revokeObjectURL(blobUrl)
-          let width = img.width
-          let height = img.height
-          const MAX_WIDTH = 1200
-          const MAX_HEIGHT = 1200
-
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height = Math.round((height * MAX_WIDTH) / width)
-              width = MAX_WIDTH
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width = Math.round((width * MAX_HEIGHT) / height)
-              height = MAX_HEIGHT
-            }
-          }
-
-          canvas.width = width
-          canvas.height = height
-          ctx.drawImage(img, 0, 0, width, height)
-          const dataUrl = canvas.toDataURL(file.type, 0.5)
-          resolve(dataUrl)
+      reader.readAsDataURL(file)
+      
+      reader.onload = () => {
+        const result = reader.result
+        // Verificar que el Base64 no sea excesivamente grande
+        if (result.length > 7000000) { // ~5MB en Base64
+          reject(new Error("El archivo comprimido sigue siendo demasiado grande"))
+          return
         }
-
-        img.onerror = () => {
-          URL.revokeObjectURL(blobUrl)
-          toast({
-            title: "Error al procesar la imagen",
-            description: "No se pudo procesar la imagen. Intente con otro formato.",
-            variant: "destructive",
-          })
-          reject(new Error("Error al cargar la imagen"))
-        }
-        img.src = blobUrl
+        resolve(result)
       }
-
+      
       reader.onerror = (error) => {
-        toast({
-          title: "Error al leer el archivo",
-          description: "No se pudo leer el archivo. Intente con otro formato.",
-          variant: "destructive",
-        })
-        reject(error)
+        reject(new Error("Error al procesar el archivo"))
       }
     })
   }
@@ -473,11 +461,16 @@ export default function InscripcionPage() {
       if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
       if (!formData.recorrido) errors.recorrido = "El recorrido es obligatorio"
     } else if (step === 2) {
-      if (formData.esCeliaco === undefined || formData.esCeliaco === null)
+      if (formData.esCeliaco === undefined || formData.esCeliaco === null || formData.esCeliaco === "")
         errors.esCeliaco = "Debe indicar si es celíaco o no"
     } else if (step === 3) {
       if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
+      if (!formData.nombreTransferencia) errors.nombreTransferencia = "El nombre de quien transfiere es obligatorio"
+      else if (!validateName(formData.nombreTransferencia)) errors.nombreTransferencia = "El nombre solo debe contener letras"
+      if (!formData.horarioTransferencia) errors.horarioTransferencia = "El horario de transferencia es obligatorio"
+      if (!formData.transferidoA) errors.transferidoA = "Debe indicar a quién transfirió"
     }
+    
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) {
       const firstErrorKey = Object.keys(errors)[0]
@@ -519,22 +512,6 @@ export default function InscripcionPage() {
 
   const sendAdminNotificationEmail = async (participantData) => {
     try {
-      let comprobanteDataUrl = ""
-      if (participantData.imagenBase64) {
-        let mimeType = "image/jpeg"
-        if (participantData.imagenBase64.startsWith("data:")) {
-          comprobanteDataUrl = participantData.imagenBase64
-        } else {
-          const fileName = participantData.nombreArchivo || ""
-          if (fileName.toLowerCase().includes(".png")) {
-            mimeType = "image/png"
-          } else if (fileName.toLowerCase().includes(".pdf")) {
-            mimeType = "application/pdf"
-          }
-          comprobanteDataUrl = `data:${mimeType};base64,${participantData.imagenBase64}`
-        }
-      }
-
       const templateParams = {
         nombre: participantData.nombre,
         apellido: participantData.apellido,
@@ -558,29 +535,43 @@ export default function InscripcionPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const errors = {}
-    if (!formData.nombre) errors.nombre = "El nombre es obligatorio"
-    else if (!validateName(formData.nombre)) errors.nombre = "El nombre solo debe contener letras"
-    if (!formData.apellido) errors.apellido = "El apellido es obligatorio"
-    else if (!validateName(formData.apellido)) errors.apellido = "El apellido solo debe contener letras"
-    if (!formData.dni) errors.dni = "El DNI es obligatorio"
-    else if (!validateDNI(formData.dni)) errors.dni = "El DNI debe tener 7-8 dígitos"
-    if (!formData.fechaNacimiento) errors.fechaNacimiento = "La fecha de nacimiento es obligatoria"
-    if (!formData.localidad) errors.localidad = "La localidad es obligatoria"
-    if (!formData.email) errors.email = "El email es obligatorio"
-    else if (!validateEmail(formData.email)) errors.email = "Formato de email inválido"
-    if (!formData.telefono) errors.telefono = "El teléfono es obligatorio"
-    else if (!validatePhone(formData.telefono)) errors.telefono = "Formato de teléfono inválido"
-    if (!formData.telefonoEmergencia) errors.telefonoEmergencia = "El teléfono de emergencia es obligatorio"
-    else if (!validatePhone(formData.telefonoEmergencia)) errors.telefonoEmergencia = "Formato de teléfono inválido"
-    if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
-    if (!formData.genero) errors.genero = "El género es obligatorio"
-    if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
-    if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
     
-    setFieldErrors(errors)
-    if (Object.keys(errors).length > 0) {
-      const firstError = Object.values(errors)[0]
+    // Validar todos los pasos
+    const allErrors = {}
+    
+    // Step 1 validations
+    if (!formData.nombre) allErrors.nombre = "El nombre es obligatorio"
+    else if (!validateName(formData.nombre)) allErrors.nombre = "El nombre solo debe contener letras"
+    if (!formData.apellido) allErrors.apellido = "El apellido es obligatorio"
+    else if (!validateName(formData.apellido)) allErrors.apellido = "El apellido solo debe contener letras"
+    if (!formData.dni) allErrors.dni = "El DNI es obligatorio"
+    else if (!validateDNI(formData.dni)) allErrors.dni = "El DNI debe tener 7-8 dígitos"
+    if (!formData.fechaNacimiento) allErrors.fechaNacimiento = "La fecha de nacimiento es obligatoria"
+    if (!formData.localidad) allErrors.localidad = "La localidad es obligatoria"
+    if (!formData.email) allErrors.email = "El email es obligatorio"
+    else if (!validateEmail(formData.email)) allErrors.email = "Formato de email inválido"
+    if (!formData.telefono) allErrors.telefono = "El teléfono es obligatorio"
+    else if (!validatePhone(formData.telefono)) allErrors.telefono = "Formato de teléfono inválido"
+    if (!formData.telefonoEmergencia) allErrors.telefonoEmergencia = "El teléfono de emergencia es obligatorio"
+    else if (!validatePhone(formData.telefonoEmergencia)) allErrors.telefonoEmergencia = "Formato de teléfono inválido"
+    if (!formData.grupoSanguineo) allErrors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
+    if (!formData.genero) allErrors.genero = "El género es obligatorio"
+    if (!formData.grupoCiclistas) allErrors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
+    if (!formData.recorrido) allErrors.recorrido = "El recorrido es obligatorio"
+    
+    // Step 2 validations
+    if (!formData.esCeliaco) allErrors.esCeliaco = "Debe indicar si es celíaco o no"
+    
+    // Step 3 validations
+    if (!formData.aceptaCondiciones) allErrors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
+    if (!formData.nombreTransferencia) allErrors.nombreTransferencia = "El nombre de quien transfiere es obligatorio"
+    else if (!validateName(formData.nombreTransferencia)) allErrors.nombreTransferencia = "El nombre solo debe contener letras"
+    if (!formData.horarioTransferencia) allErrors.horarioTransferencia = "El horario de transferencia es obligatorio"
+    if (!formData.transferidoA) allErrors.transferidoA = "Debe indicar a quién transfirió"
+
+    setFieldErrors(allErrors)
+    if (Object.keys(allErrors).length > 0) {
+      const firstError = Object.values(allErrors)[0]
       toast({
         title: "Error en el formulario",
         description: firstError,
@@ -588,21 +579,23 @@ export default function InscripcionPage() {
       })
       return
     }
-    
+
     setIsSubmitting(true)
     try {
       const numeroInscripcion = await getNextRegistrationNumber()
       let imagenBase64 = ""
 
       if (formData.comprobantePago) {
-        imagenBase64 = await convertToBase64(formData.comprobantePago)
-        if (imagenBase64.length * 0.75 > 1024 * 1024) {
+        try {
+          imagenBase64 = await convertToBase64(formData.comprobantePago)
+        } catch (error) {
           toast({
-            title: "Advertencia de tamaño de archivo",
-            description:
-              "El comprobante de pago es muy grande y podría exceder el límite de 1MB de Firestore. Se guardará, pero podría haber problemas.",
+            title: "Error al procesar el archivo",
+            description: error.message,
             variant: "destructive",
           })
+          setIsSubmitting(false)
+          return
         }
       }
 
@@ -625,8 +618,11 @@ export default function InscripcionPage() {
         grupoSanguineo: formData.grupoSanguineo || "",
         genero: formData.genero || "",
         grupoCiclistas: formData.grupoCiclistas || "",
-        talleRemera: "", // Campo vacío ya que no hay remeras
+        //talleRemera: formData.talleRemera || "",
         recorrido: formData.recorrido || "",
+        nombreTransferencia: formData.nombreTransferencia || "",
+        horarioTransferencia: formData.horarioTransferencia || "",
+        transferidoA: formData.transferidoA || "",
         condicionSalud: JSON.stringify(condicionSalud),
         comprobantePagoUrl: "",
         imagenBase64: imagenBase64,
@@ -639,6 +635,7 @@ export default function InscripcionPage() {
       }
 
       const documentName = `${numeroInscripcion.toString().padStart(3, "0")} ${formData.nombre} ${formData.apellido}`
+
       const docRef = doc(db, "participantes2025", documentName)
       await setDoc(docRef, registrationData)
 
@@ -658,6 +655,7 @@ export default function InscripcionPage() {
     }
   }
 
+
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
@@ -667,15 +665,6 @@ export default function InscripcionPage() {
       case 1:
         return (
           <div className="space-y-6">
-            {/* Alerta sobre las remeras */}
-            <Alert className="bg-amber-50 border-amber-200">
-              <AlertCircle className="h-4 w-4 text-amber-500" />
-              <AlertTitle className="text-amber-800">Información importante</AlertTitle>
-              <AlertDescription className="text-amber-700">
-                <strong>Su inscripción es sin remera, no hay más talles disponibles</strong>
-              </AlertDescription>
-            </Alert>
-
             <div className="bg-gray-50 p-4 rounded-lg border shadow-sm">
               <h3 className="font-medium text-lg mb-4 text-gray-800 flex items-center gap-2">
                 <User className="h-5 w-5 text-blue-600" />
@@ -973,7 +962,7 @@ export default function InscripcionPage() {
                     Escriba el nombre de su grupo o seleccione uno de la lista.
                   </p>
                 </div>
-
+                
                 <div className="space-y-2">
                   <Label htmlFor="recorrido" className="flex justify-between">
                     <span className="flex items-center gap-1">
@@ -1088,9 +1077,7 @@ export default function InscripcionPage() {
                       <li>CUIT: 27-26233106-2</li>
                       <li>CBU: 4530000800016415745759</li>
                       <li>Alias: ciclotermal2025</li>
-                      <li>
-                        <strong>Importe: $35.000 (ARS)</strong>
-                      </li>
+                      <li><strong>Importe: $35.000 (ARS)</strong></li>
                     </ul>
                   </AlertDescription>
                 </Alert>
@@ -1104,19 +1091,93 @@ export default function InscripcionPage() {
                       <li>CUIT: 27-26233106-2</li>
                       <li>CBU: 0000013000032290638313</li>
                       <li>Alias: CicloTermal.PREX</li>
-                      <li>
-                        <strong>Importe: $1.300 (UYU)</strong>
-                      </li>
+                      <li><strong>Importe: $1.300 (UYU)</strong></li>
                     </ul>
                   </AlertDescription>
                 </Alert>
               </div>
-              <div className="space-y-4">
+              
+              <div className="space-y-4 mt-6 border-t pt-4">
+                <h4 className="font-medium text-gray-800 flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Detalles de la transferencia
+                </h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nombreTransferencia" className="flex justify-between">
+                      <span>Nombre de quien hace la transferencia *</span>
+                      {fieldErrors.nombreTransferencia && (
+                        <span className="text-red-500 text-xs">{fieldErrors.nombreTransferencia}</span>
+                      )}
+                    </Label>
+                    <Input
+                      id="nombreTransferencia"
+                      name="nombreTransferencia"
+                      value={formData.nombreTransferencia}
+                      onChange={handleInputChange}
+                      className={fieldErrors.nombreTransferencia ? "border-red-500" : ""}
+                      placeholder="Nombre completo de quien transfiere"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="horarioTransferencia" className="flex justify-between items-center">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5 text-gray-500" />
+                        Horario de transferencia *
+                      </span>
+                      {fieldErrors.horarioTransferencia && (
+                        <span className="text-red-500 text-xs">{fieldErrors.horarioTransferencia}</span>
+                      )}
+                    </Label>
+                    <Input
+                      id="horarioTransferencia"
+                      name="horarioTransferencia"
+                      type="datetime-local"
+                      value={formData.horarioTransferencia}
+                      onChange={handleInputChange}
+                      className={fieldErrors.horarioTransferencia ? "border-red-500" : ""}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="transferidoA" className="flex justify-between">
+                    <span>Transferido a *</span>
+                    {fieldErrors.transferidoA && (
+                      <span className="text-red-500 text-xs">{fieldErrors.transferidoA}</span>
+                    )}
+                  </Label>
+                  <RadioGroup
+                    value={formData.transferidoA}
+                    onValueChange={(value) => handleSelectChange("transferidoA", value)}
+                    className="flex flex-col space-y-2 mt-2"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="gisela_orbes" id="transferido-gisela" />
+                      <Label htmlFor="transferido-gisela" className="font-normal">
+                        Gisela Orbes
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="brunilda_shubert" id="transferido-brunilda" />
+                      <Label htmlFor="transferido-brunilda" className="font-normal">
+                        Brunilda Shubert
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </div>
+
+              <div className="space-y-4 mt-6 border-t pt-4">
                 <div className="space-y-2">
                   <Label htmlFor="comprobantePago" className="flex justify-between">
                     <span className="flex items-center gap-1">
                       <FileText className="h-4 w-4" />
-                      Comprobante de pago *
+                      Comprobante de pago
                     </span>
                     {fieldErrors.comprobantePago && (
                       <span className="text-red-500 text-xs">{fieldErrors.comprobantePago}</span>
@@ -1142,7 +1203,7 @@ export default function InscripcionPage() {
                       <span className="text-blue-600 font-medium hover:text-blue-700">
                         Haga clic para subir el comprobante
                       </span>
-                      <p className="text-xs text-gray-500 mt-1">PDF, JPG, PNG (máx. 10MB)</p>
+                      <p className="text-xs text-gray-500 mt-1">PDF, JPG, PNG (máx. 5MB)</p>
                     </label>
                     {formData.comprobantePago && (
                       <div className="mt-2 p-2 bg-green-50 rounded border text-xs">
@@ -1154,6 +1215,7 @@ export default function InscripcionPage() {
                 </div>
               </div>
             </div>
+            
             <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 shadow-sm">
               <h3 className="font-medium text-lg mb-4 text-yellow-800">Términos y Condiciones</h3>
               <div className="space-y-3 text-sm text-gray-700">
