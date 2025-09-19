@@ -26,10 +26,12 @@ export default function ConfirmationPage() {
             <p>
               Hemos recibido tu información y comprobante de pago. Recibirás un correo electrónico con la
               confirmación de tu inscripción.
+              Su inscripción es sin remera, ya que no hay más talles disponibles
             </p>
             <p>Recuerda que el evento se realizará el 12 de octubre de 2025 en Federación, Entre Ríos.</p>
             <p className="font-medium">¡Gracias por ser parte de esta experiencia!</p>
           </CardContent>
+          
           <CardFooter className="flex justify-center">
             <Link href="/">
               <Button className="bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 hover:from-pink-600 hover:via-violet-600 hover:to-blue-600">

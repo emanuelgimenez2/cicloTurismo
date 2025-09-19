@@ -6,9 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { collection, getDocs, query, orderBy, setDoc, doc } from "firebase/firestore"
-// Eliminar importaciones de Firebase Storage
-// import { ref, uploadBytes, getDownloadURL } from "firebase/storage"
-import { db } from "@/lib/firebase/firebase-config" // Asegúrate de que 'storage' ya no se importa
+import { db } from "@/lib/firebase/firebase-config"
 import { format, parse } from "date-fns"
 import { es } from "date-fns/locale"
 import { CalendarIcon } from "lucide-react"
@@ -39,52 +37,36 @@ import {
   Mail,
   MapPin,
   Heart,
-  Shirt,
   AlertTriangle,
   ChevronLeft,
   ChevronRight,
-  CreditCard,
 } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
-import emailjs from "@emailjs/browser" // Importa EmailJS
+import emailjs from "@emailjs/browser"
 
 // Inicializa EmailJS
 if (typeof window !== "undefined") {
-  emailjs.init("azc3nwXCG2ojZsRsB") // Usando la clave proporcionada en tu ejemplo
+  emailjs.init("azc3nwXCG2ojZsRsB")
 }
 
-// Modificación 1: Mejorar el DatePicker para selección de fecha de nacimiento
-// Reemplazar el componente DatePicker actual con esta versión mejorada
 function DatePicker({ date, setDate, className, placeholder = "Seleccionar fecha", disabled = false }) {
   const [calendarOpen, setCalendarOpen] = useState(false)
   const [year, setYear] = useState(date ? date.getFullYear() : new Date().getFullYear())
   const [month, setMonth] = useState(date ? date.getMonth() : new Date().getMonth())
-  // Generar array de años (desde 100 años atrás hasta el año actual)
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 100 }, (_, i) => currentYear - i)
-  // Nombres de los meses en español
   const months = [
-    "Enero",
-    "Febrero",
-    "Marzo",
-    "Abril",
-    "Mayo",
-    "Junio",
-    "Julio",
-    "Agosto",
-    "Septiembre",
-    "Octubre",
-    "Noviembre",
-    "Diciembre",
+    "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+    "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
   ]
-  // Actualizar el calendario cuando cambia el año o mes
+
   useEffect(() => {
     if (calendarOpen) {
       const newDate = new Date(year, month, 1)
-      // Solo actualizamos la vista del calendario, no la fecha seleccionada
       document.querySelector('[data-calendar-root="true"]')?.setAttribute("data-view-date", newDate.toISOString())
     }
   }, [year, month, calendarOpen])
+
   return (
     <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
       <PopoverTrigger asChild>
@@ -148,7 +130,7 @@ function DatePicker({ date, setDate, className, placeholder = "Seleccionar fecha
     </Popover>
   )
 }
-// Toast personalizado para el ejemploconst useToast = () => {
+
 const useToast = () => {
   const [toasts, setToasts] = useState([])
   const toast = ({ title, description, variant = "default" }) => {
@@ -161,7 +143,7 @@ const useToast = () => {
   }
   return { toast, toasts }
 }
-// Componente Toast
+
 const Toast = ({ toast, onClose }) => {
   const bgColor =
     toast.variant === "destructive" ? "bg-red-500" : toast.variant === "success" ? "bg-green-500" : "bg-blue-500"
@@ -174,7 +156,7 @@ const Toast = ({ toast, onClose }) => {
     </div>
   )
 }
-// Contenedor de toasts
+
 const ToastContainer = ({ toasts }) => (
   <div className="fixed top-4 right-4 z-50 space-y-2 max-w-md">
     {toasts.map((toast) => (
@@ -182,44 +164,18 @@ const ToastContainer = ({ toasts }) => (
     ))}
   </div>
 )
-// Modificación 2: Añadir array de grupos de ciclistas y lógica para agregar nuevos grupos
-// Añadir este array después de la definición del componente TallesRemeraMejorado
+
 const gruposCiclistas = [
-  "Team Riders",
-  "Pedal Power",
-  "Grand Team Bike Cdelu",
-  "Ciclo Materos",
-  "Los Despacito",
-  "Kamikaze MTB",
-  "Rural Bike concepcion",
-  "En Bici Ando",
-  "Desafiando Caminos",
-  "Los Tiernitos",
-  "CicloturismoBasso",
-  "Desacatados Bike",
-  "Bikers Alcorta",
-  "Bici Chicas",
-  "Panteras Bike",
+  "Team Riders", "Pedal Power", "Grand Team Bike Cdelu", "Ciclo Materos", "Los Despacito",
+  "Kamikaze MTB", "Rural Bike concepcion", "En Bici Ando", "Desafiando Caminos", "Los Tiernitos",
+  "CicloturismoBasso", "Desacatados Bike", "Bikers Alcorta", "Bici Chicas", "Panteras Bike",
 ]
-// Array de países con Argentina y Uruguay primero
+
 const paises = [
-  "Argentina",
-  "Uruguay",
-  "Bolivia",
-  "Brasil",
-  "Chile",
-  "Colombia",
-  "Ecuador",
-  "Paraguay",
-  "Perú",
-  "Venezuela",
-  "México",
-  "Estados Unidos",
-  "Canadá",
-  "España",
-  "Otro",
+  "Argentina", "Uruguay", "Bolivia", "Brasil", "Chile", "Colombia", "Ecuador",
+  "Paraguay", "Perú", "Venezuela", "México", "Estados Unidos", "Canadá", "España", "Otro",
 ]
-// Componente de pasos del formulario
+
 const FormSteps = ({ currentStep, totalSteps }) => {
   return (
     <div className="mb-6">
@@ -242,9 +198,6 @@ const FormSteps = ({ currentStep, totalSteps }) => {
   )
 }
 
-
-
-
 export default function InscripcionPage() {
   const { toast, toasts } = useToast()
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -256,10 +209,6 @@ export default function InscripcionPage() {
   const topRef = useRef(null)
   const [birthDate, setBirthDate] = useState(undefined)
   const [grupoCiclistasOpen, setGrupoCiclistasOpen] = useState(false)
-
-  const [stockRemeras, setStockRemeras] = useState(STOCK_REMERAS)
-  const [totalInscripcionesValidas, setTotalInscripcionesValidas] = useState(0)
-  const [stockAgotado, setStockAgotado] = useState(false)
 
   const totalSteps = 3
   const [formData, setFormData] = useState({
@@ -276,58 +225,15 @@ export default function InscripcionPage() {
     grupoSanguineo: "",
     genero: "",
     grupoCiclistas: "",
-    talleRemera: "",
     condicionesSalud: "",
     esCeliaco: "",
     recorrido: "",
     transferidoA: "",
     aceptaCondiciones: false,
     comprobantePago: null,
-    comprobantePagoUrl: "", // Esta URL ya no se usará para Firebase Storage
+    comprobantePagoUrl: "",
   })
 
-  const calcularStockUsado = async () => {
-    try {
-      const participantesRef = collection(db, "participantes2025")
-      const snapshot = await getDocs(participantesRef)
-
-      const stockUsado = { s: 0, m: 0, l: 0, xl: 0, xxl: 0 }
-      let totalValidas = 0
-
-      snapshot.docs.forEach((doc) => {
-        const data = doc.data()
-        const estado = data.estado || "pendiente"
-
-        // Solo contar confirmados y pendientes (no rechazados)
-        if (estado === "confirmado" || estado === "pendiente") {
-          totalValidas++
-
-          const talle = data.talleRemera?.toLowerCase()
-          if (talle && stockUsado.hasOwnProperty(talle)) {
-            stockUsado[talle]++
-          }
-        }
-      })
-
-      // Calcular stock disponible
-      const stockDisponible = {}
-      Object.keys(STOCK_REMERAS).forEach((talle) => {
-        stockDisponible[talle] = STOCK_REMERAS[talle] - stockUsado[talle]
-      })
-
-      setStockRemeras(stockDisponible)
-      setTotalInscripcionesValidas(totalValidas)
-      setStockAgotado(totalValidas >= LIMITE_TOTAL_REMERAS)
-    } catch (error) {
-      console.error("Error calculando stock:", error)
-    }
-  }
-
-  useEffect(() => {
-    calcularStockUsado()
-  }, [])
-
-  // Actualizar formData cuando cambia la fecha de nacimiento
   useEffect(() => {
     if (birthDate) {
       setFormData({
@@ -336,7 +242,7 @@ export default function InscripcionPage() {
       })
     }
   }, [birthDate])
-  // Inicializar la fecha de nacimiento si ya existe en formData
+
   useEffect(() => {
     if (formData.fechaNacimiento && !birthDate) {
       try {
@@ -349,10 +255,9 @@ export default function InscripcionPage() {
       }
     }
   }, [formData.fechaNacimiento])
-  // Modificación 4: Actualizar la función handleCloseSuccessDialog para limpiar el formulario
+
   const handleCloseSuccessDialog = () => {
     setShowSuccessDialog(false)
-    // Limpiar el formulario
     setFormData({
       nombre: "",
       apellido: "",
@@ -367,7 +272,6 @@ export default function InscripcionPage() {
       grupoSanguineo: "",
       genero: "",
       grupoCiclistas: "",
-      talleRemera: "",
       condicionesSalud: "",
       esCeliaco: "",
       recorrido: "",
@@ -379,29 +283,32 @@ export default function InscripcionPage() {
     setBirthDate(undefined)
     setFieldErrors({})
     setCurrentStep(1)
-    // Hacer scroll al inicio
     window.scrollTo({ top: 0, behavior: "smooth" })
     topRef.current?.scrollIntoView({ behavior: "smooth" })
   }
+
   const goToHomePage = () => {
     window.location.href = "/"
   }
+
   const validateName = (value) => {
     return /^[A-Za-zÁáÉéÍíÓóÚúÜüÑñ\s]+$/.test(value)
   }
+
   const validateDNI = (value) => {
-    // Permitir cualquier número de dígitos (mínimo 1)
     return /^\d+$/.test(value)
   }
+
   const validateEmail = (value) => {
     if (!value) return true
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
   }
+
   function validatePhone(value) {
     if (!value) return true
-    // Permitir cualquier número de dígitos (mínimo 1)
     return /^\d+$/.test(value.replace(/\D/g, ""))
   }
+
   const validateField = (name, value) => {
     switch (name) {
       case "nombre":
@@ -418,6 +325,7 @@ export default function InscripcionPage() {
         return ""
     }
   }
+
   const handleInputChange = (e) => {
     const { name, value, type } = e.target
     const newValue = type === "checkbox" ? e.target.checked : value
@@ -433,30 +341,30 @@ export default function InscripcionPage() {
       })
     }
   }
+
   const handleCheckboxChange = (name, checked) => {
     setFormData({
       ...formData,
       [name]: checked,
     })
   }
+
   const handleSelectChange = (name, value) => {
     setFormData({
       ...formData,
       [name]: value,
     })
   }
+
   const handleFileChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      // Verificar el tamaño del archivo (30MB = 30 * 1024 * 1024 bytes)
-      // Este límite es para la subida, pero el límite de Firestore es 1MB
       if (file.size > 30 * 1024 * 1024) {
         toast({
           title: "Archivo demasiado grande",
           description: "El archivo excede el límite de 30MB. Por favor, seleccione un archivo más pequeño.",
           variant: "destructive",
         })
-        // Limpiar el input de archivo
         e.target.value = ""
         return
       }
@@ -466,10 +374,9 @@ export default function InscripcionPage() {
       })
     }
   }
-  // La función convertToBase64 se usará para guardar en Firestore
+
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
-      // Si no es una imagen, usar el método estándar sin compresión
       if (!file.type.startsWith("image/") || !file.type.match(/jpeg|jpg|png/i)) {
         const reader = new FileReader()
         reader.readAsDataURL(file)
@@ -484,7 +391,7 @@ export default function InscripcionPage() {
         }
         return
       }
-      // Para imágenes JPG/PNG, comprimir antes de convertir a base64
+
       const reader = new FileReader()
       reader.readAsArrayBuffer(file)
       reader.onload = (event) => {
@@ -494,13 +401,14 @@ export default function InscripcionPage() {
         const arrayBuffer = event.target.result
         const blob = new Blob([arrayBuffer], { type: file.type })
         const blobUrl = URL.createObjectURL(blob)
+
         img.onload = () => {
           URL.revokeObjectURL(blobUrl)
-          // Calcular nuevas dimensiones manteniendo la proporción
           let width = img.width
           let height = img.height
           const MAX_WIDTH = 1200
           const MAX_HEIGHT = 1200
+
           if (width > height) {
             if (width > MAX_WIDTH) {
               height = Math.round((height * MAX_WIDTH) / width)
@@ -512,14 +420,14 @@ export default function InscripcionPage() {
               height = MAX_HEIGHT
             }
           }
+
           canvas.width = width
           canvas.height = height
           ctx.drawImage(img, 0, 0, width, height)
-          // Convertir a base64 con calidad reducida (0.5 = 50%)
-          // Esto reducirá significativamente el tamaño del archivo
           const dataUrl = canvas.toDataURL(file.type, 0.5)
           resolve(dataUrl)
         }
+
         img.onerror = () => {
           URL.revokeObjectURL(blobUrl)
           toast({
@@ -531,6 +439,7 @@ export default function InscripcionPage() {
         }
         img.src = blobUrl
       }
+
       reader.onerror = (error) => {
         toast({
           title: "Error al leer el archivo",
@@ -541,8 +450,6 @@ export default function InscripcionPage() {
       }
     })
   }
-  // La función uploadFile ya no es necesaria
-  // const uploadFile = async (file) => { ... }
 
   const validateStep = (step) => {
     const errors = {}
@@ -564,14 +471,12 @@ export default function InscripcionPage() {
       if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
       if (!formData.genero) errors.genero = "El género es obligatorio"
       if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
-      //if (!formData.talleRemera && !stockAgotado) errors.talleRemera = "El talle de remera es obligatorio"
       if (!formData.recorrido) errors.recorrido = "El recorrido es obligatorio"
     } else if (step === 2) {
       if (formData.esCeliaco === undefined || formData.esCeliaco === null)
         errors.esCeliaco = "Debe indicar si es celíaco o no"
     } else if (step === 3) {
       if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
-      //if (!formData.transferidoA) errors.transferidoA = "Debe indicar a nombre de quien transfirió"
     }
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) {
@@ -586,80 +491,40 @@ export default function InscripcionPage() {
     }
     return true
   }
-  const validateForm = () => {
-    const errors = {}
-    if (!formData.nombre) errors.nombre = "El nombre es obligatorio"
-    else if (!validateName(formData.nombre)) errors.nombre = "El nombre solo debe contener letras"
-    if (!formData.apellido) errors.apellido = "El apellido es obligatorio"
-    else if (!validateName(formData.apellido)) errors.apellido = "El apellido solo debe contener letras"
-    if (!formData.dni) errors.dni = "El DNI es obligatorio"
-    else if (!validateDNI(formData.dni)) errors.dni = "El DNI debe tener 7-8 dígitos"
-    if (!formData.fechaNacimiento) errors.fechaNacimiento = "La fecha de nacimiento es obligatoria"
-    if (!formData.localidad) errors.localidad = "La localidad es obligatoria"
-    if (!formData.email) errors.email = "El email es obligatorio"
-    else if (!validateEmail(formData.email)) errors.email = "Formato de email inválido"
-    if (!formData.telefono) errors.telefono = "El teléfono es obligatorio"
-    else if (!validatePhone(formData.telefono)) errors.telefono = "Formato de teléfono inválido"
-    if (!formData.telefonoEmergencia) errors.telefonoEmergencia = "El teléfono de emergencia es obligatorio"
-    else if (!validatePhone(formData.telefonoEmergencia)) errors.telefonoEmergencia = "Formato de teléfono inválido"
-    if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
-    if (!formData.genero) errors.genero = "El género es obligatorio"
-    if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
-    //if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
-    if (!formData.esCeliaco) errors.esCeliaco = "Debe indicar si es celíaco o no"
-    if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
-    //if (!formData.comprobantePago) errors.comprobantePago = "Debe adjuntar un comprobante de pago"
-    setFieldErrors(errors)
-    if (Object.keys(errors).length > 0) {
-      toast({
-        title: "Hay errores en el formulario",
-        description: "Por favor revise los campos marcados en rojo",
-        variant: "destructive",
-      })
-      return false
-    }
-    return true
-  }
+
   const nextStep = () => {
     if (validateStep(currentStep)) {
       setCurrentStep(currentStep + 1)
       window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
+
   const prevStep = () => {
     setCurrentStep(currentStep - 1)
     window.scrollTo({ top: 0, behavior: "smooth" })
     topRef.current?.scrollIntoView({ behavior: "smooth" })
   }
-  // Función para obtener el siguiente número de inscripción
+
   const getNextRegistrationNumber = async () => {
     try {
       const registrationsRef = collection(db, "participantes2025")
       const allRegistrations = query(registrationsRef, orderBy("fechaInscripcion", "asc"))
       const snapshot = await getDocs(allRegistrations)
-      // El número de inscripción será el total de documentos + 1
       return snapshot.size + 1
     } catch (error) {
       console.error("Error obteniendo número de inscripción:", error)
-      // En caso de error, usar timestamp como fallback
       return Date.now()
     }
   }
 
-  // Nueva función para enviar el email al administrador
-  // Ahora solo recibe participantData y no un comprobanteUrl
   const sendAdminNotificationEmail = async (participantData) => {
     try {
-      // Convert base64 to data URL if image exists
       let comprobanteDataUrl = ""
       if (participantData.imagenBase64) {
-        // Determine the MIME type based on the base64 prefix or file name
-        let mimeType = "image/jpeg" // default
+        let mimeType = "image/jpeg"
         if (participantData.imagenBase64.startsWith("data:")) {
-          // Already has data URL prefix
           comprobanteDataUrl = participantData.imagenBase64
         } else {
-          // Add data URL prefix based on file extension
           const fileName = participantData.nombreArchivo || ""
           if (fileName.toLowerCase().includes(".png")) {
             mimeType = "image/png"
@@ -674,7 +539,7 @@ export default function InscripcionPage() {
         nombre: participantData.nombre,
         apellido: participantData.apellido,
         comprobanteUrl: participantData.nombreArchivo || "comprobante",
-        emailIara: "iara37699@gmail.com", // Email fijo del administrador
+        emailIara: "iara37699@gmail.com",
       }
 
       await emailjs.send("default_service", "template_f7yvb9x", templateParams)
@@ -691,11 +556,8 @@ export default function InscripcionPage() {
     }
   }
 
-  // Modificación 3: Actualizar el componente RegistrationForm para implementar los cambios
-  // Modificar la función handleSubmit para eliminar el toast de éxito
   const handleSubmit = async (e) => {
     e.preventDefault()
-    // Validar el formulario
     const errors = {}
     if (!formData.nombre) errors.nombre = "El nombre es obligatorio"
     else if (!validateName(formData.nombre)) errors.nombre = "El nombre solo debe contener letras"
@@ -714,11 +576,10 @@ export default function InscripcionPage() {
     if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
     if (!formData.genero) errors.genero = "El género es obligatorio"
     if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
-    //if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
     if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
+    
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) {
-      // Mostrar el primer error específico
       const firstError = Object.values(errors)[0]
       toast({
         title: "Error en el formulario",
@@ -727,18 +588,15 @@ export default function InscripcionPage() {
       })
       return
     }
+    
     setIsSubmitting(true)
     try {
-      // Obtener el número de inscripción
       const numeroInscripcion = await getNextRegistrationNumber()
       let imagenBase64 = ""
 
       if (formData.comprobantePago) {
-        // Convertir a Base64 para guardar en Firestore
         imagenBase64 = await convertToBase64(formData.comprobantePago)
-        // Advertir si el Base64 es muy grande (Firestore tiene límite de 1MB por documento)
         if (imagenBase64.length * 0.75 > 1024 * 1024) {
-          // Aproximación de bytes de Base64
           toast({
             title: "Advertencia de tamaño de archivo",
             description:
@@ -748,14 +606,12 @@ export default function InscripcionPage() {
         }
       }
 
-      // Estructura para condiciones de salud y medicamentos
       const condicionSalud = {
         condicionesSalud: formData.condicionesSalud || "",
         esCeliaco: formData.esCeliaco || "no",
       }
-      // Datos completos para Firestore según el formulario
+
       const registrationData = {
-        // Datos personales
         nombre: formData.nombre,
         apellido: formData.apellido,
         dni: formData.dni,
@@ -769,32 +625,23 @@ export default function InscripcionPage() {
         grupoSanguineo: formData.grupoSanguineo || "",
         genero: formData.genero || "",
         grupoCiclistas: formData.grupoCiclistas || "",
-        talleRemera: formData.talleRemera || "",
-        // Agregando campo recorrido
+        talleRemera: "", // Campo vacío ya que no hay remeras
         recorrido: formData.recorrido || "",
-        // Condiciones de salud (ahora como texto completo)
         condicionSalud: JSON.stringify(condicionSalud),
-        // Datos del comprobante de pago (ahora solo Base64)
-        comprobantePagoUrl: "", // Ya no se usa URL de Storage
-        imagenBase64: imagenBase64, // Guarda el Base64 directamente
+        comprobantePagoUrl: "",
+        imagenBase64: imagenBase64,
         nombreArchivo: formData.comprobantePago?.name || "comprobante.jpg",
-        // Metadatos
         fechaInscripcion: new Date().toISOString(),
         year: new Date().getFullYear(),
         estado: "pendiente",
         aceptaTerminos: formData.aceptaCondiciones,
-        // Agregar número de inscripción
         numeroInscripcion: numeroInscripcion,
       }
-      // Crear el nombre del documento: "numeroInscripcion nombre apellido"
-      const documentName = `${numeroInscripcion.toString().padStart(3, "0")} ${formData.nombre} ${formData.apellido}`
 
-      // Usar setDoc en lugar de addDoc para especificar el nombre del documento
+      const documentName = `${numeroInscripcion.toString().padStart(3, "0")} ${formData.nombre} ${formData.apellido}`
       const docRef = doc(db, "participantes2025", documentName)
       await setDoc(docRef, registrationData)
 
-      // Enviar email al administrador con los datos del inscripto
-      // NO se envía Base64 aquí para evitar el error 413
       await sendAdminNotificationEmail(registrationData)
 
       setSubmitted(true)
@@ -811,22 +658,24 @@ export default function InscripcionPage() {
     }
   }
 
-  const getTallesDisponibles = () => {
-    return Object.entries(stockRemeras).filter(([talle, stock]) => stock > 0)
-  }
-
-  const getRemerasDisponibles = () => {
-    return Object.values(stockRemeras).reduce((total, stock) => total + stock, 0)
-  }
-
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
         return (
           <div className="space-y-6">
+            {/* Alerta sobre las remeras */}
+            <Alert className="bg-amber-50 border-amber-200">
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+              <AlertTitle className="text-amber-800">Información importante</AlertTitle>
+              <AlertDescription className="text-amber-700">
+                <strong>Su inscripción es sin remera, no hay más talles disponibles</strong>
+              </AlertDescription>
+            </Alert>
+
             <div className="bg-gray-50 p-4 rounded-lg border shadow-sm">
               <h3 className="font-medium text-lg mb-4 text-gray-800 flex items-center gap-2">
                 <User className="h-5 w-5 text-blue-600" />
@@ -1057,115 +906,72 @@ export default function InscripcionPage() {
                   </RadioGroup>
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="grupoCiclistas" className="flex justify-between">
-                        <span className="flex items-center gap-1">
-                        <Users className="h-3.5 w-3.5 text-indigo-500" />
-                        <span>Grupo de ciclistas *</span>
-                        </span>
-                        {fieldErrors.grupoCiclistas && (
-                        <span className="text-red-500 text-xs">{fieldErrors.grupoCiclistas}</span>
-                        )}
-                    </Label>
-
-                    <Popover open={grupoCiclistasOpen} onOpenChange={setGrupoCiclistasOpen}>
-                        <PopoverTrigger asChild>
-                        <div className="relative">
-                            <Input
-                            id="grupoCiclistas"
-                            name="grupoCiclistas"
-                            value={formData.grupoCiclistas}
-                            onChange={(e) => {
-                                setFormData({
-                                ...formData,
-                                grupoCiclistas: e.target.value,
-                                })
-                            }}
-                            placeholder="Escriba o seleccione su grupo de ciclistas"
-                            className="w-full"
-                            />
-                        </div>
-                        </PopoverTrigger>
-
-                        <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
-                        <div className="max-h-[200px] overflow-y-auto p-1">
-                            <div className="grid grid-cols-1 gap-1">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="justify-start font-normal text-left h-auto py-1.5"
-                                onClick={() => {
-                                handleSelectChange("grupoCiclistas", "No pertenezco a ninguno")
-                                setGrupoCiclistasOpen(false)
-                                }}
-                            >
-                                No pertenezco a ninguno
-                            </Button>
-
-                            {gruposCiclistas.map((grupo) => (
-                                <Button
-                                key={grupo}
-                                variant="ghost"
-                                size="sm"
-                                className="justify-start font-normal text-left h-auto py-1.5"
-                                onClick={() => {
-                                    handleSelectChange("grupoCiclistas", grupo)
-                                    setGrupoCiclistasOpen(false)
-                                }}
-                                >
-                                {grupo}
-                                </Button>
-                            ))}
-                            </div>
-                        </div>
-                        </PopoverContent>
-                    </Popover>
-
-                    <p className="text-xs text-gray-500">
-                        Escriba el nombre de su grupo o seleccione uno de la lista.
-                    </p>
-                    </div>
-                <div className="space-y-2">
-                  <Label htmlFor="talleRemera" className="flex justify-between">
+                  <Label htmlFor="grupoCiclistas" className="flex justify-between">
                     <span className="flex items-center gap-1">
-                      <Shirt className="h-3.5 w-3.5 text-purple-500" />
-                      <span>Talle de remera {!stockAgotado && "*"}</span>
+                      <Users className="h-3.5 w-3.5 text-indigo-500" />
+                      <span>Grupo de ciclistas *</span>
                     </span>
-                    {fieldErrors.talleRemera && <span className="text-red-500 text-xs">{fieldErrors.talleRemera}</span>}
+                    {fieldErrors.grupoCiclistas && (
+                      <span className="text-red-500 text-xs">{fieldErrors.grupoCiclistas}</span>
+                    )}
                   </Label>
 
-                  {stockAgotado ? (
-                    <div className="space-y-2">
-                      <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                        <p className="text-red-700 font-semibold text-sm">NO HAY MAS REMERAS DISPONIBLES</p>
-                        <p className="text-red-600 text-xs mt-1">ADVERTENCIA: SU INSCRIPCION ES SIN REMERA</p>
+                  <Popover open={grupoCiclistasOpen} onOpenChange={setGrupoCiclistasOpen}>
+                    <PopoverTrigger asChild>
+                      <div className="relative">
+                        <Input
+                          id="grupoCiclistas"
+                          name="grupoCiclistas"
+                          value={formData.grupoCiclistas}
+                          onChange={(e) => {
+                            setFormData({
+                              ...formData,
+                              grupoCiclistas: e.target.value,
+                            })
+                          }}
+                          placeholder="Escriba o seleccione su grupo de ciclistas"
+                          className="w-full"
+                        />
                       </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="mb-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
-                        <p className="text-blue-700 text-xs font-medium">
-                          Quedan {getRemerasDisponibles()} remeras disponibles
-                        </p>
-                      </div>
-                      <Select
-                        name="talleRemera"
-                        value={formData.talleRemera}
-                        onValueChange={(value) => handleSelectChange("talleRemera", value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccionar talle" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getTallesDisponibles().map(([talle, stock]) => (
-                            <SelectItem key={talle} value={talle}>
-                              {talle.toUpperCase()} ({stock} disponibles)
-                            </SelectItem>
+                    </PopoverTrigger>
+
+                    <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+                      <div className="max-h-[200px] overflow-y-auto p-1">
+                        <div className="grid grid-cols-1 gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="justify-start font-normal text-left h-auto py-1.5"
+                            onClick={() => {
+                              handleSelectChange("grupoCiclistas", "No pertenezco a ninguno")
+                              setGrupoCiclistasOpen(false)
+                            }}
+                          >
+                            No pertenezco a ninguno
+                          </Button>
+
+                          {gruposCiclistas.map((grupo) => (
+                            <Button
+                              key={grupo}
+                              variant="ghost"
+                              size="sm"
+                              className="justify-start font-normal text-left h-auto py-1.5"
+                              onClick={() => {
+                                handleSelectChange("grupoCiclistas", grupo)
+                                setGrupoCiclistasOpen(false)
+                              }}
+                            >
+                              {grupo}
+                            </Button>
                           ))}
-                        </SelectContent>
-                      </Select>
-                      <TallesRemeraMejorado />
-                    </>
-                  )}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+
+                  <p className="text-xs text-gray-500">
+                    Escriba el nombre de su grupo o seleccione uno de la lista.
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -1271,9 +1077,7 @@ export default function InscripcionPage() {
                 <DollarSign className="h-5 w-5" />
                 Información de pago
               </h3>
-              {/* Grid responsive para los dos datos de pago */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-                {/* Dato de pago 1 - UALA */}
                 <Alert className="bg-white border-blue-200">
                   <AlertCircle className="h-4 w-4 text-blue-500" />
                   <AlertTitle className="text-blue-800">Dato de pago 1 - Argentina</AlertTitle>
@@ -1290,7 +1094,6 @@ export default function InscripcionPage() {
                     </ul>
                   </AlertDescription>
                 </Alert>
-                {/* Dato de pago 2 - PREX Uruguay */}
                 <Alert className="bg-white border-green-200">
                   <AlertCircle className="h-4 w-4 text-green-500" />
                   <AlertTitle className="text-green-800">Dato de pago 2 - Uruguay</AlertTitle>
@@ -1366,20 +1169,11 @@ export default function InscripcionPage() {
                           <li>Participa bajo su propia responsabilidad y riesgo</li>
                           <li>Debe contar con bicicleta en buen estado y equipo de seguridad</li>
                           <li>Es obligatorio el uso de casco durante toda la actividad</li>
-                          <li>
-                            Se compromete a respetar las normas de tránsito y las indicaciones de los organizadores
-                          </li>
+                          <li>Se compromete a respetar las normas de tránsito y las indicaciones de los organizadores</li>
                           <li>Autoriza el uso de imágenes tomadas durante el evento para fines promocionales</li>
-                          <li>
-                            La organización no se hace responsable por pérdidas, daños o lesiones durante el evento
-                          </li>
-                          <li>
-                            El evento se realizará con lluvia, solo se suspende por condiciones climáticas extremas
-                          </li>
-                          <li>
-                            Los menores de edad deben contar con autorización de sus padres o tutores, presentarlo al
-                            momento de la acreditación
-                          </li>
+                          <li>La organización no se hace responsable por pérdidas, daños o lesiones durante el evento</li>
+                          <li>El evento se realizará con lluvia, solo se suspende por condiciones climáticas extremas</li>
+                          <li>Los menores de edad deben contar con autorización de sus padres o tutores, presentarlo al momento de la acreditación</li>
                         </ul>
                       </div>
                     </AccordionContent>
@@ -1413,6 +1207,7 @@ export default function InscripcionPage() {
         return null
     }
   }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-blue-50 pb-10">
       <ToastContainer toasts={toasts} />
@@ -1428,11 +1223,11 @@ export default function InscripcionPage() {
             Volver a la página principal
           </Button>
         </div>
+
         <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
           <DialogContent
             className="bg-white max-w-md overflow-hidden p-0"
             onOpenAutoFocus={(event) => {
-              // Asegura que el foco se mueva al botón "Entendido" cuando el diálogo se abre
               event.preventDefault()
               document.getElementById("understood-button")?.focus()
             }}
@@ -1463,17 +1258,17 @@ export default function InscripcionPage() {
                 <ul className="text-green-700 text-sm space-y-1">
                   <li>• Fecha del evento: 12 de Octubre de 2025</li>
                   <li>
-                  • Lugar de acreditación:{" "}
-                  <a
-                    href="https://maps.app.goo.gl/sKgRGozptoXJrpY17"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline"
-                  >
-                    Frente al predio de la Terminal de Ómnibus de Federación
-                  </a>
-                  .
-                </li>
+                    • Lugar de acreditación:{" "}
+                    <a
+                      href="https://maps.app.goo.gl/sKgRGozptoXJrpY17"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      Frente al predio de la Terminal de Ómnibus de Federación
+                    </a>
+                    .
+                  </li>
                   <li>• Horario de acreditación: 7:30 AM</li>
                   <li>• Horario de salida: 8:30 AM</li>
                 </ul>
@@ -1481,7 +1276,7 @@ export default function InscripcionPage() {
             </div>
             <DialogFooter className="bg-gray-50 p-4 flex flex-col gap-2">
               <Button
-                id="understood-button" // Añade un ID para poder enfocarlo
+                id="understood-button"
                 onClick={handleCloseSuccessDialog}
                 className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
               >
@@ -1493,6 +1288,7 @@ export default function InscripcionPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
         <Card className="max-w-4xl mx-auto shadow-lg border-0">
           <CardHeader className="bg-gradient-to-r from-pink-100 to-blue-100 rounded-t-lg">
             <CardTitle className="text-3xl font-bold text-center bg-gradient-to-r from-pink-500 via-violet-500 to-blue-500 bg-clip-text text-transparent">
