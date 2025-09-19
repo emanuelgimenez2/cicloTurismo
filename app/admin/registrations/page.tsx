@@ -2144,6 +2144,16 @@ export default function AdminRegistrationsPage() {
                       <Trash2 className="h-3 w-3 mr-1" />
                       Eliminar
                     </Button>
+                    <Button type="button" onClick={updateRegistrationStatus} disabled={updatingStatus || sendingEmail}>
+                      {updatingStatus ? (
+                        <>
+                          Actualizando...
+                          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
+                        </>
+                      ) : (
+                        "Actualizar Estado"
+                      )}
+                    </Button>
                   </>
                 )}
               </div>
