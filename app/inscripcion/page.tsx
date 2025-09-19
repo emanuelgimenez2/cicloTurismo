@@ -654,14 +654,14 @@ export default function InscripcionPage() {
       if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
       if (!formData.genero) errors.genero = "El género es obligatorio"
       if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
-      if (!formData.talleRemera && !stockAgotado) errors.talleRemera = "El talle de remera es obligatorio"
+      //if (!formData.talleRemera && !stockAgotado) errors.talleRemera = "El talle de remera es obligatorio"
       if (!formData.recorrido) errors.recorrido = "El recorrido es obligatorio"
     } else if (step === 2) {
       if (formData.esCeliaco === undefined || formData.esCeliaco === null)
         errors.esCeliaco = "Debe indicar si es celíaco o no"
     } else if (step === 3) {
       if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
-      if (!formData.transferidoA) errors.transferidoA = "Debe indicar a nombre de quien transfirió"
+      //if (!formData.transferidoA) errors.transferidoA = "Debe indicar a nombre de quien transfirió"
     }
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) {
@@ -695,7 +695,7 @@ export default function InscripcionPage() {
     if (!formData.grupoSanguineo) errors.grupoSanguineo = "El grupo sanguíneo es obligatorio"
     if (!formData.genero) errors.genero = "El género es obligatorio"
     if (!formData.grupoCiclistas) errors.grupoCiclistas = "El grupo de ciclistas es obligatorio"
-    if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
+    //if (!formData.talleRemera) errors.talleRemera = "El talle de remera es obligatorio"
     if (!formData.esCeliaco) errors.esCeliaco = "Debe indicar si es celíaco o no"
     if (!formData.aceptaCondiciones) errors.aceptaCondiciones = "Debe aceptar los términos y condiciones"
     //if (!formData.comprobantePago) errors.comprobantePago = "Debe adjuntar un comprobante de pago"
