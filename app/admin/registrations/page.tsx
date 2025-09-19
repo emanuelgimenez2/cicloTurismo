@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { db } from "@/lib/firebase/firebase-config"
-import { collection, getDocs, orderBy, query, doc, updateDoc } from "firebase/firestore"
+import { collection, getDocs, orderBy, query, doc, updateDoc, deleteDoc } from "firebase/firestore"
 import {
   Search,
   Filter,
@@ -46,6 +46,7 @@ import {
   Edit,
   ArrowRightLeft,
   DollarSign,
+  Trash2,
 } from "lucide-react"
 import Link from "next/link"
 import { motion } from "framer-motion"
@@ -153,6 +154,7 @@ export default function AdminRegistrationsPage() {
     condicionSalud: "",
     transferidoA: "",
     precio: "",
+    recorrido: "",
   })
 
   const scrollToTop = () => {
@@ -729,6 +731,7 @@ export default function AdminRegistrationsPage() {
         condicionSalud: selectedRegistration.condicionSalud || "",
         transferidoA: selectedRegistration.transferidoA || "",
         precio: selectedRegistration.precio || "",
+        recorrido: selectedRegistration.recorrido || "",
       })
       setIsEditMode(true)
     }
@@ -794,6 +797,34 @@ export default function AdminRegistrationsPage() {
       toast({
         title: "Error",
         description: "No se pudieron actualizar los datos",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const deleteRegistration = async () => {
+    if (!selectedRegistration) return
+
+    try {
+      const registrationRef = doc(db, "participantes2025", selectedRegistration.id)
+      await deleteDoc(registrationRef)
+
+      // Update local state
+      setRegistrations((prev) => prev.filter((reg) => reg.id !== selectedRegistration.id))
+
+      // Close modal
+      setIsDetailsModalOpen(false)
+      setSelectedRegistration(null)
+
+      toast({
+        title: "Éxito",
+        description: "La inscripción ha sido eliminada correctamente",
+      })
+    } catch (error) {
+      console.error("Error deleting registration:", error)
+      toast({
+        title: "Error",
+        description: "No se pudo eliminar la inscripción",
         variant: "destructive",
       })
     }
@@ -1373,6 +1404,7 @@ export default function AdminRegistrationsPage() {
                         <TableHead className="font-semibold text-xs hidden md:table-cell">Email</TableHead>
                         <TableHead className="font-semibold text-xs hidden md:table-cell">Teléfono</TableHead>
                         <TableHead className="font-semibold text-xs hidden md:table-cell">Localidad</TableHead>
+                        <TableHead className="font-semibold text-xs hidden lg:table-cell">Recorrido</TableHead>
                         <TableHead className="font-semibold text-xs">Estado</TableHead>
                         <TableHead className="text-right font-semibold text-xs">Acciones</TableHead>
                       </TableRow>
@@ -1401,6 +1433,9 @@ export default function AdminRegistrationsPage() {
                             </TableCell>
                             <TableCell className="text-xs hidden md:table-cell">
                               {registration.localidad || "-"}
+                            </TableCell>
+                            <TableCell className="text-xs hidden lg:table-cell">
+                              {registration.recorrido || "-"}
                             </TableCell>
                             <TableCell>{getStatusBadge(registration.estado)}</TableCell>
                             <TableCell className="text-right">
@@ -1765,7 +1800,7 @@ export default function AdminRegistrationsPage() {
                         {isEditMode ? (
                           <Select
                             value={editFormData.talleRemera}
-                            onValueChange={(value) => setEditFormData((prev) => ({ ...prev, talleRemera: value }))}
+                            onChange={(value) => setEditFormData((prev) => ({ ...prev, talleRemera: value }))}
                           >
                             <SelectTrigger className="text-sm mt-1">
                               <SelectValue placeholder="Seleccionar talle" />
@@ -2024,6 +2059,28 @@ export default function AdminRegistrationsPage() {
                           <p className="text-sm">{selectedRegistration.precio || "-"}</p>
                         )}
                       </div>
+                      <div>
+                        <Label className="text-xs font-medium text-gray-500">Recorrido (KM)</Label>
+                        {isEditMode ? (
+                          <Select
+                            value={editFormData.recorrido}
+                            onValueChange={(value) => setEditFormData((prev) => ({ ...prev, recorrido: value }))}
+                          >
+                            <SelectTrigger className="text-sm mt-1">
+                              <SelectValue placeholder="Seleccionar recorrido" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="30">30 KM</SelectItem>
+                              <SelectItem value="60">60 KM</SelectItem>
+                              <SelectItem value="100">100 KM</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <p className="text-sm">
+                            {selectedRegistration.recorrido ? `${selectedRegistration.recorrido} KM` : "-"}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -2066,38 +2123,33 @@ export default function AdminRegistrationsPage() {
               </div>
             )}
 
-            <DialogFooter>
-              {isEditMode ? (
-                <div className="flex justify-between w-full">
-                  <Button type="button" variant="ghost" onClick={cancelEdit}>
-                    Cancelar
-                  </Button>
-                  <Button type="button" onClick={saveEdit}>
-                    Guardar Cambios
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex justify-between w-full">
-                  <Button type="button" variant="secondary" onClick={closeDetailsModal}>
-                    Cerrar
-                  </Button>
-                  <div className="flex gap-2">
-                    <Button type="button" variant="outline" onClick={enterEditMode}>
+            <DialogFooter className="flex justify-between items-center pt-4 border-t">
+              <div className="flex gap-2">
+                {isEditMode ? (
+                  <>
+                    <Button variant="outline" onClick={cancelEdit} className="text-xs bg-transparent">
+                      Cancelar
+                    </Button>
+                    <Button onClick={saveEdit} className="text-xs bg-indigo-600 hover:bg-indigo-700">
+                      Guardar Cambios
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button variant="outline" onClick={enterEditMode} className="text-xs bg-transparent">
+                      <Edit className="h-3 w-3 mr-1" />
                       Editar
                     </Button>
-                    <Button type="button" onClick={updateRegistrationStatus} disabled={updatingStatus || sendingEmail}>
-                      {updatingStatus ? (
-                        <>
-                          Actualizando...
-                          <Loader2 className="ml-2 h-4 w-4 animate-spin" />
-                        </>
-                      ) : (
-                        "Actualizar Estado"
-                      )}
+                    <Button variant="destructive" onClick={deleteRegistration} className="text-xs">
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Eliminar
                     </Button>
-                  </div>
-                </div>
-              )}
+                  </>
+                )}
+              </div>
+              <Button variant="ghost" onClick={() => setIsDetailsModalOpen(false)} className="text-xs">
+                Cerrar
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
