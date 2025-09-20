@@ -665,6 +665,15 @@ export default function InscripcionPage() {
       case 1:
         return (
           <div className="space-y-6">
+            {/* Alerta sobre las remeras */}
+            <Alert className="bg-amber-50 border-amber-200">
+              <AlertCircle className="h-4 w-4 text-amber-500" />
+              <AlertTitle className="text-amber-800">Información importante</AlertTitle>
+              <AlertDescription className="text-amber-700">
+                <strong>Su inscripción es sin remera, no hay más talles disponibles</strong>
+              </AlertDescription>
+            </Alert>
+
             <div className="bg-gray-50 p-4 rounded-lg border shadow-sm">
               <h3 className="font-medium text-lg mb-4 text-gray-800 flex items-center gap-2">
                 <User className="h-5 w-5 text-blue-600" />
