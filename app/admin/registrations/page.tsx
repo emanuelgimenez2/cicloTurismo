@@ -392,7 +392,7 @@ export default function AdminRegistrationsPage() {
         telefono: participant.telefono || "",
         localidad: participant.localidad || "",
         genero: participant.genero || "",
-        talleRemera: (participant.talleRemera || "").toUpperCase(), // Convertir a mayúsculas
+        talleRemera: (participant.talleRemera || "NO INCLUYE REMERA").toUpperCase(), // Convertir a mayúscula
         fechaInscripcion: participant.fechaInscripcion?.toLocaleDateString("es-ES") || "",
       }
 
