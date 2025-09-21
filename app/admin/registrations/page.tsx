@@ -2136,13 +2136,21 @@ export default function AdminRegistrationsPage() {
                   </>
                 ) : (
                   <>
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        if (window.confirm("¿Seguro que desea eliminar esta inscripción?")) {
+                          deleteRegistration();
+                        }
+                      }}
+                      className="text-xs"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Eliminar
+                    </Button>
                     <Button variant="outline" onClick={enterEditMode} className="text-xs bg-transparent">
                       <Edit className="h-3 w-3 mr-1" />
                       Editar
-                    </Button>
-                    <Button variant="destructive" onClick={deleteRegistration} className="text-xs">
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      Eliminar
                     </Button>
                     <Button type="button" onClick={updateRegistrationStatus} disabled={updatingStatus || sendingEmail}>
                       {updatingStatus ? (

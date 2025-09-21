@@ -1166,13 +1166,13 @@ export default function InscripcionPage() {
                     className="flex flex-col space-y-2 mt-2"
                   >
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="gisela_orbes" id="transferido-gisela" />
+                      <RadioGroupItem value="Gise" id="transferido-gisela" />
                       <Label htmlFor="transferido-gisela" className="font-normal">
                         Gisela Orbes
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="brunilda_shubert" id="transferido-brunilda" />
+                      <RadioGroupItem value="Bruni" id="transferido-brunilda" />
                       <Label htmlFor="transferido-brunilda" className="font-normal">
                         Brunilda Shubert
                       </Label>
